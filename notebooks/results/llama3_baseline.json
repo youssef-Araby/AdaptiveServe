@@ -1,0 +1,30 @@
+{
+  "alias": "llama3",
+  "hf_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "task": "piqa",
+  "limit": 64,
+  "method": "full",
+  "target_sparsity": null,
+  "sparse_ratio": null,
+  "prefill_ratio": null,
+  "accuracy": {
+    "results": {
+      "piqa": {
+        "acc": 0.796875,
+        "acc_stderr": 0.050688158720985414,
+        "acc_norm": 0.890625,
+        "acc_norm_stderr": 0.039322054350368486
+      }
+    },
+    "versions": {
+      "piqa": 0
+    }
+  },
+  "latency": {
+    "wall_clock_s": 2.787312034000024,
+    "total_output_tokens": 512,
+    "tokens_per_sec": 183.68951655019316,
+    "num_prompts": 8,
+    "max_new_tokens": 64
+  }
+}
