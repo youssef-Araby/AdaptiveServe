@@ -2,7 +2,7 @@
 
 **Benchmarking adaptive KV cache quantization for efficient LLM inference.**
 
-AdaptiveServe measures the quality–efficiency trade-off of KV cache compression strategies for large language models. It provides reproducible benchmarks across latency, memory, and generation quality metrics, enabling side-by-side comparison of a full-precision baseline against the QAQ attention-aware quantization algorithm.
+AdaptiveServe measures the quality–efficiency trade-off of KV cache compression strategies for large language models. It provides reproducible benchmarks across latency, memory, and generation quality metrics. The current code base implements a full-precision baseline (C0) and the QAQ attention-aware quantization algorithm (C2); additional methods (C1, C3–C5) and a per-query adaptive selector (C6–C7) are planned.
 
 ---
 
@@ -16,10 +16,16 @@ This project characterises that trade-off across two configurations, two model f
 
 ## Configurations
 
-| ID | Method | Description |
-|----|--------|-------------|
-| **C0** | FP16 Baseline | Full-precision KV cache. No quantization. Reference for all comparisons. |
-| **C1** | QAQ Full | Attention-aware variable-bit quantization ([2, 16] bits), 1 % outliers kept at FP16, attention window of 5. Keys quantized via query-norm error bound; Values quantized inversely proportional to attention score (Dong et al., 2024 — [arXiv:2403.04643](https://arxiv.org/abs/2403.04643)). |
+| ID | Method | Status | Description |
+|----|--------|--------|-------------|
+| **C0** | FP16 Baseline | implemented | Full-precision KV cache. No quantization. Reference for all comparisons. |
+| **C1** | TailorKV | planned | Offline per-layer hybrid (sparsity + quantization), black-box baseline. |
+| **C2** | QAQ Full | implemented | Attention-aware variable-bit quantization ([2, 16] bits), 1 % outliers kept at FP16, attention window of 5. Keys quantized via query-norm error bound; Values quantized inversely proportional to attention score (Dong et al., 2024 — [arXiv:2403.04643](https://arxiv.org/abs/2403.04643)). |
+| **C3** | KVQuant | planned | Per-channel asymmetric quantization with calibration. |
+| **C4** | DynamicKV | planned | Layer-adaptive token retention. |
+| **C5** | Ada-KV | planned | Head-budget adaptive eviction (FlashAttention-2). |
+| **C6** | Adaptive-A (rule-based selector) | planned | Per-query selection across {C1…C5}. |
+| **C7** | Adaptive-B (learned selector) | planned | Lightweight MLP selector trained on profiling signals. |
 
 ---
 
@@ -70,20 +76,20 @@ This project characterises that trade-off across two configurations, two model f
 | Config | TTFT (ms) | TPOT (ms) | Tok/s | VRAM (MB) | KV Cache (MB) | Compression | PPL ↓ | LongBench ↑ |
 |--------|-----------|-----------|-------|-----------|---------------|-------------|-------|-------------|
 | C0 (FP16) | 266.3 | 45.8 | 21.83 | 15 719 | 128.0 | 1.00× | 7.460 | 0.505 |
-| C1 (QAQ) | 579.7 | 158.1 | 6.32 | 17 790 | 76.1 | **1.76×** | 7.460 | 0.505 |
+| C2 (QAQ) | 579.7 | 158.1 | 6.32 | 17 790 | 76.1 | **1.76×** | 7.460 | 0.505 |
 
 ### Phi-3-mini-4k-instruct
 
 | Config | TTFT (ms) | TPOT (ms) | Tok/s | VRAM (MB) | KV Cache (MB) | Compression | PPL ↓ | LongBench ↑ |
 |--------|-----------|-----------|-------|-----------|---------------|-------------|-------|-------------|
 | C0 (FP16) | 158.7 | 19.9 | 50.34 | 7 775 | 384.0 | 1.00× | 5.635 | 0.369 |
-| C1 (QAQ) | 578.2 | 35.6 | 28.06 | 7 839 | 228.3 | **1.76×** | 5.635 | 0.377 |
+| C2 (QAQ) | 578.2 | 35.6 | 28.06 | 7 839 | 228.3 | **1.76×** | 5.635 | 0.377 |
 
 ### Key Observations
 
-- **C1 achieves 1.76× KV cache compression on both models** with no perplexity degradation.
+- **C2 achieves 1.76× KV cache compression on both models** with no perplexity degradation.
 - **LongBench quality is fully preserved** on LLaMA-3 (0.505 → 0.505) and slightly improves on Phi-3 (0.369 → 0.377), suggesting the attention-aware bit allocation can suppress irrelevant cache noise.
-- **TPOT overhead in C1 is a Python simulation artefact** — production hardware with packed 2–4 bit storage would see DRAM-bandwidth speedups over the FP16 baseline, not slowdowns.
+- **TPOT overhead in C2 is a Python simulation artefact** — production hardware with packed 2–4 bit storage would see DRAM-bandwidth speedups over the FP16 baseline, not slowdowns.
 - Phi-3's attention-aware decode is disabled (SDPA path) because its eager attention implementation is ~43× slower than SDPA; V-cache bits fall back to the K-formula in that case.
 
 ---
@@ -93,16 +99,21 @@ This project characterises that trade-off across two configurations, two model f
 ```
 AdaptiveServe/
 ├── scripts/
-│   ├── benchmark_c0.py   # C0 baseline benchmark (FP16 full KV cache)
-│   └── benchmark_c1.py   # C1 QAQ benchmark (variable-bit quantization)
+│   ├── _common.py                 # Shared constants, scoring, PPL, LongBench loader
+│   ├── benchmark_c0_baseline.py   # C0 baseline (FP16 full KV cache)
+│   └── benchmark_c2_qaq.py        # C2 QAQ (variable-bit attention-aware quantization)
 └── runs/
     ├── C0/
     │   ├── llama3/results.json
     │   └── phi3/results.json
-    └── C1/
+    └── C2/
         ├── llama3/results.json
         └── phi3/results.json
 ```
+
+Each `benchmark_cN_*.py` script is self-contained: it owns its own model loading,
+speed loop, and generation function. Only constants and method-agnostic helpers
+(scoring, perplexity, LongBench task loading) are shared via `_common.py`.
 
 ---
 
@@ -127,12 +138,12 @@ huggingface-cli login
 
 ```bash
 # C0 — FP16 baseline
-python scripts/benchmark_c0.py --model phi3
-python scripts/benchmark_c0.py --model llama3
+python scripts/benchmark_c0_baseline.py --model phi3
+python scripts/benchmark_c0_baseline.py --model llama3
 
-# C1 — QAQ full quantization
-python scripts/benchmark_c1.py --model phi3
-python scripts/benchmark_c1.py --model llama3
+# C2 — QAQ full quantization
+python scripts/benchmark_c2_qaq.py --model phi3
+python scripts/benchmark_c2_qaq.py --model llama3
 ```
 
 Results are written to `runs/{config}/{model}/results.json`.

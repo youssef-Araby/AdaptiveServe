@@ -1,5 +1,5 @@
 {
-  "config": "C1",
+  "config": "C2",
   "method": "QAQ full (attention-aware variable-bit [2,16], 1% outliers, window=5)",
   "model": "llama3",
   "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",

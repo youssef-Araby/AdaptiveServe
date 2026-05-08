@@ -1,5 +1,5 @@
 {
-  "config": "C1",
+  "config": "C2",
   "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=prefill-only (SDPA, K-formula))",
   "model": "phi3",
   "model_id": "microsoft/Phi-3-mini-4k-instruct",

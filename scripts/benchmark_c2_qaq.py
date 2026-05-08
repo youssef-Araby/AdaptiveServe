@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-C1 benchmark — Full QAQ KV cache quantization (attention-aware, variable-bit).
+C2 benchmark — Full QAQ KV cache quantization (attention-aware, variable-bit).
 
 QAQ: Quality Adaptive Quantization for LLM KV Cache (Dong et al., 2024)
   arXiv: 2403.04643  |  github.com/ClubieDong/QAQ-KVCacheQuantization
@@ -27,11 +27,11 @@ Measures:
   Speed  : TTFT (ms), TPOT (ms), tokens/sec, peak VRAM (MB), theoretical KV MB
   Quality: WikiText-2 perplexity (teacher-forcing), LongBench (7 tasks, QAQ generation)
 
-Output: runs/C1/{model}/results.json
+Output: runs/C2/{model}/results.json
 
 Usage:
-    python scripts/benchmark_c1.py --model phi3
-    python scripts/benchmark_c1.py --model llama3
+    python scripts/benchmark_c2_qaq.py --model phi3
+    python scripts/benchmark_c2_qaq.py --model llama3
 """
 
 from __future__ import annotations
@@ -39,21 +39,28 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import string
 import time
-from collections import Counter
 from pathlib import Path
 
 import torch
-from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
+from _common import (
+    LB_MAX_INPUT,
+    LB_TASKS,
+    LB_TEMPLATES,
+    MODELS,
+    SPEED_N_DECODE,
+    SPEED_TEXT,
+    apply_chat_template,
+    compute_score,
+    load_longbench_task,
+    run_ppl,
+)
 
-# Per-model config:
-#   id               : HuggingFace model ID
+# ---------------------------------------------------------------------------
+# Per-model attention-implementation config (QAQ-specific)
+# ---------------------------------------------------------------------------
 #   attn_impl        : attention implementation for loading
 #                      ("eager" = needed for output_attentions; "sdpa" = flash/fast)
 #   attn_aware_decode: True  → capture attention per decode step and compute attention-aware
@@ -62,89 +69,16 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 #                      Phi-3-mini's eager attention is ~43× slower than SDPA, so we use SDPA.
 MODELS_CFG: dict[str, dict] = {
     "llama3": {
-        "id":               "meta-llama/Meta-Llama-3-8B-Instruct",
+        "id":               MODELS["llama3"],
         "attn_impl":        "eager",   # needed for decode output_attentions
         "attn_aware_decode": True,
     },
     "phi3": {
-        "id":               "microsoft/Phi-3-mini-4k-instruct",
+        "id":               MODELS["phi3"],
         "attn_impl":        "sdpa",    # phi3 eager is 43× slower than SDPA
         "attn_aware_decode": False,
     },
 }
-# Convenience alias
-MODELS = {k: v["id"] for k, v in MODELS_CFG.items()}
-
-LB_MAX_INPUT = {
-    "phi3":   3500,
-    "llama3": 7500,
-}
-
-LB_TASKS = {
-    "narrativeqa": {"metric": "f1",       "max_new_tokens": 128, "chat": True,  "first_line": False},
-    "qasper":      {"metric": "f1",       "max_new_tokens": 128, "chat": True,  "first_line": False},
-    "hotpotqa":    {"metric": "f1",       "max_new_tokens": 32,  "chat": True,  "first_line": True},
-    "2wikimqa":    {"metric": "f1",       "max_new_tokens": 32,  "chat": True,  "first_line": True},
-    "gov_report":  {"metric": "rouge1",   "max_new_tokens": 512, "chat": True,  "first_line": False},
-    "trec":        {"metric": "accuracy", "max_new_tokens": 32,  "chat": False, "first_line": True},
-    "triviaqa":    {"metric": "f1",       "max_new_tokens": 32,  "chat": False, "first_line": True},
-}
-
-LB_TEMPLATES = {
-    "narrativeqa": (
-        "You are given a story, which can be either a novel or a movie script, and a question. "
-        "Answer the question as concisely as you can, using a single phrase if possible. "
-        "Do not provide any explanation.\n\nStory: {context}\n\nNow, answer the question based on "
-        "the story as concisely as you can, using a single phrase if possible. Do not provide any "
-        "explanation.\n\nQuestion: {input}\n\nAnswer:"
-    ),
-    "qasper": (
-        "You are given a scientific article and a question. Answer the question as concisely "
-        "as you can, using a single phrase or sentence if possible. If the question cannot be "
-        "answered based on the information in the article, write \"unanswerable\". If the question "
-        "is a yes/no question, answer \"yes\", \"no\", or \"unanswerable\". Do not provide any "
-        "explanation.\n\nArticle: {context}\n\n Answer the question based on the above article as "
-        "concisely as you can, using a single phrase or sentence if possible. If the question cannot "
-        "be answered based on the information in the article, write \"unanswerable\". If the question "
-        "is a yes/no question, answer \"yes\", \"no\", or \"unanswerable\". Do not provide any "
-        "explanation.\n\nQuestion: {input}\n\nAnswer:"
-    ),
-    "hotpotqa": (
-        "Answer the question based on the given passages. Only give me the answer and do not "
-        "output any other words.\n\nThe following are given passages.\n{context}\n\nAnswer the "
-        "question based on the given passages. Only give me the answer and do not output any "
-        "other words.\n\nQuestion: {input}\nAnswer:"
-    ),
-    "2wikimqa": (
-        "Answer the question based on the given passages. Only give me the answer and do not "
-        "output any other words.\n\nThe following are given passages.\n{context}\n\nAnswer the "
-        "question based on the given passages. Only give me the answer and do not output any "
-        "other words.\n\nQuestion: {input}\nAnswer:"
-    ),
-    "gov_report": (
-        "You are given a report by a government agency. Write a one-page summary of the report.\n\n"
-        "Report:\n{context}\n\nNow, write a one-page summary of the report.\n\nSummary:"
-    ),
-    "trec": (
-        "Please determine the type of the question below. Here are some examples of questions.\n\n"
-        "{context}\n{input}"
-    ),
-    "triviaqa": (
-        "Answer the question based on the given passage. Only give me the answer and do not output "
-        "any other words. The following are some examples.\n\n{context}\n\n{input}"
-    ),
-}
-
-LB_CACHE     = Path("~/.cache/longbench/data").expanduser()
-LB_N_SAMPLES = 20
-
-PPL_MAX_LEN = {
-    "phi3":   4096,
-    "llama3": 8192,
-}
-PPL_N_CHUNKS = None   # None = full dataset
-
-SPEED_N_DECODE = 50
 
 # QAQ config (full attention-aware, variable-bit)
 QAQ_OUTLIER_RATIO      = 0.01   # 1% outliers kept at FP16
@@ -153,23 +87,6 @@ QAQ_N_BITS_MAX         = 16     # maximum (= FP16, effectively no quantization)
 QAQ_LAST_N_ATTENTIONS  = 5      # attention window size (paper: n=5)
 QAQ_TARGET_ERROR       = 1.0    # σ_max — target quantization error (paper default)
 QAQ_Q_NORM_PERCENTILE  = 90     # use 90th-percentile of ||Q||^2 across heads/layers
-
-_SPEED_TEXT = (
-    "The development of large language models has transformed natural language "
-    "processing. These models, trained on vast corpora of text, demonstrate "
-    "remarkable capabilities across a wide range of tasks including translation, "
-    "summarization, question answering, and code generation. However, deploying "
-    "these models in production environments presents significant challenges. "
-    "The primary bottleneck is memory: as context length grows, the key-value "
-    "cache required to store intermediate attention states grows linearly, "
-    "consuming tens of gigabytes for contexts exceeding one hundred thousand tokens. "
-    "Researchers have proposed various techniques to address this challenge, "
-    "including quantization of cache elements to lower numerical precision, "
-    "eviction of less important tokens based on attention scores, and adaptive "
-    "allocation of memory budgets across attention heads and transformer layers. "
-    "Each approach involves a quality-efficiency trade-off that must be carefully "
-    "characterized for different task types and sequence lengths. "
-) * 10
 
 
 # ---------------------------------------------------------------------------
@@ -613,61 +530,6 @@ def _theoretical_kv_mb_variable(cache, avg_bits: float) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Scoring helpers (identical to C0)
-# ---------------------------------------------------------------------------
-
-def _normalize(s: str) -> str:
-    s = s.lower()
-    s = s.translate(str.maketrans("", "", string.punctuation))
-    return " ".join(s.split())
-
-
-def _token_f1(pred: str, gold: str) -> float:
-    pred_toks = _normalize(pred).split()
-    gold_toks = _normalize(gold).split()
-    if not pred_toks or not gold_toks:
-        return 0.0
-    common = Counter(pred_toks) & Counter(gold_toks)
-    n = sum(common.values())
-    if n == 0:
-        return 0.0
-    p = n / len(pred_toks)
-    r = n / len(gold_toks)
-    return 2 * p * r / (p + r)
-
-
-def _rouge1(pred: str, ref: str) -> float:
-    pred_set = set(_normalize(pred).split())
-    ref_set  = set(_normalize(ref).split())
-    if not pred_set or not ref_set:
-        return 0.0
-    common = len(pred_set & ref_set)
-    p = common / len(pred_set)
-    r = common / len(ref_set)
-    if p + r == 0:
-        return 0.0
-    return 2 * p * r / (p + r)
-
-
-def _accuracy(pred: str, golds: list[str]) -> float:
-    pred_norm = _normalize(pred)
-    return float(any(
-        _normalize(g) in pred_norm or pred_norm in _normalize(g)
-        for g in golds
-    ))
-
-
-def compute_score(metric: str, pred: str, golds: list[str]) -> float:
-    if metric == "f1":
-        return max(_token_f1(pred, g) for g in golds)
-    if metric == "rouge1":
-        return max(_rouge1(pred, g) for g in golds)
-    if metric == "accuracy":
-        return _accuracy(pred, golds)
-    raise ValueError(f"Unknown metric: {metric}")
-
-
-# ---------------------------------------------------------------------------
 # Phase 1: Speed
 # ---------------------------------------------------------------------------
 
@@ -676,7 +538,7 @@ def run_speed(model, tokenizer, model_key: str, device: str,
     print("\n=== Speed benchmark (Full QAQ, attention-aware variable-bit) ===")
 
     target_len = min(1024, LB_MAX_INPUT[model_key])
-    all_ids    = tokenizer.encode(_SPEED_TEXT, add_special_tokens=False)
+    all_ids    = tokenizer.encode(SPEED_TEXT, add_special_tokens=False)
     prompt_ids = all_ids[:target_len]
     input_ids  = torch.tensor([prompt_ids], device=device)
     print(f"  Prompt: {len(prompt_ids)} tokens")
@@ -779,77 +641,8 @@ def run_speed(model, tokenizer, model_key: str, device: str,
 
 
 # ---------------------------------------------------------------------------
-# Phase 2: Perplexity (teacher-forcing, same as C0)
-# ---------------------------------------------------------------------------
-
-def run_ppl(model, tokenizer, model_key: str, device: str) -> dict:
-    """
-    Teacher-forcing PPL on WikiText-2 test (same methodology as C0).
-    QAQ quantizes the KV cache during GENERATION, not teacher-forcing;
-    this PPL measures inherent model quality unaffected by KV quantization.
-    The LongBench scores reflect actual QAQ quality impact.
-    """
-    print("\n=== WikiText-2 perplexity (teacher-forcing) ===")
-
-    chunk_len = PPL_MAX_LEN[model_key]
-    ds   = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
-    text = "\n\n".join(ds["text"])
-    ids  = tokenizer.encode(text)
-    print(f"  Total tokens: {len(ids):,}")
-
-    n_chunks = len(ids) // chunk_len
-    if PPL_N_CHUNKS is not None:
-        n_chunks = min(PPL_N_CHUNKS, n_chunks)
-    print(f"  Chunks: {n_chunks}  (chunk_size={chunk_len}, score all tokens, no QAQ)")
-
-    total_nll   = 0.0
-    total_count = 0
-
-    with torch.no_grad():
-        for i in range(n_chunks):
-            start   = i * chunk_len
-            chunk   = ids[start : start + chunk_len]
-            input_t = torch.tensor([chunk], device=device)
-
-            out     = model(input_t, use_cache=False)
-            logits  = out.logits[:, :-1, :]
-            targets = input_t[:, 1:]
-
-            log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
-            nll       = -log_probs.gather(2, targets.unsqueeze(-1)).squeeze(-1)
-            total_nll   += nll.sum().item()
-            total_count += targets.numel()
-
-            if (i + 1) % 5 == 0:
-                print(f"  chunk {i+1}/{n_chunks}  PPL={math.exp(total_nll/total_count):.3f}")
-
-    ppl = math.exp(total_nll / total_count)
-    print(f"  Final PPL: {ppl:.4f}  (note: same as C0, QAQ does not affect teacher-forcing)")
-    return {"ppl_wikitext2": round(ppl, 4), "ppl_n_chunks": n_chunks}
-
-
-# ---------------------------------------------------------------------------
 # Phase 3: LongBench (QAQ generation)
 # ---------------------------------------------------------------------------
-
-def _load_task(task: str) -> list[dict]:
-    path = LB_CACHE / f"{task}.jsonl"
-    if not path.exists():
-        raise FileNotFoundError(path)
-    records = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
-    step = max(1, len(records) // LB_N_SAMPLES)
-    return records[::step][:LB_N_SAMPLES]
-
-
-def _apply_chat_template(tokenizer, prompt: str) -> str:
-    if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template is not None:
-        return tokenizer.apply_chat_template(
-            [{"role": "user", "content": prompt}],
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-    return prompt
-
 
 def _generate_qaq(
     model, tokenizer, prompt: str, max_new: int, max_input: int,
@@ -863,7 +656,7 @@ def _generate_qaq(
     Decode (attn_aware_decode=False): SDPA, K formula for V bits (fast, for phi3, etc.)
     """
     if use_chat:
-        prompt = _apply_chat_template(tokenizer, prompt)
+        prompt = apply_chat_template(tokenizer, prompt)
     ids = tokenizer.encode(prompt, add_special_tokens=False)
     if len(ids) > max_input:
         half = max_input // 2
@@ -924,7 +717,7 @@ def run_longbench(
 
     for task, cfg in LB_TASKS.items():
         try:
-            samples = _load_task(task)
+            samples = load_longbench_task(task)
         except FileNotFoundError:
             print(f"  SKIP {task}: file not found")
             continue
@@ -963,7 +756,7 @@ def run_longbench(
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--model",  required=True, choices=list(MODELS.keys()))
-    p.add_argument("--output", default="runs/C1")
+    p.add_argument("--output", default="runs/C2")
     return p.parse_args()
 
 
@@ -997,8 +790,9 @@ def main():
     model.eval()
 
     results = {
-        "config":   "C1",
+        "config":   "C2",
         "method":   f"QAQ full (variable-bit [{QAQ_N_BITS_MIN},{QAQ_N_BITS_MAX}], "
+
                     f"{QAQ_OUTLIER_RATIO*100:.0f}% outliers, window={QAQ_LAST_N_ATTENTIONS}, "
                     f"decode={decode_mode})",
         "model":    args.model,
