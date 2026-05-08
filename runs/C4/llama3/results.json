@@ -6,15 +6,15 @@
   "max_capacity": 1024,
   "window_size": 32,
   "kernel_size": 7,
-  "ttft_ms": 308.4,
-  "tpot_ms": 26.586,
-  "tokens_per_sec": 37.61,
-  "peak_vram_mb": 17895.0,
-  "kv_cache_mb_full": 128.0,
+  "ttft_ms": 1932.1,
+  "tpot_ms": 49.353,
+  "tokens_per_sec": 20.26,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
   "kv_cache_mb": 128.0,
-  "kv_compression_ratio": 1.0,
+  "kv_compression_ratio": 7.324,
   "avg_kept_per_layer": 1024.0,
-  "speed_prompt_tokens": 1024,
+  "speed_prompt_tokens": 7500,
   "speed_n_decode": 50,
   "ppl_wikitext2": 7.4601,
   "ppl_n_chunks": 35,
@@ -53,7 +53,19 @@
       "metric": "f1",
       "score": 0.9319,
       "n": 20
+    },
+    "_compression": {
+      "avg_seq_len": 6455.2,
+      "avg_kept_per_layer": 1024.0,
+      "avg_kv_cache_mb_full": 806.9,
+      "avg_kv_cache_mb": 128.0,
+      "avg_compression_ratio": 6.304
     }
   },
-  "longbench_avg": 0.4991
+  "longbench_avg": 0.4991,
+  "longbench_avg_seq_len": 6455.2,
+  "longbench_avg_kept_per_layer": 1024.0,
+  "longbench_avg_kv_cache_mb_full": 806.9,
+  "longbench_avg_kv_cache_mb": 128.0,
+  "longbench_avg_compression_ratio": 6.304
 }

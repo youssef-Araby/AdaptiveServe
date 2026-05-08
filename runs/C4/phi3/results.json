@@ -6,17 +6,17 @@
   "max_capacity": 512,
   "window_size": 32,
   "kernel_size": 7,
-  "ttft_ms": 329.21,
-  "tpot_ms": 47.076,
-  "tokens_per_sec": 21.24,
-  "peak_vram_mb": 10001.0,
-  "kv_cache_mb_full": 384.0,
+  "ttft_ms": 772.52,
+  "tpot_ms": 74.892,
+  "tokens_per_sec": 13.35,
+  "peak_vram_mb": 8910.3,
+  "kv_cache_mb_full": 767.25,
   "kv_cache_mb": 192.0,
-  "kv_compression_ratio": 2.0,
+  "kv_compression_ratio": 3.996,
   "avg_kept_per_layer": 512.0,
-  "speed_prompt_tokens": 1024,
+  "speed_prompt_tokens": 3500,
   "speed_n_decode": 50,
-  "ppl_wikitext2": 5.6352,
+  "ppl_wikitext2": 5.6349,
   "ppl_n_chunks": 83,
   "longbench": {
     "narrativeqa": {
@@ -31,7 +31,7 @@
     },
     "hotpotqa": {
       "metric": "f1",
-      "score": 0.2322,
+      "score": 0.2217,
       "n": 20
     },
     "2wikimqa": {
@@ -41,7 +41,7 @@
     },
     "gov_report": {
       "metric": "rouge1",
-      "score": 0.279,
+      "score": 0.278,
       "n": 20
     },
     "trec": {
@@ -53,7 +53,19 @@
       "metric": "f1",
       "score": 0.9348,
       "n": 20
+    },
+    "_compression": {
+      "avg_seq_len": 3488.7,
+      "avg_kept_per_layer": 512.0,
+      "avg_kv_cache_mb_full": 767.25,
+      "avg_kv_cache_mb": 192.0,
+      "avg_compression_ratio": 3.996
     }
   },
-  "longbench_avg": 0.3596
+  "longbench_avg": 0.358,
+  "longbench_avg_seq_len": 3488.7,
+  "longbench_avg_kept_per_layer": 512.0,
+  "longbench_avg_kv_cache_mb_full": 767.25,
+  "longbench_avg_kv_cache_mb": 192.0,
+  "longbench_avg_compression_ratio": 3.996
 }

@@ -2,7 +2,7 @@
 
 **Benchmarking adaptive KV cache quantization for efficient LLM inference.**
 
-AdaptiveServe measures the quality–efficiency trade-off of KV cache compression strategies for large language models. It provides reproducible benchmarks across latency, memory, and generation quality metrics. The current code base implements a full-precision baseline (C0) and the QAQ attention-aware quantization algorithm (C2); additional methods (C1, C3–C5) and a per-query adaptive selector (C6–C7) are planned.
+AdaptiveServe measures the quality–efficiency trade-off of KV cache compression strategies for large language models. It provides reproducible benchmarks across latency, memory, and generation quality metrics. The current code base implements a full-precision baseline (C0), QAQ attention-aware quantization (C2), and DynamicKV per-layer token retention (C4); additional methods (C1, C3, C5) and a per-query adaptive selector (C6–C7) are planned.
 
 ---
 
@@ -22,7 +22,7 @@ This project characterises that trade-off across two configurations, two model f
 | **C1** | TailorKV | planned | Offline per-layer hybrid (sparsity + quantization), black-box baseline. |
 | **C2** | QAQ Full | implemented | Attention-aware variable-bit quantization ([2, 16] bits), 1 % outliers kept at FP16, attention window of 5. Keys quantized via query-norm error bound; Values quantized inversely proportional to attention score (Dong et al., 2024 — [arXiv:2403.04643](https://arxiv.org/abs/2403.04643)). |
 | **C3** | KVQuant | planned | Per-channel asymmetric quantization with calibration. |
-| **C4** | DynamicKV | planned | Layer-adaptive token retention. |
+| **C4** | DynamicKV | implemented | Per-layer attention-driven token retention. Each layer keeps the top-K tokens by aggregated attention score (with sliding window of recent tokens always preserved); per-layer budget is uniform (Zhou et al., 2024 — [arXiv:2407.11550](https://arxiv.org/abs/2407.11550)). |
 | **C5** | Ada-KV | planned | Head-budget adaptive eviction (FlashAttention-2). |
 | **C6** | Adaptive-A (rule-based selector) | planned | Per-query selection across {C1…C5}. |
 | **C7** | Adaptive-B (learned selector) | planned | Lightweight MLP selector trained on profiling signals. |
@@ -71,24 +71,29 @@ This project characterises that trade-off across two configurations, two model f
 
 ## Results
 
-### LLaMA-3-8B-Instruct
+Speed phase uses a fixed prompt of 3 500 tokens (Phi-3) or 7 500 tokens (LLaMA-3) — both near the model context limit so reported compression reflects realistic long-context use.
+
+### LLaMA-3-8B-Instruct  (speed prompt = 7 500 tokens)
 
 | Config | TTFT (ms) | TPOT (ms) | Tok/s | VRAM (MB) | KV Cache (MB) | Compression | PPL ↓ | LongBench ↑ |
 |--------|-----------|-----------|-------|-----------|---------------|-------------|-------|-------------|
-| C0 (FP16) | 266.3 | 45.8 | 21.83 | 15 719 | 128.0 | 1.00× | 7.460 | 0.505 |
-| C2 (QAQ) | 579.7 | 158.1 | 6.32 | 17 790 | 76.1 | **1.76×** | 7.460 | 0.505 |
+| C0 (FP16) | 1 815.9 | 38.3 | 26.14 | 18 169 | 937.5 | 1.00× | 7.460 | 0.505 |
+| C2 (QAQ) | 2 374.7 | 163.5 | 6.12 | 18 168 | 535.0 | **1.76×** | 7.460 | 0.505 |
+| C4 (DynamicKV) | 1 932.1 | 49.4 | 20.26 | 18 151 | 128.0 | **7.32×** speed / **6.30×** LongBench | 7.460 | 0.499 |
 
-### Phi-3-mini-4k-instruct
+### Phi-3-mini-4k-instruct  (speed prompt = 3 500 tokens)
 
 | Config | TTFT (ms) | TPOT (ms) | Tok/s | VRAM (MB) | KV Cache (MB) | Compression | PPL ↓ | LongBench ↑ |
 |--------|-----------|-----------|-------|-----------|---------------|-------------|-------|-------------|
-| C0 (FP16) | 158.7 | 19.9 | 50.34 | 7 775 | 384.0 | 1.00× | 5.635 | 0.369 |
-| C2 (QAQ) | 578.2 | 35.6 | 28.06 | 7 839 | 228.3 | **1.76×** | 5.635 | 0.377 |
+| C0 (FP16) | 618.0 | 68.2 | 14.66 | 8 928 | 767.3 | 1.00× | 5.635 | 0.369 |
+| C2 (QAQ) | 1 039.9 | 42.7 | 23.39 | 9 015 | 434.9 | **1.76×** | 5.635 | 0.377 |
+| C4 (DynamicKV) | 772.5 | 74.9 | 13.35 | 8 910 | 192.0 | **4.00×** | 5.635 | 0.358 |
 
 ### Key Observations
 
-- **C2 achieves 1.76× KV cache compression on both models** with no perplexity degradation.
-- **LongBench quality is fully preserved** on LLaMA-3 (0.505 → 0.505) and slightly improves on Phi-3 (0.369 → 0.377), suggesting the attention-aware bit allocation can suppress irrelevant cache noise.
+- **Perplexity is identical across configs** within each model — KV compression methods that operate on the prefix only do not affect teacher-forced next-token prediction.
+- **C2 achieves 1.76× KV cache compression with no LongBench quality loss** on LLaMA-3 (0.505 → 0.505) and a slight gain on Phi-3 (0.369 → 0.377), suggesting the attention-aware bit allocation can suppress irrelevant cache noise.
+- **C4 reaches 4–7× compression** with a small LongBench drop (-1.2 % LLaMA-3, -3.0 % Phi-3). The LLaMA-3 compression ratio is higher because LongBench prompts (avg ≈ 6 455 tokens) far exceed the per-layer budget of 1 024.
 - **TPOT overhead in C2 is a Python simulation artefact** — production hardware with packed 2–4 bit storage would see DRAM-bandwidth speedups over the FP16 baseline, not slowdowns.
 - Phi-3's attention-aware decode is disabled (SDPA path) because its eager attention implementation is ~43× slower than SDPA; V-cache bits fall back to the K-formula in that case.
 
@@ -99,16 +104,14 @@ This project characterises that trade-off across two configurations, two model f
 ```
 AdaptiveServe/
 ├── scripts/
-│   ├── _common.py                 # Shared constants, scoring, PPL, LongBench loader
-│   ├── benchmark_c0_baseline.py   # C0 baseline (FP16 full KV cache)
-│   └── benchmark_c2_qaq.py        # C2 QAQ (variable-bit attention-aware quantization)
+│   ├── _common.py                  # Shared constants, scoring, PPL, LongBench loader
+│   ├── benchmark_c0_baseline.py    # C0 baseline (FP16 full KV cache)
+│   ├── benchmark_c2_qaq.py         # C2 QAQ (variable-bit attention-aware quantization)
+│   └── benchmark_c4_dynamickv.py   # C4 DynamicKV (per-layer attention-driven retention)
 └── runs/
-    ├── C0/
-    │   ├── llama3/results.json
-    │   └── phi3/results.json
-    └── C2/
-        ├── llama3/results.json
-        └── phi3/results.json
+    ├── C0/{llama3,phi3}/results.json
+    ├── C2/{llama3,phi3}/results.json
+    └── C4/{llama3,phi3}/results.json
 ```
 
 Each `benchmark_cN_*.py` script is self-contained: it owns its own model loading,
@@ -144,18 +147,25 @@ python scripts/benchmark_c0_baseline.py --model llama3
 # C2 — QAQ full quantization
 python scripts/benchmark_c2_qaq.py --model phi3
 python scripts/benchmark_c2_qaq.py --model llama3
+
+# C4 — DynamicKV per-layer token retention
+python scripts/benchmark_c4_dynamickv.py --model phi3
+python scripts/benchmark_c4_dynamickv.py --model llama3
 ```
 
 Results are written to `runs/{config}/{model}/results.json`.
 
 Each benchmark measures:
-1. **Speed**: fixed 1024-token prompt, 50-token decode run.
+1. **Speed**: fixed long prompt (3 500 tokens for Phi-3, 7 500 for LLaMA-3), 50-token decode run.
 2. **Perplexity**: non-overlapping chunks over the full WikiText-2 test split.
 3. **LongBench**: 20 samples per task, scored with task-specific metrics.
 
 ---
 
-## Reference
+## References
 
 > Dong et al. (2024). *QAQ: Quality Adaptive Quantization for LLM Key-Value Cache*.  
 > arXiv:2403.04643. [https://arxiv.org/abs/2403.04643](https://arxiv.org/abs/2403.04643)
+
+> Zhou et al. (2024). *DynamicKV: Task-Aware Adaptive KV Cache Compression for Long Context LLMs*.  
+> arXiv:2407.11550. [https://arxiv.org/abs/2407.11550](https://arxiv.org/abs/2407.11550)

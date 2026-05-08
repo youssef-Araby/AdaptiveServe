@@ -59,7 +59,7 @@ SPEED_TEXT = (
     "allocation of memory budgets across attention heads and transformer layers. "
     "Each approach involves a quality-efficiency trade-off that must be carefully "
     "characterized for different task types and sequence lengths. "
-) * 10
+) * 50
 
 
 # ---------------------------------------------------------------------------

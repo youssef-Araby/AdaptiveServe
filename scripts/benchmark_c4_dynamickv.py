@@ -174,7 +174,7 @@ def _compress_cache(
 def _prefill_and_compress(
     model, ids_t: torch.Tensor, budget: int, window: int, kernel: int,
     device: str,
-) -> tuple[DynamicCache, torch.Tensor]:
+) -> tuple[DynamicCache, torch.Tensor, dict]:
     """
     Two-pass prefill that captures the per-layer attention scores DynamicKV
     needs without materializing the full [N, N] attention matrix.
@@ -188,7 +188,8 @@ def _prefill_and_compress(
     two-pass result is mathematically identical to the single-pass eager
     prefill.
 
-    Returns (compressed_cache, last_logits[:, -1, :]).
+    Returns (compressed_cache, last_logits[:, -1, :], stats) where stats has
+    full_kv_mb / compressed_kv_mb / avg_kept / seq_len.
     """
     seq_len = ids_t.shape[1]
     w = min(window, seq_len)
@@ -197,11 +198,15 @@ def _prefill_and_compress(
         # Tiny prompt: single eager pass fits trivially.
         model.set_attn_implementation("eager")
         out = model(ids_t, use_cache=True, output_attentions=True)
-        past, _ = _compress_cache(
+        full_mb = kv_cache_mb(out.past_key_values)
+        past, kept = _compress_cache(
             out.past_key_values, out.attentions,
             budget=budget, window=window, kernel=kernel,
         )
-        return past, out.logits[:, -1, :]
+        comp_mb = kv_cache_mb(past)
+        stats = {"full_kv_mb": full_mb, "compressed_kv_mb": comp_mb,
+                 "avg_kept": sum(kept) / len(kept), "seq_len": seq_len}
+        return past, out.logits[:, -1, :], stats
 
     prefix_ids = ids_t[:, :-w]
     last_ids   = ids_t[:, -w:]
@@ -220,11 +225,15 @@ def _prefill_and_compress(
     with torch.no_grad():
         out = model(last_ids, past_key_values=prefix_past, use_cache=True,
                     output_attentions=True, position_ids=pos)
-    past, _ = _compress_cache(
+    full_mb = kv_cache_mb(out.past_key_values)
+    past, kept = _compress_cache(
         out.past_key_values, out.attentions,
         budget=budget, window=window, kernel=kernel,
     )
-    return past, out.logits[:, -1, :]
+    comp_mb = kv_cache_mb(past)
+    stats = {"full_kv_mb": full_mb, "compressed_kv_mb": comp_mb,
+             "avg_kept": sum(kept) / len(kept), "seq_len": seq_len}
+    return past, out.logits[:, -1, :], stats
 
 
 # ---------------------------------------------------------------------------
@@ -234,8 +243,15 @@ def _prefill_and_compress(
 def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
     print("\n=== Speed benchmark (DynamicKV) ===")
 
-    target_len = min(1024, LB_MAX_INPUT[model_key])
+    # Use a realistic long prompt so compression actually triggers (a 1024-tok
+    # prompt with budget>=1024 reports 1.0x and hides what the method does).
+    target_len = LB_MAX_INPUT[model_key]
     all_ids    = tokenizer.encode(SPEED_TEXT, add_special_tokens=False)
+    if len(all_ids) < target_len:
+        raise RuntimeError(
+            f"SPEED_TEXT only has {len(all_ids)} tokens; need {target_len}. "
+            "Increase the repetition factor in scripts/_common.py."
+        )
     prompt_ids = all_ids[:target_len]
     input_ids  = torch.tensor([prompt_ids], device=device)
     print(f"  Prompt: {len(prompt_ids)} tokens  budget/layer: {DKV_MAX_CAPACITY[model_key]}")
@@ -246,33 +262,29 @@ def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
     torch.cuda.synchronize()
     torch.cuda.reset_peak_memory_stats()
 
-    # TTFT: full prefill + compression overhead.
+    # TTFT: full prefill + compression overhead (two-pass, same as LongBench).
     torch.cuda.synchronize()
     t0 = time.perf_counter()
-    with torch.no_grad():
-        prefill_out = model(input_ids, use_cache=True, output_attentions=True)
-        past, kept  = _compress_cache(
-            prefill_out.past_key_values,
-            prefill_out.attentions,
-            budget=DKV_MAX_CAPACITY[model_key],
-            window=DKV_WINDOW_SIZE,
-            kernel=DKV_KERNEL_SIZE,
-        )
+    past, last_logits, stats = _prefill_and_compress(
+        model, input_ids,
+        budget=DKV_MAX_CAPACITY[model_key],
+        window=DKV_WINDOW_SIZE, kernel=DKV_KERNEL_SIZE, device=device,
+    )
     torch.cuda.synchronize()
     ttft_ms = (time.perf_counter() - t0) * 1000
     print(f"  TTFT (incl. compression): {ttft_ms:.1f} ms")
 
-    full_kv_mb       = kv_cache_mb(prefill_out.past_key_values)
-    compressed_kv_mb = kv_cache_mb(past)
+    full_kv_mb       = stats["full_kv_mb"]
+    compressed_kv_mb = stats["compressed_kv_mb"]
     ratio            = full_kv_mb / compressed_kv_mb if compressed_kv_mb > 0 else 1.0
-    avg_kept         = sum(kept) / len(kept)
+    avg_kept         = stats["avg_kept"]
     print(f"  Full KV: {full_kv_mb:.1f} MB → compressed: {compressed_kv_mb:.1f} MB "
           f"({ratio:.2f}× compression, avg {avg_kept:.0f} tok/layer)")
 
-    # Free the uncompressed prefill cache before timing decode.
-    next_tok = prefill_out.logits[:, -1, :].argmax(dim=-1, keepdim=True)
+    # Free anything we don't need before timing decode.
+    next_tok = last_logits.argmax(dim=-1, keepdim=True)
     logical_len = input_ids.shape[1]
-    del prefill_out
+    del last_logits
     torch.cuda.empty_cache()
 
     # TPOT: time each decode step. position_ids must reflect the LOGICAL
@@ -319,7 +331,7 @@ def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
 def _generate_dkv(
     model, tokenizer, prompt: str, max_new: int, max_input: int,
     device: str, use_chat: bool, budget: int,
-) -> str:
+) -> tuple[str, dict]:
     if use_chat:
         prompt = apply_chat_template(tokenizer, prompt)
     ids = tokenizer.encode(prompt, add_special_tokens=False)
@@ -330,7 +342,7 @@ def _generate_dkv(
     logical_len = ids_t.shape[1]   # original prompt length, kept across compression
 
     eos_id = tokenizer.eos_token_id
-    past, last_logits = _prefill_and_compress(
+    past, last_logits, stats = _prefill_and_compress(
         model, ids_t, budget=budget,
         window=DKV_WINDOW_SIZE, kernel=DKV_KERNEL_SIZE, device=device,
     )
@@ -354,7 +366,7 @@ def _generate_dkv(
             past     = step.past_key_values
             next_tok = step.logits[:, -1, :].argmax(dim=-1, keepdim=True)
 
-    return tokenizer.decode(generated, skip_special_tokens=True).strip()
+    return tokenizer.decode(generated, skip_special_tokens=True).strip(), stats
 
 
 def run_longbench(model, tokenizer, model_key: str, device: str) -> dict:
@@ -362,6 +374,7 @@ def run_longbench(model, tokenizer, model_key: str, device: str) -> dict:
     max_input = LB_MAX_INPUT[model_key]
     budget    = DKV_MAX_CAPACITY[model_key]
     results   = {}
+    full_mbs, comp_mbs, kept_list, seq_lens = [], [], [], []
 
     for task, cfg in LB_TASKS.items():
         try:
@@ -378,8 +391,12 @@ def run_longbench(model, tokenizer, model_key: str, device: str) -> dict:
             golds  = sample["answers"] if isinstance(sample["answers"], list) else [sample["answers"]]
             prompt = LB_TEMPLATES[task].format(context=sample.get("context", ""),
                                                input=sample["input"])
-            pred = _generate_dkv(model, tokenizer, prompt, max_new, max_input, device,
-                                 use_chat=cfg["chat"], budget=budget)
+            pred, st = _generate_dkv(model, tokenizer, prompt, max_new, max_input,
+                                     device, use_chat=cfg["chat"], budget=budget)
+            full_mbs.append(st["full_kv_mb"])
+            comp_mbs.append(st["compressed_kv_mb"])
+            kept_list.append(st["avg_kept"])
+            seq_lens.append(st["seq_len"])
             if cfg["first_line"]:
                 pred = pred.split("\n")[0].strip()
             scores.append(compute_score(metric, pred, golds))
@@ -389,6 +406,23 @@ def run_longbench(model, tokenizer, model_key: str, device: str) -> dict:
         avg = sum(scores) / len(scores) if scores else 0.0
         print(f"  {task}  FINAL {metric}={avg:.4f}  (n={len(scores)})")
         results[task] = {"metric": metric, "score": round(avg, 4), "n": len(scores)}
+
+    if full_mbs:
+        avg_full = sum(full_mbs) / len(full_mbs)
+        avg_comp = sum(comp_mbs) / len(comp_mbs)
+        avg_ratio = avg_full / avg_comp if avg_comp > 0 else 1.0
+        avg_seq  = sum(seq_lens) / len(seq_lens)
+        avg_kept = sum(kept_list) / len(kept_list)
+        print(f"\n  LongBench compression: full {avg_full:.1f} MB → "
+              f"compressed {avg_comp:.1f} MB ({avg_ratio:.2f}×, "
+              f"avg seq {avg_seq:.0f} → {avg_kept:.0f} kept)")
+        results["_compression"] = {
+            "avg_seq_len":          round(avg_seq, 1),
+            "avg_kept_per_layer":   round(avg_kept, 1),
+            "avg_kv_cache_mb_full": round(avg_full, 2),
+            "avg_kv_cache_mb":      round(avg_comp, 2),
+            "avg_compression_ratio": round(avg_ratio, 3),
+        }
 
     return results
 
@@ -460,10 +494,14 @@ def main():
 
     lb = run_longbench(model, tokenizer, args.model, device)
     results["longbench"] = lb
-    if lb:
-        results["longbench_avg"] = round(
-            sum(v["score"] for v in lb.values()) / len(lb), 4
-        )
+    task_scores = [v["score"] for k, v in lb.items() if not k.startswith("_")]
+    if task_scores:
+        results["longbench_avg"] = round(sum(task_scores) / len(task_scores), 4)
+    if "_compression" in lb:
+        # Surface LongBench compression at the top level so it's visible in
+        # the summary alongside the speed-phase numbers.
+        for k, v in lb["_compression"].items():
+            results[f"longbench_{k}"] = v
 
     out_path = out_dir / "results.json"
     out_path.write_text(json.dumps(results, indent=2))

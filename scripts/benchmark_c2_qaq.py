@@ -537,8 +537,13 @@ def run_speed(model, tokenizer, model_key: str, device: str,
               attn_aware_decode: bool = True) -> dict:
     print("\n=== Speed benchmark (Full QAQ, attention-aware variable-bit) ===")
 
-    target_len = min(1024, LB_MAX_INPUT[model_key])
+    # Match the speed-phase prompt length used by compression configs.
+    target_len = LB_MAX_INPUT[model_key]
     all_ids    = tokenizer.encode(SPEED_TEXT, add_special_tokens=False)
+    if len(all_ids) < target_len:
+        raise RuntimeError(
+            f"SPEED_TEXT only has {len(all_ids)} tokens; need {target_len}."
+        )
     prompt_ids = all_ids[:target_len]
     input_ids  = torch.tensor([prompt_ids], device=device)
     print(f"  Prompt: {len(prompt_ids)} tokens")
@@ -563,8 +568,23 @@ def run_speed(model, tokenizer, model_key: str, device: str,
     t0 = time.perf_counter()
     with torch.no_grad():
         if attn_aware_decode:
-            # eager is loaded; get attention weights for V-bit allocation
-            prefill_out   = model(input_ids, use_cache=True, output_attentions=True)
+            # QAQ only consumes attn[:, :, -1, :] (the last query row). Materializing
+            # the full [B, H, N, N] eager attention OOMs at N≈7500 on llama3-8B.
+            # Two-pass: SDPA for the prefix (no attentions), then eager for just
+            # the last token against that prefix → attention is [B, H, 1, N].
+            seq_len = input_ids.shape[1]
+            if seq_len > 1:
+                model.set_attn_implementation("sdpa")
+                prefix = model(input_ids[:, :-1], use_cache=True)
+                prefix_past = prefix.past_key_values
+                del prefix
+                model.set_attn_implementation("eager")
+                pos = torch.tensor([[seq_len - 1]], device=device)
+                prefill_out = model(input_ids[:, -1:], past_key_values=prefix_past,
+                                    use_cache=True, output_attentions=True,
+                                    position_ids=pos)
+            else:
+                prefill_out = model(input_ids, use_cache=True, output_attentions=True)
             prefill_attns = list(prefill_out.attentions)
         else:
             # SDPA (phi3 etc.): no attention weights needed
@@ -805,8 +825,16 @@ def main():
     q_norm = speed_results["qaq_q_norm"]
     torch.cuda.empty_cache()
 
+    # PPL is teacher-forced and doesn't need attention scores. Switching to
+    # SDPA avoids eager attention's O(N^2) softmax tensor on llama3-8B at
+    # PPL_MAX_LEN=8192 (which would otherwise OOM / take an hour).
+    prev_impl = MODELS_CFG[args.model]["attn_impl"]
+    if prev_impl != "sdpa":
+        model.set_attn_implementation("sdpa")
     results.update(run_ppl(model, tokenizer, args.model, device))
     torch.cuda.empty_cache()
+    if prev_impl != "sdpa":
+        model.set_attn_implementation(prev_impl)
 
     lb = run_longbench(model, tokenizer, args.model, device, q_norm,
                        attn_aware_decode=attn_aware_decode)

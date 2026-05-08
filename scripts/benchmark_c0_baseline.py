@@ -45,8 +45,14 @@ from _common import (
 def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
     print("\n=== Speed benchmark ===")
 
-    target_len = min(1024, LB_MAX_INPUT[model_key])
+    # Match the speed-phase prompt length used by compression configs (LongBench
+    # max_input) so KV-cache numbers across configs are directly comparable.
+    target_len = LB_MAX_INPUT[model_key]
     all_ids = tokenizer.encode(SPEED_TEXT, add_special_tokens=False)
+    if len(all_ids) < target_len:
+        raise RuntimeError(
+            f"SPEED_TEXT only has {len(all_ids)} tokens; need {target_len}."
+        )
     prompt_ids = all_ids[:target_len]
     input_ids  = torch.tensor([prompt_ids], device=device)
     print(f"  Prompt: {len(prompt_ids)} tokens")
