@@ -2,7 +2,7 @@
 
 **Benchmarking adaptive KV cache quantization for efficient LLM inference.**
 
-AdaptiveServe measures the quality–efficiency trade-off of KV cache compression strategies for large language models. It provides reproducible benchmarks across latency, memory, and generation quality metrics. The current code base implements a full-precision baseline (C0), TailorKV hybrid quantization+sparsity (C1), QAQ attention-aware quantization (C2), KVQuant per-channel/per-token 4-bit quantization with outliers (C3), and DynamicKV per-layer token retention (C4); an additional method (C5) and a per-query adaptive selector (C6–C7) are planned.
+AdaptiveServe measures the quality–efficiency trade-off of KV cache compression strategies for large language models. It provides reproducible benchmarks across latency, memory, and generation quality metrics. The current code base implements a full-precision baseline (C0), TailorKV hybrid quantization+sparsity (C1), QAQ attention-aware quantization (C2), KVQuant per-channel/per-token 4-bit quantization with outliers (C3), DynamicKV per-layer token retention (C4), and Ada-KV head-wise adaptive budget allocation (C5); a per-query adaptive selector (C6–C7) is planned.
 
 ---
 
@@ -22,8 +22,8 @@ This project characterises that trade-off across two configurations, two model f
 | **C1** | TailorKV | implemented | Hybrid per-layer compression: dense "quantization-friendly" layers (Q={0}) get 1-bit KIVI-style quantization (per-channel K, per-token V); sparse "sparsity-friendly" layers get SnapKV-style retention (64 recent + 128 top-attention prefix tokens). Yao et al. 2025 — [arXiv:2505.19586](https://arxiv.org/abs/2505.19586). |
 | **C2** | QAQ Full | implemented | Attention-aware variable-bit quantization ([2, 16] bits), 1 % outliers kept at FP16, attention window of 5. Keys quantized via query-norm error bound; Values quantized inversely proportional to attention score (Dong et al., 2024 — [arXiv:2403.04643](https://arxiv.org/abs/2403.04643)). |
 | **C3** | KVQuant | implemented | Per-channel K + per-token V uniform asymmetric quantization at 4 bits, with 1 % FP16 magnitude outliers (Dense-and-Sparse). All layers, full prefix length. Single-pass SDPA prefill + post-hoc cache quantization. Hooper et al., 2024 — [arXiv:2401.18079](https://arxiv.org/abs/2401.18079). |
-| **C4** | DynamicKV | implemented | Per-layer attention-driven token retention. Each layer keeps the top-K tokens by aggregated attention score (with sliding window of recent tokens always preserved); per-layer budget is uniform (Zhou et al., 2024 — [arXiv:2407.11550](https://arxiv.org/abs/2407.11550)). |
-| **C5** | Ada-KV | planned | Head-budget adaptive eviction (FlashAttention-2). |
+| **C4** | DynamicKV | implemented | Per-layer attention-driven token retention. Each layer keeps the top-K tokens by aggregated attention score (with sliding window of recent tokens always preserved); per-layer budget is uniform (Zhou et al., 2024 — [arXiv:2412.14838](https://arxiv.org/abs/2412.14838)). |
+| **C5** | Ada-KV | implemented | Head-wise adaptive budget allocation. Per-layer pool = budget_per_head × n_kv_heads; split across heads proportional to per-head attention concentration. Each head selects its top-k_h prefix tokens; selections are vote-aggregated (head score weighting) to a uniform per-layer length so the HF DynamicCache invariant holds. Feng et al., 2024 — [arXiv:2407.11550](https://arxiv.org/abs/2407.11550). |
 | **C6** | Adaptive-A (rule-based selector) | planned | Per-query selection across {C1…C5}. |
 | **C7** | Adaptive-B (learned selector) | planned | Lightweight MLP selector trained on profiling signals. |
 
@@ -82,6 +82,7 @@ Speed phase uses a fixed prompt of 3 500 tokens (Phi-3) or 7 500 tokens (LLaMA-3
 | C2 (QAQ) | 2 374.7 | 163.5 | 6.12 | 18 168 | 535.0 | **1.76×** | 7.460 | 0.505 |
 | C3 (KVQuant) | 1 966.3 | 49.7 | 20.14 | 19 184 | 274.8 | **3.41×** | 7.460 | 0.510 |
 | C4 (DynamicKV) | 1 932.1 | 49.4 | 20.26 | 18 151 | 128.0 | **7.32×** speed / **6.30×** LongBench | 7.460 | 0.499 |
+| C5 (Ada-KV) | 2 100.7 | 27.4 | 36.55 | 18 151 | 128.0 | **7.32×** speed / **6.30×** LongBench | 7.460 | 0.499 |
 
 ### Phi-3-mini-4k-instruct  (speed prompt = 3 500 tokens)
 
@@ -92,6 +93,7 @@ Speed phase uses a fixed prompt of 3 500 tokens (Phi-3) or 7 500 tokens (LLaMA-3
 | C2 (QAQ) | 1 039.9 | 42.7 | 23.39 | 9 015 | 434.9 | **1.76×** | 5.635 | 0.377 |
 | C3 (KVQuant) | 781.5 | 36.3 | 27.59 | 9 735 | 224.9 | **3.41×** | 5.635 | 0.371 |
 | C4 (DynamicKV) | 772.5 | 74.9 | 13.35 | 8 910 | 192.0 | **4.00×** | 5.635 | 0.358 |
+| C5 (Ada-KV) | 976.7 | 62.4 | 16.01 | 8 910 | 192.0 | **4.00×** | 5.635 | 0.359 |
 
 ### Key Observations
 
@@ -100,6 +102,7 @@ Speed phase uses a fixed prompt of 3 500 tokens (Phi-3) or 7 500 tokens (LLaMA-3
 - **C2 achieves 1.76× KV cache compression with no LongBench quality loss** on LLaMA-3 (0.505 → 0.505) and a slight gain on Phi-3 (0.369 → 0.377), suggesting the attention-aware bit allocation can suppress irrelevant cache noise.
 - **C3 reaches 3.41× compression at 4 bits with 1 % FP16 outliers** with no measurable quality loss: LongBench is preserved (LLaMA-3 0.505 → 0.510, Phi-3 0.369 → 0.371) and PPL matches the FP16 baseline. The effective bit budget (≈ 4.7 bits/element including scale/zero metadata and the dense-and-sparse outlier list) explains the 16 / 4.7 ≈ 3.41× ratio.
 - **C4 reaches 4–7× compression** with a small LongBench drop (-1.2 % LLaMA-3, -3.0 % Phi-3). The LLaMA-3 compression ratio is higher because LongBench prompts (avg ≈ 6 455 tokens) far exceed the per-layer budget of 1 024.
+- **C5 matches C4's compression** at the same per-layer budget but uses head-wise adaptive allocation. LongBench is essentially tied with C4 (0.499 vs 0.499 on LLaMA-3, 0.359 vs 0.358 on Phi-3) at this budget level. Notably, C5's TPOT on LLaMA-3 is **27.4 ms (36.6 tok/s) — faster than the FP16 baseline (38.3 ms)** because the smaller post-prefill cache reduces decode-time attention bandwidth, and llama3's 8 KV heads (GQA) leave plenty of headroom for the SDPA decode path.
 - **TPOT overhead in C2 is a Python simulation artefact** — production hardware with packed 2–4 bit storage would see DRAM-bandwidth speedups over the FP16 baseline, not slowdowns.
 - Phi-3's attention-aware decode is disabled (SDPA path) because its eager attention implementation is ~43× slower than SDPA; V-cache bits fall back to the K-formula in that case.
 
@@ -115,13 +118,15 @@ AdaptiveServe/
 │   ├── benchmark_c1_tailorkv.py    # C1 TailorKV (hybrid 1-bit quant + SnapKV pruning)
 │   ├── benchmark_c2_qaq.py         # C2 QAQ (variable-bit attention-aware quantization)
 │   ├── benchmark_c3_kvquant.py     # C3 KVQuant (4-bit per-channel K + per-token V + 1 % outliers)
-│   └── benchmark_c4_dynamickv.py   # C4 DynamicKV (per-layer attention-driven retention)
+│   ├── benchmark_c4_dynamickv.py   # C4 DynamicKV (per-layer attention-driven retention)
+│   └── benchmark_c5_adakv.py       # C5 Ada-KV (head-wise adaptive budget allocation)
 └── runs/
     ├── C0/{llama3,phi3}/results.json
     ├── C1/{llama3,phi3}/results.json
     ├── C2/{llama3,phi3}/results.json
     ├── C3/{llama3,phi3}/results.json
-    └── C4/{llama3,phi3}/results.json
+    ├── C4/{llama3,phi3}/results.json
+    └── C5/{llama3,phi3}/results.json
 ```
 
 Each `benchmark_cN_*.py` script is self-contained: it owns its own model loading,
@@ -169,6 +174,10 @@ python scripts/benchmark_c3_kvquant.py --model llama3
 # C4 — DynamicKV per-layer token retention
 python scripts/benchmark_c4_dynamickv.py --model phi3
 python scripts/benchmark_c4_dynamickv.py --model llama3
+
+# C5 — Ada-KV head-wise adaptive budget allocation
+python scripts/benchmark_c5_adakv.py --model phi3
+python scripts/benchmark_c5_adakv.py --model llama3
 ```
 
 Results are written to `runs/{config}/{model}/results.json`.
@@ -189,6 +198,9 @@ Each benchmark measures:
 > arXiv:2401.18079. [https://arxiv.org/abs/2401.18079](https://arxiv.org/abs/2401.18079)
 
 > Zhou et al. (2024). *DynamicKV: Task-Aware Adaptive KV Cache Compression for Long Context LLMs*.  
+> arXiv:2412.14838. [https://arxiv.org/abs/2412.14838](https://arxiv.org/abs/2412.14838)
+
+> Feng et al. (2024). *Ada-KV: Optimizing KV Cache Eviction by Adaptive Budget Allocation for Efficient LLM Inference*.  
 > arXiv:2407.11550. [https://arxiv.org/abs/2407.11550](https://arxiv.org/abs/2407.11550)
 
 > Yao et al. (2025). *TailorKV: A Hybrid Framework for Long-Context Inference via Tailored KV Cache Optimization*.  
