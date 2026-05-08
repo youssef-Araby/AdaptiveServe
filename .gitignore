@@ -1,0 +1,27 @@
+# Experiment outputs — tracked intentionally
+# runs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Conda / venv
+.env/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+*.pdf
