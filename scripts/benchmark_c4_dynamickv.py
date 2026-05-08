@@ -171,6 +171,62 @@ def _compress_cache(
     return new_cache, kept
 
 
+def _prefill_and_compress(
+    model, ids_t: torch.Tensor, budget: int, window: int, kernel: int,
+    device: str,
+) -> tuple[DynamicCache, torch.Tensor]:
+    """
+    Two-pass prefill that captures the per-layer attention scores DynamicKV
+    needs without materializing the full [N, N] attention matrix.
+
+    Pass 1 (SDPA, no attentions): build the prefix KV cache cheaply.
+    Pass 2 (eager, output_attentions=True): forward only the last `window`
+    queries with that prefix as past_key_values. The resulting attentions
+    have shape [B, H, window, N] — small enough to fit even for N=7500.
+
+    DynamicKV scoring uses exactly these last-`window` query rows, so the
+    two-pass result is mathematically identical to the single-pass eager
+    prefill.
+
+    Returns (compressed_cache, last_logits[:, -1, :]).
+    """
+    seq_len = ids_t.shape[1]
+    w = min(window, seq_len)
+
+    if seq_len <= w:
+        # Tiny prompt: single eager pass fits trivially.
+        model.set_attn_implementation("eager")
+        out = model(ids_t, use_cache=True, output_attentions=True)
+        past, _ = _compress_cache(
+            out.past_key_values, out.attentions,
+            budget=budget, window=window, kernel=kernel,
+        )
+        return past, out.logits[:, -1, :]
+
+    prefix_ids = ids_t[:, :-w]
+    last_ids   = ids_t[:, -w:]
+
+    # Pass 1: prefix prefill on SDPA (no attentions kept).
+    model.set_attn_implementation("sdpa")
+    with torch.no_grad():
+        pref = model(prefix_ids, use_cache=True)
+    prefix_past = pref.past_key_values
+    del pref
+
+    # Pass 2: eager over just the last `window` tokens. Explicit position_ids
+    # so RoPE uses uncompressed indices [seq_len-w .. seq_len-1].
+    model.set_attn_implementation("eager")
+    pos = torch.arange(seq_len - w, seq_len, device=device).unsqueeze(0)
+    with torch.no_grad():
+        out = model(last_ids, past_key_values=prefix_past, use_cache=True,
+                    output_attentions=True, position_ids=pos)
+    past, _ = _compress_cache(
+        out.past_key_values, out.attentions,
+        budget=budget, window=window, kernel=kernel,
+    )
+    return past, out.logits[:, -1, :]
+
+
 # ---------------------------------------------------------------------------
 # Phase 1: Speed
 # ---------------------------------------------------------------------------
@@ -274,16 +330,14 @@ def _generate_dkv(
     logical_len = ids_t.shape[1]   # original prompt length, kept across compression
 
     eos_id = tokenizer.eos_token_id
-    with torch.no_grad():
-        prefill = model(ids_t, use_cache=True, output_attentions=True)
-        past, _ = _compress_cache(
-            prefill.past_key_values, prefill.attentions,
-            budget=budget, window=DKV_WINDOW_SIZE, kernel=DKV_KERNEL_SIZE,
-        )
-        # Seed decode from the prefill's last logit (position logical_len-1).
-        next_tok = prefill.logits[:, -1, :].argmax(dim=-1, keepdim=True)
-        del prefill
+    past, last_logits = _prefill_and_compress(
+        model, ids_t, budget=budget,
+        window=DKV_WINDOW_SIZE, kernel=DKV_KERNEL_SIZE, device=device,
+    )
+    next_tok = last_logits.argmax(dim=-1, keepdim=True)
+    del last_logits
 
+    with torch.no_grad():
         generated = []
         for step_i in range(max_new):
             tok_id = int(next_tok.item())
@@ -373,9 +427,13 @@ def main():
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    # Eager attention is required for output_attentions during prefill.
+    # Load with eager attention so prefill calls with output_attentions=True
+    # return real attention scores (SDPA returns empty in this transformers
+    # version). For PPL teacher-forcing we don't need attentions, so we
+    # temporarily switch to SDPA — eager attention on llama3-8B at 8192
+    # tokens is O(N^2) and dominates total runtime otherwise.
     model = AutoModelForCausalLM.from_pretrained(
-        model_id, torch_dtype=torch.float16, device_map="auto",
+        model_id, dtype=torch.float16, device_map="auto",
         attn_implementation="eager",
     )
     model.eval()
@@ -393,8 +451,12 @@ def main():
     results.update(run_speed(model, tokenizer, args.model, device))
     torch.cuda.empty_cache()
 
+    # PPL doesn't need attention scores; SDPA is much faster (eager on
+    # llama3-8B at 8192 tokens is O(N^2) per layer).
+    model.set_attn_implementation("sdpa")
     results.update(run_ppl(model, tokenizer, args.model, device))
     torch.cuda.empty_cache()
+    model.set_attn_implementation("eager")
 
     lb = run_longbench(model, tokenizer, args.model, device)
     results["longbench"] = lb

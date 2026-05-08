@@ -1,0 +1,59 @@
+{
+  "config": "C4",
+  "method": "DynamicKV (per-layer dynamic token retention)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "max_capacity": 1024,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 308.4,
+  "tpot_ms": 26.586,
+  "tokens_per_sec": 37.61,
+  "peak_vram_mb": 17895.0,
+  "kv_cache_mb_full": 128.0,
+  "kv_cache_mb": 128.0,
+  "kv_compression_ratio": 1.0,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 1024,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench": {
+    "narrativeqa": {
+      "metric": "f1",
+      "score": 0.341,
+      "n": 20
+    },
+    "qasper": {
+      "metric": "f1",
+      "score": 0.3472,
+      "n": 20
+    },
+    "hotpotqa": {
+      "metric": "f1",
+      "score": 0.4599,
+      "n": 20
+    },
+    "2wikimqa": {
+      "metric": "f1",
+      "score": 0.4012,
+      "n": 20
+    },
+    "gov_report": {
+      "metric": "rouge1",
+      "score": 0.3124,
+      "n": 20
+    },
+    "trec": {
+      "metric": "accuracy",
+      "score": 0.7,
+      "n": 20
+    },
+    "triviaqa": {
+      "metric": "f1",
+      "score": 0.9319,
+      "n": 20
+    }
+  },
+  "longbench_avg": 0.4991
+}
