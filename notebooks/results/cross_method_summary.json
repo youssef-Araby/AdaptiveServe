@@ -1,0 +1,62 @@
+{
+  "task": "piqa",
+  "limit": null,
+  "rows": [
+    {
+      "family": "llama3",
+      "method": "dense (HuggingFace)",
+      "engine": "HF",
+      "piqa acc_norm": 0.890625,
+      "tok/s": 183.68951655019316
+    },
+    {
+      "family": "llama3",
+      "method": "R-Sparse (HuggingFace)",
+      "engine": "HF",
+      "piqa acc_norm": 0.875,
+      "tok/s": 66.46641882959877
+    },
+    {
+      "family": "llama3",
+      "method": "dense (vLLM)",
+      "engine": "vLLM",
+      "piqa acc_norm": 0.8117519042437432,
+      "tok/s": 497.66367323671943
+    },
+    {
+      "family": "llama3",
+      "method": "Wanda 2:4 (vLLM)",
+      "engine": "vLLM",
+      "piqa acc_norm": 0.6300326441784548,
+      "tok/s": 593.7596436655336
+    },
+    {
+      "family": "mistral",
+      "method": "dense (HuggingFace)",
+      "engine": "HF",
+      "piqa acc_norm": 0.890625,
+      "tok/s": 180.2201120379753
+    },
+    {
+      "family": "mistral",
+      "method": "R-Sparse (HuggingFace)",
+      "engine": "HF",
+      "piqa acc_norm": 0.859375,
+      "tok/s": 65.95597461984543
+    },
+    {
+      "family": "llama32_3b",
+      "method": "dense (HuggingFace)",
+      "engine": "HF",
+      "piqa acc_norm": 0.875,
+      "tok/s": 203.40041985429806
+    },
+    {
+      "family": "llama32_3b",
+      "method": "R-Sparse (HuggingFace)",
+      "engine": "HF",
+      "piqa acc_norm": 0.78125,
+      "tok/s": 77.2573774883501
+    }
+  ]
+}
