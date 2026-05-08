@@ -1,0 +1,68 @@
+{
+  "config": "C3",
+  "method": "KVQuant (4-bit per-channel K + per-token V, 1.0% FP16 outliers)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "bits": 4,
+  "group_size": 128,
+  "outlier_frac": 0.01,
+  "ttft_ms": 1966.34,
+  "tpot_ms": 49.651,
+  "tokens_per_sec": 20.14,
+  "peak_vram_mb": 19183.6,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 274.8,
+  "kv_compression_ratio": 3.412,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench": {
+    "narrativeqa": {
+      "metric": "f1",
+      "score": 0.3264,
+      "n": 20
+    },
+    "qasper": {
+      "metric": "f1",
+      "score": 0.3703,
+      "n": 20
+    },
+    "hotpotqa": {
+      "metric": "f1",
+      "score": 0.4536,
+      "n": 20
+    },
+    "2wikimqa": {
+      "metric": "f1",
+      "score": 0.4012,
+      "n": 20
+    },
+    "gov_report": {
+      "metric": "rouge1",
+      "score": 0.3855,
+      "n": 20
+    },
+    "trec": {
+      "metric": "accuracy",
+      "score": 0.7,
+      "n": 20
+    },
+    "triviaqa": {
+      "metric": "f1",
+      "score": 0.9319,
+      "n": 20
+    },
+    "_compression": {
+      "avg_seq_len": 6455.2,
+      "avg_kv_cache_mb_full": 806.9,
+      "avg_kv_cache_mb": 236.52,
+      "avg_compression_ratio": 3.412
+    }
+  },
+  "longbench_avg": 0.5098,
+  "longbench_avg_seq_len": 6455.2,
+  "longbench_avg_kv_cache_mb_full": 806.9,
+  "longbench_avg_kv_cache_mb": 236.52,
+  "longbench_avg_compression_ratio": 3.412
+}
