@@ -1,0 +1,161 @@
+{
+  "config": "C6",
+  "method": "per-prompt feature-based router (HistGradientBoosting regression)",
+  "model": "llama3",
+  "tau": 0.95,
+  "features": [
+    "seq_len_tokens",
+    "seq_len_chars",
+    "token_entropy",
+    "gzip_ratio",
+    "unique_token_ratio",
+    "question_position",
+    "newline_density"
+  ],
+  "n_features": 7,
+  "router_overhead_us_per_prompt": 79.3,
+  "longbench": {
+    "2wikimqa": {
+      "score": 0.4012,
+      "n": 20,
+      "compression": 6.502,
+      "picks": {
+        "C1": 15,
+        "C0": 2,
+        "C4": 2,
+        "C3": 1
+      }
+    },
+    "gov_report": {
+      "score": 0.2903,
+      "n": 20,
+      "compression": 8.73,
+      "picks": {
+        "C1": 8,
+        "C4": 4,
+        "C5": 5,
+        "C2": 3
+      }
+    },
+    "hotpotqa": {
+      "score": 0.4369,
+      "n": 20,
+      "compression": 5.341,
+      "picks": {
+        "C4": 2,
+        "C5": 3,
+        "C3": 2,
+        "C1": 11,
+        "C0": 2
+      }
+    },
+    "multi_news": {
+      "score": 0.3319,
+      "n": 20,
+      "compression": 5.032,
+      "picks": {
+        "C5": 4,
+        "C4": 5,
+        "C2": 2,
+        "C1": 2,
+        "C3": 7
+      }
+    },
+    "multifieldqa_en": {
+      "score": 0.5478,
+      "n": 20,
+      "compression": 5.228,
+      "picks": {
+        "C1": 9,
+        "C5": 2,
+        "C2": 3,
+        "C4": 4,
+        "C0": 2
+      }
+    },
+    "narrativeqa": {
+      "score": 0.3446,
+      "n": 20,
+      "compression": 7.417,
+      "picks": {
+        "C4": 12,
+        "C1": 5,
+        "C2": 3
+      }
+    },
+    "passage_count": {
+      "score": 0.2,
+      "n": 20,
+      "compression": 2.271,
+      "picks": {
+        "C0": 7,
+        "C2": 9,
+        "C1": 4
+      }
+    },
+    "qasper": {
+      "score": 0.3172,
+      "n": 20,
+      "compression": 5.321,
+      "picks": {
+        "C1": 9,
+        "C4": 7,
+        "C0": 2,
+        "C5": 2
+      }
+    },
+    "qmsum": {
+      "score": 0.2686,
+      "n": 20,
+      "compression": 12.911,
+      "picks": {
+        "C1": 13,
+        "C4": 6,
+        "C5": 1
+      }
+    },
+    "trec": {
+      "score": 0.7,
+      "n": 20,
+      "compression": 6.187,
+      "picks": {
+        "C1": 10,
+        "C3": 10
+      }
+    },
+    "triviaqa": {
+      "score": 0.9319,
+      "n": 20,
+      "compression": 5.386,
+      "picks": {
+        "C4": 10,
+        "C3": 3,
+        "C1": 6,
+        "C0": 1
+      }
+    }
+  },
+  "longbench_avg": 0.4337,
+  "longbench_avg_compression_ratio": 5.41,
+  "picks": {
+    "C1": 92,
+    "C0": 16,
+    "C4": 52,
+    "C3": 23,
+    "C5": 17,
+    "C2": 20
+  },
+  "eval_split_70_30": {
+    "n_test": 66,
+    "longbench_avg": 0.456,
+    "longbench_avg_compression_ratio": 7.307,
+    "picks": {
+      "C1": 28,
+      "C4": 28,
+      "C3": 1,
+      "C2": 5,
+      "C0": 2,
+      "C5": 2
+    }
+  }
+}

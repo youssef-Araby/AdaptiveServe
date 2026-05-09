@@ -28,6 +28,11 @@
       "score": 0.1556,
       "n": 20
     },
+    "multifieldqa_en": {
+      "metric": "f1",
+      "score": 0.3355,
+      "n": 20
+    },
     "hotpotqa": {
       "metric": "f1",
       "score": 0.2156,
@@ -43,6 +48,21 @@
       "score": 0.3525,
       "n": 20
     },
+    "multi_news": {
+      "metric": "rouge1",
+      "score": 0.3276,
+      "n": 20
+    },
+    "qmsum": {
+      "metric": "rouge1",
+      "score": 0.2392,
+      "n": 20
+    },
+    "passage_count": {
+      "metric": "count_em",
+      "score": 0.0,
+      "n": 20
+    },
     "trec": {
       "metric": "accuracy",
       "score": 0.65,
@@ -54,15 +74,15 @@
       "n": 20
     },
     "_compression": {
-      "avg_seq_len": 3488.7,
-      "avg_kv_cache_mb_full": 767.25,
-      "avg_kv_cache_mb": 224.9,
+      "avg_seq_len": 3406.1,
+      "avg_kv_cache_mb_full": 760.67,
+      "avg_kv_cache_mb": 222.97,
       "avg_compression_ratio": 3.412
     }
   },
-  "longbench_avg": 0.3708,
-  "longbench_avg_seq_len": 3488.7,
-  "longbench_avg_kv_cache_mb_full": 767.25,
-  "longbench_avg_kv_cache_mb": 224.9,
+  "longbench_avg": 0.318,
+  "longbench_avg_seq_len": 3406.1,
+  "longbench_avg_kv_cache_mb_full": 760.67,
+  "longbench_avg_kv_cache_mb": 222.97,
   "longbench_avg_compression_ratio": 3.412
 }

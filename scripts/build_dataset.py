@@ -82,7 +82,7 @@ def main() -> None:
             skipped += 1
             continue
         scores  = {c: cfg_rows[c]["score"] for c in CONFIGS}
-        feats   = cfg_rows["C0"]["features"]   # features are prompt-intrinsic, same across configs
+        feats   = dict(cfg_rows["C0"]["features"])   # prompt-intrinsic, same across configs
 
         # Best by quality (ties → lowest-numbered config = simplest)
         best_q = max(CONFIGS, key=lambda c: (scores[c], -CONFIGS.index(c)))
@@ -99,6 +99,7 @@ def main() -> None:
         rows_out.append({
             "task":               task,
             "sample_idx":         sidx,
+            "metric":             cfg_rows["C0"]["metric"],
             "features":           feats,
             "scores":             scores,
             "compression":        cr,
@@ -112,8 +113,30 @@ def main() -> None:
     out_path.write_text("\n".join(json.dumps(r) for r in rows_out) + "\n")
     print(f"wrote {len(rows_out)} rows → {out_path}  (skipped {skipped} incomplete)")
 
-    # Quick label distribution
+    # ---- Training-data summary (what the classifier actually sees) ----
     from collections import Counter
+    from statistics import mean, harmonic_mean
+
+    if not rows_out:
+        return
+    feat_keys = sorted(rows_out[0]["features"].keys())
+    print(f"\nfeatures per prompt ({len(feat_keys)}): {feat_keys}")
+    print(f"compression ratios: " + "  ".join(f"{c}={cr.get(c,1.0):.2f}x" for c in CONFIGS))
+
+    print("\nper-config quality on training data (mean over all prompts):")
+    for c in CONFIGS:
+        m = mean(r["scores"][c] for r in rows_out)
+        print(f"  always-{c}: q={m:.4f}  cr={cr.get(c,1.0):.2f}x")
+
+    print("\nper-prompt oracle (upper bound the classifier targets):")
+    for tau in TAUS:
+        key = f"best_iso_quality_{int(tau*100)}"
+        picks = [r[key] for r in rows_out]
+        q = mean(r["scores"][c] for r, c in zip(rows_out, picks))
+        cr_hm = harmonic_mean(r["compression"][c] for r, c in zip(rows_out, picks))
+        print(f"  oracle@tau={tau:.2f}: q={q:.4f}  cr={cr_hm:.2f}x")
+
+    print("\nlabel distribution (which config wins):")
     for label_key in ["best_quality"] + [f"best_iso_quality_{int(t*100)}" for t in TAUS]:
         dist = Counter(r[label_key] for r in rows_out)
         print(f"  {label_key:<22s}  " + "  ".join(f"{c}={dist.get(c,0)}" for c in CONFIGS))

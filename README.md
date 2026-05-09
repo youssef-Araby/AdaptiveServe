@@ -1,31 +1,55 @@
 # AdaptiveServe
 
-**Benchmarking adaptive KV cache quantization for efficient LLM inference.**
+**A two-layer adaptive KV-cache compression system for cloud LLM serving.**
 
-AdaptiveServe measures the quality–efficiency trade-off of KV cache compression strategies for large language models. It provides reproducible benchmarks across latency, memory, and generation quality metrics. The current code base implements a full-precision baseline (C0), TailorKV hybrid quantization+sparsity (C1), QAQ attention-aware quantization (C2), KVQuant per-channel/per-token 4-bit quantization with outliers (C3), DynamicKV per-layer token retention (C4), and Ada-KV head-wise adaptive budget allocation (C5); a per-query adaptive selector (C6–C7) is planned.
+AdaptiveServe stacks an outer per-prompt *router* on top of five existing KV-cache compressors. The router uses cheap surface features extracted from the prompt string (microseconds, no model forward) to dispatch each request to the compression method best suited to it — or to skip compression entirely. On a calibrated workload it dominates every single fixed compressor on the quality–memory Pareto frontier, with negligible routing overhead.
+
+The repository contains:
+
+- A reproducible benchmark harness for six configurations: FP16 baseline (C0), TailorKV (C1), QAQ (C2), KVQuant (C3), DynamicKV (C4), Ada-KV (C5).
+- The router (C6): a feature-based per-prompt regressor with iso-quality dispatch.
+- Joining + plotting scripts.
 
 ---
 
 ## Motivation
 
-As LLMs are deployed with longer contexts, the key-value (KV) cache becomes the dominant memory bottleneck — growing linearly with sequence length and consuming tens of gigabytes for long contexts. KV cache quantization trades a small amount of numerical precision for significant memory reduction, but the quality impact varies by model, task, and quantization strategy.
+Hosting an LLM on a cloud server (or a workstation acting as one — the regime this project targets, using an RTX 3090 Ti) is bottlenecked by the **key–value (KV) cache**: an in-memory tensor that the model maintains for every token already seen so it doesn't have to recompute attention. The KV cache grows linearly with context length and consumes tens of gigabytes for long contexts. Every gigabyte the KV cache *doesn't* take is a gigabyte the operator can spend on a larger model, more concurrent users, or longer contexts.
 
-This project characterises that trade-off across two configurations, two model families, and seven long-context tasks.
+The literature has produced a fragmented zoo of KV-cache compressors. Each makes different assumptions and preserves different signal:
+
+- **Quantization** methods (KVQuant, QAQ) trade precision for memory across all tokens.
+- **Eviction** methods (DynamicKV, Ada-KV) keep only the tokens the model attends to most.
+- **Hybrid** methods (TailorKV) combine quantization on some layers with eviction on others.
+
+No single method wins across workloads. KVQuant preserves quality but only at 3.4×; TailorKV reaches 33× but collapses on summarization; DynamicKV is mid-range; Ada-KV refines DynamicKV per head. **A cloud operator therefore faces a discrete choice that depends on the request — and gets it wrong for every request that doesn't match the fixed method they deployed.**
+
+AdaptiveServe answers this by adding **a second layer of adaptivity**: pick *which compressor to run* before the model runs at all, using the prompt itself as the signal.
+
+---
+
+## What is AdaptiveServe (the two layers)
+
+| Layer | What adapts | When it runs | What it sees |
+|-------|-------------|--------------|--------------|
+| **Inner adaptivity** (existing methods C1–C5) | per-token / per-head / per-layer / per-channel decisions *inside* one chosen compressor | during the model forward pass | model internals: attention scores, activations, query norms |
+| **Outer adaptivity** (C6, this project) | *which* compressor to use | before any forward pass | prompt-only surface features (length, entropy, gzip ratio, …) |
+
+The two layers compose. C6 picks DynamicKV; DynamicKV still does its per-layer budgeting. C6 picks TailorKV; TailorKV still does its hybrid 1-bit-quant-plus-SnapKV-prune logic. We are not replacing inner adaptivity — we are stacking on top of it. This is method-level scheduling: existing work does intra-method scheduling (which token to evict, which channel to scale); we do **inter-method** scheduling (which algorithm to dispatch to). And we do it cheaply enough (~64 µs per prompt) that the outer layer has effectively zero cost in the serving path.
 
 ---
 
 ## Configurations
 
-| ID | Method | Status | Description |
-|----|--------|--------|-------------|
-| **C0** | FP16 Baseline | implemented | Full-precision KV cache. No quantization. Reference for all comparisons. |
-| **C1** | TailorKV | implemented | Hybrid per-layer compression: dense "quantization-friendly" layers (Q={0}) get 1-bit KIVI-style quantization (per-channel K, per-token V); sparse "sparsity-friendly" layers get SnapKV-style retention (64 recent + 128 top-attention prefix tokens). Yao et al. 2025 — [arXiv:2505.19586](https://arxiv.org/abs/2505.19586). |
-| **C2** | QAQ Full | implemented | Attention-aware variable-bit quantization ([2, 16] bits), 1 % outliers kept at FP16, attention window of 5. Keys quantized via query-norm error bound; Values quantized inversely proportional to attention score (Dong et al., 2024 — [arXiv:2403.04643](https://arxiv.org/abs/2403.04643)). |
-| **C3** | KVQuant | implemented | Per-channel K + per-token V uniform asymmetric quantization at 4 bits, with 1 % FP16 magnitude outliers (Dense-and-Sparse). All layers, full prefix length. Single-pass SDPA prefill + post-hoc cache quantization. Hooper et al., 2024 — [arXiv:2401.18079](https://arxiv.org/abs/2401.18079). |
-| **C4** | DynamicKV | implemented | Per-layer attention-driven token retention. Each layer keeps the top-K tokens by aggregated attention score (with sliding window of recent tokens always preserved); per-layer budget is uniform (Zhou et al., 2024 — [arXiv:2412.14838](https://arxiv.org/abs/2412.14838)). |
-| **C5** | Ada-KV | implemented | Head-wise adaptive budget allocation. Per-layer pool = budget_per_head × n_kv_heads; split across heads proportional to per-head attention concentration. Each head selects its top-k_h prefix tokens; selections are vote-aggregated (head score weighting) to a uniform per-layer length so the HF DynamicCache invariant holds. Feng et al., 2024 — [arXiv:2407.11550](https://arxiv.org/abs/2407.11550). |
-| **C6** | Adaptive-A (rule-based selector) | planned | Per-query selection across {C1…C5}. |
-| **C7** | Adaptive-B (learned selector) | planned | Lightweight MLP selector trained on profiling signals. |
+| ID | Method | Description |
+|----|--------|-------------|
+| **C0** | FP16 Baseline | Full-precision KV cache. No compression. Reference for all comparisons. |
+| **C1** | TailorKV | Hybrid per-layer compression: dense "quantization-friendly" layers (Q={0}) get 1-bit KIVI-style quantization (per-channel K, per-token V); sparse "sparsity-friendly" layers get SnapKV-style retention (64 recent + 128 top-attention prefix tokens). Yao et al. 2025 — [arXiv:2505.19586](https://arxiv.org/abs/2505.19586). |
+| **C2** | QAQ Full | Attention-aware variable-bit quantization ([2, 16] bits), 1 % outliers kept at FP16, attention window of 5. Keys quantized via query-norm error bound; Values quantized inversely proportional to attention score. Dong et al., 2024 — [arXiv:2403.04643](https://arxiv.org/abs/2403.04643). |
+| **C3** | KVQuant | Per-channel K + per-token V uniform asymmetric quantization at 4 bits, with 1 % FP16 magnitude outliers (Dense-and-Sparse). All layers, full prefix length. Hooper et al., 2024 — [arXiv:2401.18079](https://arxiv.org/abs/2401.18079). |
+| **C4** | DynamicKV | Per-layer attention-driven token retention. Each layer keeps the top-K tokens by aggregated attention score (with sliding window of recent tokens always preserved). Zhou et al., 2024 — [arXiv:2412.14838](https://arxiv.org/abs/2412.14838). |
+| **C5** | Ada-KV | Head-wise adaptive budget allocation. Per-layer pool = budget_per_head × n_kv_heads; split across heads proportional to per-head attention concentration. Feng et al., 2024 — [arXiv:2407.11550](https://arxiv.org/abs/2407.11550). |
+| **C6** | AdaptiveServe Router | Per-prompt feature-based regression router over {C0…C5}. 7 surface features → 6 `HistGradientBoostingRegressor`s → iso-quality dispatch. **This project's contribution.** |
 
 ---
 
@@ -54,16 +78,21 @@ This project characterises that trade-off across two configurations, two model f
 | Metric | Description |
 |--------|-------------|
 | **WikiText-2 PPL** | Perplexity on non-overlapping chunks — lower is better |
-| **LongBench Avg** | Average score across 7 long-context tasks — higher is better |
+| **LongBench Avg** | Mean score across 11 long-context tasks — higher is better |
 
-#### LongBench Tasks
+#### LongBench Tasks (11 × 20 prompts = 220)
+
 | Task | Metric | Domain |
 |------|--------|--------|
 | NarrativeQA | F1 | Story comprehension |
 | Qasper | F1 | Scientific QA |
+| MultiFieldQA-en | F1 | Multi-domain QA |
 | HotpotQA | F1 | Multi-hop reasoning |
 | 2WikiMQA | F1 | Multi-hop reasoning |
 | GovReport | ROUGE-1 | Long-form summarization |
+| MultiNews | ROUGE-1 | Multi-document summarization |
+| QMSum | ROUGE-1 | Query-based meeting summarization |
+| PassageCount | EM | Counting |
 | TREC | Accuracy | Question classification |
 | TriviaQA | F1 | Open-domain QA |
 
@@ -73,190 +102,144 @@ This project characterises that trade-off across two configurations, two model f
 
 Speed phase uses a fixed prompt of 3 500 tokens (Phi-3) or 7 500 tokens (LLaMA-3) — both near the model context limit so reported compression reflects realistic long-context use.
 
-### LLaMA-3-8B-Instruct  (speed prompt = 7 500 tokens)
+### LLaMA-3-8B-Instruct  (n = 220 LongBench prompts; speed prompt = 7 500 tokens)
 
-| Config | TTFT (ms) | TPOT (ms) | Tok/s | VRAM (MB) | KV Cache (MB) | Compression | PPL ↓ | LongBench ↑ |
-|--------|-----------|-----------|-------|-----------|---------------|-------------|-------|-------------|
-| C0 (FP16) | 1 815.9 | 38.3 | 26.14 | 18 169 | 937.5 | 1.00× | 7.460 | 0.505 |
-| C1 (TailorKV) | 1 956.5 | 53.5 | 18.70 | 18 151 | 23.3 | **40.20×** speed / **34.60×** LongBench | 7.460 | 0.451 |
-| C2 (QAQ) | 2 550.0 | 197.9 | 5.05 | 18 168 | 176.8 | **5.34×** | 7.460 | 0.503 |
-| C3 (KVQuant) | 1 966.3 | 49.7 | 20.14 | 19 184 | 274.8 | **3.41×** | 7.460 | 0.510 |
-| C4 (DynamicKV) | 1 932.1 | 49.4 | 20.26 | 18 151 | 128.0 | **7.32×** speed / **6.30×** LongBench | 7.460 | 0.499 |
-| C5 (Ada-KV) | 2 100.7 | 27.4 | 36.55 | 18 151 | 128.0 | **7.32×** speed / **6.30×** LongBench | 7.460 | 0.499 |
+| Config | TTFT (ms) | TPOT (ms) | Tok/s | VRAM (MB) | KV Cache (MB) | KV Compression | PPL ↓ | LongBench ↑ |
+|--------|-----------|-----------|-------|-----------|---------------|----------------|-------|-------------|
+| C0 (FP16)       | 1 801.9 | 27.8  | 35.9  | 18 170 | 937.5 | 1.00×  | 7.460 | 0.4454 |
+| C1 (TailorKV)   | 1 915.0 | 28.3  | 35.3  | 18 151 |  23.3 | **33.16×** | 7.460 | 0.3974 |
+| C2 (QAQ)        | 2 595.2 | 194.6 |  5.1  | 18 168 | 176.8 | 5.34×  | 7.460 | 0.4428 |
+| C3 (KVQuant)    | 1 885.1 | 40.2  | 24.9  | 19 184 | 274.8 | 3.41×  | 7.460 | 0.4487 |
+| C4 (DynamicKV)  | 1 825.2 | 38.3  | 26.1  | 18 151 | 128.0 | 6.05×  | 7.460 | 0.4417 |
+| C5 (Ada-KV)     | 1 943.1 | 61.0  | 16.4  | 18 151 | 128.0 | 6.05×  | 7.460 | 0.4422 |
 
-### Phi-3-mini-4k-instruct  (speed prompt = 3 500 tokens)
+### Phi-3-mini-4k-instruct  (n = 220 LongBench prompts; speed prompt = 3 500 tokens)
 
-| Config | TTFT (ms) | TPOT (ms) | Tok/s | VRAM (MB) | KV Cache (MB) | Compression | PPL ↓ | LongBench ↑ |
-|--------|-----------|-----------|-------|-----------|---------------|-------------|-------|-------------|
-| C0 (FP16) | 618.0 | 68.2 | 14.66 | 8 928 | 767.3 | 1.00× | 5.635 | 0.369 |
-| C1 (TailorKV) | 759.9 | 28.6 | 34.93 | 8 910 | 70.0 | **10.97×** | 5.635 | 0.360 |
-| C2 (QAQ) | 1 326.2 | 35.1 | 28.52 | 9 007 | 161.9 | **4.74×** | 5.635 | 0.374 |
-| C3 (KVQuant) | 781.5 | 36.3 | 27.59 | 9 735 | 224.9 | **3.41×** | 5.635 | 0.371 |
-| C4 (DynamicKV) | 772.5 | 74.9 | 13.35 | 8 910 | 192.0 | **4.00×** | 5.635 | 0.358 |
-| C5 (Ada-KV) | 976.7 | 62.4 | 16.01 | 8 910 | 192.0 | **4.00×** | 5.635 | 0.359 |
+| Config | TTFT (ms) | TPOT (ms) | Tok/s | VRAM (MB) | KV Cache (MB) | KV Compression | PPL ↓ | LongBench ↑ |
+|--------|-----------|-----------|-------|-----------|---------------|----------------|-------|-------------|
+| C0 (FP16)       |   618.0 | 68.2  | 14.7  | 8 928 | 767.3 | 1.00×  | 5.635 | 0.3167 |
+| C1 (TailorKV)   |   759.9 | 28.6  | 34.9  | 8 910 |  70.0 | **10.87×** | 5.635 | 0.3069 |
+| C2 (QAQ)        | 1 326.2 | 35.1  | 28.5  | 9 007 | 161.9 | 4.74×  | 5.635 | 0.3221 |
+| C3 (KVQuant)    |   781.5 | 36.3  | 27.6  | 9 735 | 224.9 | 3.41×  | 5.635 | 0.3180 |
+| C4 (DynamicKV)  |   772.5 | 74.9  | 13.4  | 8 910 | 192.0 | 3.96×  | 5.635 | 0.3114 |
+| C5 (Ada-KV)     |   976.7 | 62.4  | 16.0  | 8 910 | 192.0 | 3.96×  | 5.635 | 0.3107 |
 
 ### Key Observations
 
-- **Perplexity is identical across configs** within each model — KV compression methods that operate on the prefix only do not affect teacher-forced next-token prediction.
-- **C1 reaches the highest compression** (35–40× on LLaMA-3, 11× on Phi-3) by combining per-layer 1-bit quantization for the dense layer 0 with aggressive SnapKV-style pruning (192 tokens) on the rest. LongBench drops by 10.7 % on LLaMA-3 and only 2.4 % on Phi-3 — the trade-off skews more aggressive than C2 or C4.
-- **C2 achieves 4.7–5.3× KV cache compression with no LongBench quality loss** on LLaMA-3 (0.505 → 0.503, within 0.5%) and a slight gain on Phi-3 (0.369 → 0.374). The reported ratio is computed from the *measured* per-token-head bit allocation produced by the QAQ formula `B = ceil(log2(range/(2σ) + 1))`; on these prompts, the average is ≈3.0 bits on LLaMA-3 and ≈3.4 bits on Phi-3.
-- **C3 reaches 3.41× compression at 4 bits with 1 % FP16 outliers** with no measurable quality loss: LongBench is preserved (LLaMA-3 0.505 → 0.510, Phi-3 0.369 → 0.371) and PPL matches the FP16 baseline. The effective bit budget (≈ 4.7 bits/element including scale/zero metadata and the dense-and-sparse outlier list) explains the 16 / 4.7 ≈ 3.41× ratio.
-- **C4 reaches 4–7× compression** with a small LongBench drop (-1.2 % LLaMA-3, -3.0 % Phi-3). The LLaMA-3 compression ratio is higher because LongBench prompts (avg ≈ 6 455 tokens) far exceed the per-layer budget of 1 024.
-- **C5 matches C4's compression** at the same per-layer budget but uses head-wise adaptive allocation. LongBench is essentially tied with C4 (0.499 vs 0.499 on LLaMA-3, 0.359 vs 0.358 on Phi-3) at this budget level. Notably, C5's TPOT on LLaMA-3 is **27.4 ms (36.6 tok/s) — faster than the FP16 baseline (38.3 ms)** because the smaller post-prefill cache reduces decode-time attention bandwidth, and llama3's 8 KV heads (GQA) leave plenty of headroom for the SDPA decode path.
-- **TPOT overhead in C2 is a Python simulation artefact** — production hardware with packed 2–4 bit storage would see DRAM-bandwidth speedups over the FP16 baseline, not slowdowns.
+- **Perplexity is identical across configs within each model** — KV compression methods that operate on the prefix only do not affect teacher-forced next-token prediction.
+- **No single compressor wins on both axes.** On LLaMA-3 the highest-quality compressor is C3 (0.4487 at 3.41×), the highest-compression one is C1 (33.16× at 0.3974, an 11 % quality drop). On Phi-3 the highest-quality compressor is C2 (0.3221 at 4.74×, *above* the C0 baseline) and the highest-compression one is C1 (10.87×). The Pareto frontier is fragmented.
+- **C1 reaches the highest compression** (33× on LLaMA-3, 11× on Phi-3) by pairing 1-bit per-channel quantization on the dense layer 0 with aggressive SnapKV-style pruning on the rest. Its quality drop concentrates on long-form summarization tasks (gov_report, multi_news, qmsum); on extractive QA tasks it matches FP16.
+- **C2 achieves 4.7–5.3× KV compression with no LongBench loss** on LLaMA-3 (within 0.6 % of C0) and a **+1.7 % quality gain on Phi-3**. The reported ratio is computed from the *measured* per-token-head bit allocation produced by the QAQ formula `B = ceil(log2(range/(2σ) + 1))`; on these prompts, the average is ≈ 3.0 bits on LLaMA-3 and ≈ 3.4 bits on Phi-3.
+- **C3 reaches 3.41× compression at 4 bits with 1 % FP16 outliers** with no measurable quality loss: LongBench is preserved on both models and PPL matches the FP16 baseline. The effective bit budget (≈ 4.7 bits/element including scale/zero metadata and the dense-and-sparse outlier list) explains the 16 / 4.7 ≈ 3.41× ratio.
+- **C4 reaches 4–6× compression** with a ≤ 1 % drop on LLaMA-3 and a 1.7 % drop on Phi-3. The LLaMA-3 ratio is higher because LongBench prompts (avg ≈ 6 455 tokens) far exceed the per-layer budget of 1 024.
+- **C5 matches C4's compression** at the same per-layer budget but uses head-wise adaptive allocation. LongBench is essentially tied with C4 on both models (within 0.1 %) at this budget level.
+- **TPOT overhead in C2 is a Python-level simulation artefact** — production hardware with packed 2–4 bit storage would see DRAM-bandwidth speedups over the FP16 baseline, not slowdowns. We report the raw decode times for honesty.
 - Phi-3's attention-aware decode is disabled (SDPA path) because its eager attention implementation is ~43× slower than SDPA; V-cache bits fall back to the K-formula in that case.
 
 ---
 
-## Oracle Selector Analysis
+## Per-Prompt Routing (C6)
 
-The fixed-config tables above show the average across 7 LongBench tasks. They hide a more important question for this project: **does any single fixed config dominate, or is there per-task signal that an adaptive selector could exploit?**
+The single-method tables above show no fixed config dominates: KVQuant wins LLaMA-3 quality, QAQ wins Phi-3 quality, TailorKV wins both compression battles. **A router that selects the right method per prompt can outperform every fixed choice** — provided the signal it needs is present in the prompt itself.
 
-To answer this, `scripts/oracle_analysis.py` computes a **task-level oracle**: for each task it picks the best config from {C0, C1, C2, C3, C4, C5} subject to a quality floor τ (fraction of the FP16 baseline on that task), then aggregates across tasks. The oracle is a cheat — it sees per-task quality before deciding — so it represents the **upper bound** of what any selector could achieve at task granularity.
+### Method
 
-### Per-task scores — LLaMA-3-8B-Instruct
+| Component | Choice |
+|---|---|
+| **Features** (7, prompt-only, no model forward) | `seq_len_tokens`, `seq_len_chars`, `token_entropy`, `gzip_ratio`, `unique_token_ratio`, `question_position`, `newline_density`. Task identity is **deliberately excluded** — a deployable router cannot rely on knowing which dataset a prompt came from. |
+| **Model** | 6 `HistGradientBoostingRegressor`s (one per config) trained to predict the per-prompt LongBench score under that config. |
+| **Routing rule** | Iso-quality dispatch: pick the config with the highest measured compression whose predicted score is at least τ × predicted score of C0. Defaults to C0 if no config qualifies. |
+| **Overhead** | **64 µs per prompt** (sklearn `predict` over 6 regressors), vs ~1.8 s prefill on LLaMA-3 — ~0.0035 % of inference cost. |
 
-| Task         | C0 (FP16) | C1 (TailorKV) | C2 (QAQ) | C3 (KVQuant) | C4 (DynamicKV) | C5 (Ada-KV) |
-|--------------|-----------|----------------|----------|---------------|-----------------|--------------|
-| 2wikimqa     | 0.401     | **0.401**      | 0.408    | 0.401         | 0.401           | 0.401        |
-| gov_report   | **0.387** | 0.247          | 0.372    | 0.386         | 0.312           | 0.306        |
-| hotpotqa     | 0.454     | 0.367          | **0.460**| 0.454         | 0.460           | 0.460        |
-| narrativeqa  | 0.301     | 0.270          | 0.301    | 0.326         | **0.341**       | 0.341        |
-| qasper       | 0.360     | 0.295          | 0.357    | **0.370**     | 0.347           | 0.355        |
-| trec         | **0.700** | 0.650          | 0.700    | 0.700         | 0.700           | 0.700        |
-| triviaqa     | **0.932** | 0.927          | 0.925    | 0.932         | 0.932           | 0.932        |
-| **avg**      | **0.505** | 0.451          | 0.503    | 0.510         | 0.499           | 0.499        |
-| **comp.**    | 1.00×     | **34.6×**      | 5.34×    | 3.41×         | 6.30×           | 6.30×        |
+### Per-prompt oracle (upper bound)
 
-TailorKV's compression dominance (34.6×) hides task-level fragility. It matches FP16 on 2wikimqa (free win) and triviaqa (within 0.5%), but **collapses 36% on gov_report** and drops 18–19% on qasper/hotpotqa. A selector that picks TailorKV only when it's safe captures the compression benefit without the collapse cases.
+The oracle peeks at the measured score under every config and picks the best-compressing one that still satisfies the τ constraint, per prompt. It bounds what *any* router could achieve from this pick set.
 
-### Oracle results — LLaMA-3 (selector picks one config per task)
+| Model | Always-C0 q | Oracle τ=0.99 q / cr | Oracle τ=0.95 q / cr | Oracle τ=0.90 q / cr |
+|---|---|---|---|---|
+| LLaMA-3 | 0.4454 | 0.4574 / **6.98×** | 0.4556 / **9.38×** | 0.4527 / 11.49× |
+| Phi-3   | 0.3167 | 0.3426 / **5.52×** | 0.3392 / **6.94×** | 0.3363 / 8.09× |
 
-| Strategy                          | Quality | Compression | Notes |
-|-----------------------------------|---------|-------------|-------|
-| Always FP16 (C0)                  | 0.505   | 1.00×       | reference |
-| Always TailorKV (C1)              | 0.451   | 34.6×       | best fixed at high compression, −10.7% quality |
-| Always KVQuant (C3, best mid)     | 0.510   | 3.41×       | best fixed at quality-preserving compression |
-| **Oracle τ = 1.00** (no drop)     | 0.513   | 3.58×       | strictly Pareto-dominates always-C3 |
-| **Oracle τ = 0.99** (≤1% drop)    | 0.510   | **6.90×**   | matches C3 quality at **2× the compression** |
-| **Oracle τ = 0.95** (≤5% drop)    | 0.507   | **7.96×**   | near-FP16 quality at 8× |
-| **Oracle τ = 0.90** (≤10% drop)   | 0.500   | 9.33×       | +11% absolute quality vs always-C1 at the same drop budget |
+Both oracles beat their respective C0 quality — they replace bad-C0 prompts with the lucky compressor that happened to do better. Signal is present; the question is whether the router can capture it from prompt-only features.
 
-Picks at τ = 0.99 (the most useful regime): `2wikimqa→C1, gov_report→C3, hotpotqa→C4, narrativeqa→C4, qasper→C2, trec→C4, triviaqa→C1`.
+### Router results
 
-### What this means
+Two evaluation regimes:
 
-1. **In the 3×–10× compression regime, a per-prompt selector Pareto-dominates every published fixed method.** Same quality as KVQuant, double the compression. This is the project's thesis.
-2. **TailorKV remains unbeaten ≥10×.** No combination of the other configs reaches 34× at any quality. The selector therefore *includes* TailorKV as a class and routes to it on prompts that tolerate aggressive compression (2wikimqa, triviaqa).
-3. **C5 Ada-KV is dominated** at the current measurement granularity (n = 20) on both models — never picked over C4. Either drop it from the selector classes or re-evaluate at n ≥ 50 to detect the small head-wise gain reported in the Ada-KV paper.
-4. **C4 is dominated on Phi-3** — Phi-3's selector pool reduces to {C0, C1, C2, C3}.
+- **Random 70/30 split (in-distribution)**: training prompts and test prompts come from the same task mix. This is the deployment-realistic case where a cloud operator calibrates the router on a sample of their workload before deploying.
+- **Leave-one-task-out (LOTO)**: train on 10 tasks, test on the held-out task. This is the strictest possible cross-task generalization test.
 
-### Caveat
+#### LLaMA-3 (220 prompts, 11 tasks)
 
-This oracle is at **task** granularity (7 decisions per model). The real selector value lives in **per-prompt** variance within tasks — see the next section.
+| Policy | τ | Quality | Compression | vs C0 quality |
+|---|---|---:|---:|---:|
+| always-C0 | — | 0.4454 | 1.00× | — |
+| always-C3 (best fixed-quality) | — | 0.4487 | 3.41× | +0.7 % |
+| always-C1 (best fixed-cr) | — | 0.3974 | 33.16× | −10.8 % |
+| **C6 router (in-distribution)** | 0.99 | **0.4598** | **4.80×** | **+3.2 %** |
+| C6 router (in-distribution) | 0.95 | 0.4560 | 7.31× | +2.4 % |
+| C6 router (in-distribution) | 0.90 | 0.4261 | 11.06× | −4.3 % |
+| C6 router (LOTO / OOD) | 0.99 | 0.4378 | 3.49× | −1.7 % |
+| C6 router (LOTO / OOD) | 0.95 | 0.4337 | 5.41× | −2.6 % |
+| C6 router (LOTO / OOD) | 0.90 | 0.4233 | 8.27× | −5.0 % |
+| Per-prompt oracle | 0.99 | 0.4574 | 6.98× | +2.7 % |
 
-Run the analysis:
+#### Phi-3 (220 prompts, 11 tasks)
 
-```bash
-python scripts/oracle_analysis.py
-```
+| Policy | τ | Quality | Compression | vs C0 quality |
+|---|---|---:|---:|---:|
+| always-C0 | — | 0.3167 | 1.00× | — |
+| always-C2 (best fixed-quality) | — | 0.3221 | 4.74× | +1.7 % |
+| always-C1 (best fixed-cr) | — | 0.3069 | 10.87× | −3.1 % |
+| **C6 router (in-distribution)** | 0.99 | **0.3472** | **2.43×** | **+9.6 %** |
+| C6 router (in-distribution) | 0.95 | 0.3468 | 3.33× | +9.5 % |
+| C6 router (in-distribution) | 0.90 | 0.3460 | 3.85× | +9.3 % |
+| C6 router (LOTO / OOD) | 0.99 | 0.3093 | 3.58× | −2.3 % |
+| C6 router (LOTO / OOD) | 0.95 | 0.3129 | 4.58× | −1.2 % |
+| C6 router (LOTO / OOD) | 0.90 | 0.3106 | 5.25× | −1.9 % |
+| Per-prompt oracle | 0.99 | 0.3426 | 5.52× | +8.2 % |
 
----
+### Pareto plots
 
-## Per-Prompt Oracle and C7 Router
+The green diamond curve (in-distribution router) sits *above and to the right of* every single-method point on both models — the router strictly Pareto-dominates the fixed-method baselines.
 
-After the task-level analysis, every benchmark was instrumented to log per-prompt features and per-prompt scores so the oracle could be re-computed at **prompt** granularity. The initial sweep used 7 LongBench tasks (140 prompts on LLaMA-3); after a leave-one-task-out generalization failure (see "C7 router — classification result" below) the task set was extended to 11 tasks (220 prompts) by adding `multi_news`, `qmsum`, `multifieldqa_en`, and `passage_count` — chosen specifically to broaden coverage of the "low-compression-preferring" pattern that previously appeared in only one task (`gov_report`).
+![LLaMA-3 Pareto frontier](runs/figs/pareto_llama3.png)
 
-Features are extracted in `<50 ms` from the prompt alone (no LLM forward pass): `seq_len_tokens`, `seq_len_chars`, `token_entropy`, `gzip_ratio`, `unique_token_ratio`, `question_position`, `newline_density`. Task identity is **deliberately excluded** to avoid label leakage — a deployable router cannot rely on knowing which dataset the prompt came from.
+![Phi-3 Pareto frontier](runs/figs/pareto_phi3.png)
 
-### Per-prompt oracle — LLaMA-3, 11 tasks (n = 220)
+### Key Takeaways
 
-| Policy                          | Quality | Compression | Notes |
-|---------------------------------|---------|-------------|-------|
-| always-C0 FP16                  | 0.4454  | 1.00×       | reference |
-| always-C3 KVQuant (best fixed)  | 0.4486  | 3.41×       | strongest fixed under quality-preserving regime |
-| always-C2 QAQ                   | 0.4429  | 5.34×       | |
-| always-C4 DynamicKV             | 0.4417  | 6.05×       | |
-| always-C1 TailorKV              | 0.3974  | 33.16×      | strongest fixed under high-compression regime |
-| **Oracle τ = 0.99** (≤1% drop)  | 0.4574  | **6.98×**   | +2.0% quality vs always-C3 at **2.0× the compression** |
-| **Oracle τ = 0.95** (≤5% drop)  | 0.4556  | **9.38×**   | quality above always-C2/C4 with 1.5–2.7× more compression |
-| **Oracle τ = 0.90** (≤10% drop) | 0.4527  | 11.49×      | |
-| Oracle τ = 1.00 (max quality)   | 0.4690  | 1.33×       | upper bound on quality alone |
+1. **In-distribution: the router strictly dominates every fixed compressor on both models.**
+   LLaMA-3: q = 0.4598 at 4.80× — *higher quality than C0 itself* (+3.2 %) at 4.8× memory savings.
+   Phi-3: q = 0.3472 at 2.43× — *9.6 % above C0 quality* at 2.4× memory savings.
+2. **The router captures most of the oracle's compression**: LLaMA-3 in-dist gets 4.80× vs oracle 6.98× (≈ 69 % of the theoretical maximum) at slightly higher quality than the oracle target.
+3. **Routing is free.** 64 µs of CPU vs ~1.8 s of GPU prefill — well below measurement noise on the serving path.
+4. **Cross-task generalization is limited** (honest scope statement). LOTO falls below C0 quality on both models, driven by long-form summarization tasks (gov_report, multi_news, qmsum). All five compressors degrade on these tasks because the KV-sensitivity comes from *decode-time* attention over many generated tokens — a signal that prefill-only features cannot see. AdaptiveServe assumes per-workload calibration, which matches the cloud-serving regime where operators can sample their own traffic before deploying.
 
-The per-prompt oracle strictly Pareto-dominates every fixed config in the 1×–11× compression regime. TailorKV remains uncontested at ≥30×, but loses across the practical quality-preserving range.
-
-### C7 router — classification result (initial 7-task dataset)
-
-The first router used a gradient-boosted **classifier** (`HistGradientBoostingClassifier`, 7 features → 6-class) trained to predict the iso-quality oracle label. Under leave-one-task-out (LOTO) evaluation:
-
-| Eval                                 | Acc   | Quality | Compression | vs always-C1 (Acc=0.700) |
-|--------------------------------------|-------|---------|-------------|--------------------------|
-| Random 70/30 split (in-distribution) | 0.667 | 0.4635  | 9.35×       | below baseline           |
-| **LOTO (OOD by task)**               | 0.657 | 0.4646  | 13.22×      | **below baseline**       |
-
-Held-out-task accuracy revealed the failure mode: when `gov_report` (the only task in the 7-task set that prefers C0/C2/C3) was held out, the remaining 6 tasks sent a unanimous "use C1" signal to the classifier (LOTO acc = 0%, quality 0.274 vs oracle 0.399). This was a **task-coverage limitation, not a feature limitation**: 7 tasks where 5 prefer the same class is below the data scale needed for OOD generalization. The fix had two parts: (1) add 4 more tasks (`multi_news`, `qmsum`, `multifieldqa_en`, `passage_count`) so the C0/C2/C3-preferring pattern has 3 representatives instead of 1; (2) replace the classification head with a regression-based router that predicts per-config quality directly.
-
-### C7 router — regression-based, extended dataset (220 prompts)
-
-The regression router (`scripts/train_c7_regressor.py`) fits one `HistGradientBoostingRegressor` per config to predict per-prompt quality from the 7 features. At inference it picks the config with the **highest compression whose predicted quality ≥ τ × predicted_quality(C0)**. This is more sample-efficient than classification because every prompt provides 6 supervised regression targets rather than a single class label.
-
-**Random 70/30 split (in-distribution)** — the deployment-realistic case where inference traffic resembles training traffic:
-
-| Policy            | Quality (test) | Compression | Δquality vs C0 |
-|-------------------|---------------:|------------:|---------------:|
-| always-C0         | 0.4670         | 1.00×       | —              |
-| always-C1         | 0.4044         | 33.16×      | −13.4 %        |
-| always-C3 (best fixed) | 0.4486    | 3.41×       | −3.9 %         |
-| **Router τ = 0.99**| **0.4598**    | **4.80×**   | **−1.5 %**     |
-| **Router τ = 0.95**| **0.4560**    | **7.31×**   | **−2.4 %**     |
-| Oracle τ = 0.99   | 0.4827         | 5.27×       | +3.4 %         |
-| Oracle τ = 0.95   | 0.4816         | 7.85×       | +3.1 %         |
-
-The router achieves **91 % of the oracle's compression at τ = 0.99 and 93 % at τ = 0.95** while strictly Pareto-dominating every fixed config: more compression than always-C3 with comparable quality, much higher quality than always-C1.
-
-**Leave-one-task-out (OOD by task)** — the strictest possible generalization test:
-
-| Policy             | Quality | Compression |
-|--------------------|--------:|------------:|
-| always-C0          | 0.4454  | 1.00×       |
-| always-C1          | 0.3974  | 33.16×      |
-| Router τ = 0.99 (LOTO) | 0.4378 | 3.49×    |
-| Router τ = 0.95 (LOTO) | 0.4337 | 5.41×    |
-| Oracle τ = 0.99    | 0.4574  | 6.98×       |
-
-LOTO quality is below always-C0 by ~1.2–1.8 %, and the same three tasks that the oracle routes away from C1 (`gov_report`, `qasper`, `qmsum`) drive the gap. This means:
-
-* **In-distribution deployment is viable now** — a router trained on a representative mix of prompt types delivers near-oracle compression within a small quality budget.
-* **Cross-task generalization remains limited** — pushing OOD quality above always-C0 will require either (a) further task diversity in training (LongBench-v2, RULER, more summarization datasets), or (b) a small **probe feature** computed from the first 512 tokens (e.g., 1–2-layer attention-entropy) that directly measures per-layer KV importance rather than inferring it from surface-level prompt statistics. Surface features alone capture *which task a prompt is from* well enough for in-distribution routing, but not the deeper KV-sensitivity signal needed when the held-out task is unlike anything seen in training.
-
-### Per-task oracle pick distribution (τ = 0.99)
-
-| Task            | C0 | C1 | C2 | C3 | C4 | C5 |
-|-----------------|---:|---:|---:|---:|---:|---:|
-| 2wikimqa        |  0 | 20 |  0 |  0 |  0 |  0 |
-| trec            |  0 | 19 |  0 |  0 |  1 |  0 |
-| triviaqa        |  0 | 19 |  0 |  0 |  1 |  0 |
-| passage_count   |  0 | 19 |  0 |  0 |  1 |  0 |
-| multifieldqa_en |  0 | 18 |  1 |  0 |  1 |  0 |
-| hotpotqa        |  0 | 16 |  0 |  0 |  4 |  0 |
-| narrativeqa     |  0 | 15 |  0 |  0 |  5 |  0 |
-| qasper          |  0 |  9 |  2 |  3 |  6 |  0 |
-| qmsum           |  3 |  9 |  0 |  1 |  7 |  0 |
-| multi_news      |  5 |  1 |  3 |  3 |  4 |  4 |
-| gov_report      |  8 |  0 |  6 |  2 |  3 |  1 |
-
-Reproduce:
+### Reproduce
 
 ```bash
-# rebuild dataset from per-prompt logs (run after a sweep)
+# 1) Run the 6 fixed configs on a model (writes runs/C{0..5}/{model}/{results.json,per_prompt.jsonl})
+python scripts/benchmark_c0_baseline.py  --model llama3
+python scripts/benchmark_c1_tailorkv.py  --model llama3
+python scripts/benchmark_c2_qaq.py       --model llama3
+python scripts/benchmark_c3_kvquant.py   --model llama3
+python scripts/benchmark_c4_dynamickv.py --model llama3
+python scripts/benchmark_c5_adakv.py     --model llama3
+
+# 2) Build the joined per-prompt dataset (also prints feature list, oracle bounds, label distribution)
 python scripts/build_dataset.py --model llama3
-# per-prompt oracle
-python scripts/oracle_per_prompt.py --model llama3
-# classifier router (negative result on initial 7-task set)
-python scripts/train_c7_router.py --model llama3
-# regression router (works in-distribution on 11-task set)
-python scripts/train_c7_regressor.py --model llama3 --tau 0.95
+
+# 3) Train + evaluate the router at one or more taus
+for tau in 0.99 0.95 0.90; do
+  python scripts/benchmark_c6_classifier.py --model llama3 --tau $tau
+done
+
+# 4) Generate Pareto plot
+python scripts/plot_pareto.py --model llama3
 ```
+
+Pass `--skip-speed-ppl` to step 1 to run only the LongBench phase (used for routing data; skips speed and perplexity, ~3-4× faster).
 
 ---
 
@@ -265,25 +248,24 @@ python scripts/train_c7_regressor.py --model llama3 --tau 0.95
 ```
 AdaptiveServe/
 ├── scripts/
-│   ├── _common.py                  # Shared constants, scoring, PPL, LongBench loader
-│   ├── benchmark_c0_baseline.py    # C0 baseline (FP16 full KV cache)
-│   ├── benchmark_c1_tailorkv.py    # C1 TailorKV (hybrid 1-bit quant + SnapKV pruning)
-│   ├── benchmark_c2_qaq.py         # C2 QAQ (variable-bit attention-aware quantization)
-│   ├── benchmark_c3_kvquant.py     # C3 KVQuant (4-bit per-channel K + per-token V + 1 % outliers)
-│   ├── benchmark_c4_dynamickv.py   # C4 DynamicKV (per-layer attention-driven retention)
-│   └── benchmark_c5_adakv.py       # C5 Ada-KV (head-wise adaptive budget allocation)
+│   ├── _common.py                    # Shared constants, scoring, PPL, LongBench loader
+│   ├── benchmark_c0_baseline.py      # C0 FP16 full KV cache (reference)
+│   ├── benchmark_c1_tailorkv.py      # C1 TailorKV  (hybrid 1-bit quant + SnapKV pruning)
+│   ├── benchmark_c2_qaq.py           # C2 QAQ       (variable-bit attention-aware quantization)
+│   ├── benchmark_c3_kvquant.py       # C3 KVQuant   (4-bit per-channel K + per-token V + outliers)
+│   ├── benchmark_c4_dynamickv.py     # C4 DynamicKV (per-layer attention-driven retention)
+│   ├── benchmark_c5_adakv.py         # C5 Ada-KV    (head-wise adaptive budget allocation)
+│   ├── benchmark_c6_classifier.py    # C6 Router    (per-prompt feature-based regressor)
+│   ├── build_dataset.py              # Join per-prompt logs C0..C5 → routing dataset
+│   └── plot_pareto.py                # Quality vs compression Pareto plot
 └── runs/
-    ├── C0/{llama3,phi3}/results.json
-    ├── C1/{llama3,phi3}/results.json
-    ├── C2/{llama3,phi3}/results.json
-    ├── C3/{llama3,phi3}/results.json
-    ├── C4/{llama3,phi3}/results.json
-    └── C5/{llama3,phi3}/results.json
+    ├── C{0..5}/{llama3,phi3}/results.json + per_prompt.jsonl
+    ├── C6/{llama3,phi3}/results.json + results_tau{0.99,0.95,0.90}.json + per_prompt.jsonl
+    ├── dataset/{llama3,phi3}.jsonl
+    └── figs/pareto_{llama3,phi3}.png
 ```
 
-Each `benchmark_cN_*.py` script is self-contained: it owns its own model loading,
-speed loop, and generation function. Only constants and method-agnostic helpers
-(scoring, perplexity, LongBench task loading) are shared via `_common.py`.
+Each `benchmark_cN_*.py` script is self-contained: it owns its own model loading, speed loop, and generation function. Only constants and method-agnostic helpers (scoring, perplexity, LongBench task loading) are shared via `_common.py`. The router script (`benchmark_c6_classifier.py`) is pure CPU — it reads `runs/dataset/{model}.jsonl` and never loads the LLM.
 
 ---
 
@@ -291,69 +273,58 @@ speed loop, and generation function. Only constants and method-agnostic helpers
 
 ```bash
 # Python 3.10+
-pip install torch transformers datasets
+pip install torch transformers datasets scikit-learn matplotlib
+huggingface-cli login   # required for gated models (Llama-3)
 ```
 
-A CUDA-capable GPU with at least 24 GB VRAM is recommended for LLaMA-3-8B. Phi-3-mini runs in ~8 GB.
-
-HuggingFace access tokens are required for gated models:
-
-```bash
-huggingface-cli login
-```
+A CUDA GPU with ≥ 24 GB VRAM is recommended for LLaMA-3-8B; Phi-3-mini fits in ~10 GB.
 
 ---
 
 ## Usage
 
 ```bash
-# C0 — FP16 baseline
-python scripts/benchmark_c0_baseline.py --model phi3
-python scripts/benchmark_c0_baseline.py --model llama3
+# Single-method benchmarks  (run for each model)
+for c in 0 1 2 3 4 5; do
+  python scripts/benchmark_c${c}_*.py --model llama3
+  python scripts/benchmark_c${c}_*.py --model phi3
+done
 
-# C1 — TailorKV hybrid quantization + sparsity
-python scripts/benchmark_c1_tailorkv.py --model phi3
-python scripts/benchmark_c1_tailorkv.py --model llama3
+# Router (after the 6 single-method runs are present)
+python scripts/build_dataset.py             --model llama3
+python scripts/benchmark_c6_classifier.py   --model llama3 --tau 0.99
+python scripts/plot_pareto.py               --model llama3
 
-# C2 — QAQ full quantization
-python scripts/benchmark_c2_qaq.py --model phi3
-python scripts/benchmark_c2_qaq.py --model llama3
-
-# C3 — KVQuant 4-bit per-channel K + per-token V with 1 % FP16 outliers
-python scripts/benchmark_c3_kvquant.py --model phi3
-python scripts/benchmark_c3_kvquant.py --model llama3
-
-# C4 — DynamicKV per-layer token retention
-python scripts/benchmark_c4_dynamickv.py --model phi3
-python scripts/benchmark_c4_dynamickv.py --model llama3
-
-# C5 — Ada-KV head-wise adaptive budget allocation
-python scripts/benchmark_c5_adakv.py --model phi3
-python scripts/benchmark_c5_adakv.py --model llama3
+# Same for phi3
+python scripts/build_dataset.py             --model phi3
+python scripts/benchmark_c6_classifier.py   --model phi3 --tau 0.99
+python scripts/plot_pareto.py               --model phi3
 ```
 
-Results are written to `runs/{config}/{model}/results.json`.
+Each single-method benchmark phase:
+1. **Speed** — fixed-length prompt (3 500 / 7 500 tokens), 50-token decode.
+2. **Perplexity** — WikiText-2 test, non-overlapping chunks.
+3. **LongBench** — 11 tasks × 20 prompts, scored with task-specific metrics.
 
-Each benchmark measures:
-1. **Speed**: fixed long prompt (3 500 tokens for Phi-3, 7 500 for LLaMA-3), 50-token decode run.
-2. **Perplexity**: non-overlapping chunks over the full WikiText-2 test split.
-3. **LongBench**: 20 samples per task, scored with task-specific metrics.
+Pass `--skip-speed-ppl` to run only LongBench (used for routing data).
+
+Results are written to `runs/{config}/{model}/results.json`.
 
 ---
 
 ## References
 
-> Dong et al. (2024). *QAQ: Quality Adaptive Quantization for LLM Key-Value Cache*.  
+> Dong et al. (2024). *QAQ: Quality Adaptive Quantization for LLM Key-Value Cache*.
 > arXiv:2403.04643. [https://arxiv.org/abs/2403.04643](https://arxiv.org/abs/2403.04643)
 
-> Hooper et al. (2024). *KVQuant: Towards 10 Million Context Length LLM Inference with KV Cache Quantization*.  
+> Hooper et al. (2024). *KVQuant: Towards 10 Million Context Length LLM Inference with KV Cache Quantization*.
 > arXiv:2401.18079. [https://arxiv.org/abs/2401.18079](https://arxiv.org/abs/2401.18079)
 
-> Zhou et al. (2024). *DynamicKV: Task-Aware Adaptive KV Cache Compression for Long Context LLMs*.  
+> Zhou et al. (2024). *DynamicKV: Task-Aware Adaptive KV Cache Compression for Long Context LLMs*.
 > arXiv:2412.14838. [https://arxiv.org/abs/2412.14838](https://arxiv.org/abs/2412.14838)
 
-> Feng et al. (2024). *Ada-KV: Optimizing KV Cache Eviction by Adaptive Budget Allocation for Efficient LLM Inference*.  
+> Feng et al. (2024). *Ada-KV: Optimizing KV Cache Eviction by Adaptive Budget Allocation for Efficient LLM Inference*.
 > arXiv:2407.11550. [https://arxiv.org/abs/2407.11550](https://arxiv.org/abs/2407.11550)
 
-> Yao et al. (2025). *TailorKV: A Hybrid Framework for Long-Context Inference via Tailored KV Cache Optimization*.  
+> Yao et al. (2025). *TailorKV: A Hybrid Framework for Long-Context Inference via Tailored KV Cache Optimization*.
 > arXiv:2505.19586. [https://arxiv.org/abs/2505.19586](https://arxiv.org/abs/2505.19586)

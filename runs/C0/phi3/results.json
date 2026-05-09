@@ -24,6 +24,11 @@
       "score": 0.1557,
       "n": 20
     },
+    "multifieldqa_en": {
+      "metric": "f1",
+      "score": 0.3305,
+      "n": 20
+    },
     "hotpotqa": {
       "metric": "f1",
       "score": 0.2156,
@@ -39,6 +44,21 @@
       "score": 0.3584,
       "n": 20
     },
+    "multi_news": {
+      "metric": "rouge1",
+      "score": 0.3232,
+      "n": 20
+    },
+    "qmsum": {
+      "metric": "rouge1",
+      "score": 0.2474,
+      "n": 20
+    },
+    "passage_count": {
+      "metric": "count_em",
+      "score": 0.0,
+      "n": 20
+    },
     "trec": {
       "metric": "accuracy",
       "score": 0.65,
@@ -50,5 +70,5 @@
       "n": 20
     }
   },
-  "longbench_avg": 0.3689
+  "longbench_avg": 0.3167
 }
