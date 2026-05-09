@@ -397,6 +397,8 @@ def parse_args():
                    help=f"quantization bit width (default: {KVQ_BITS})")
     p.add_argument("--outliers", type=float, default=None,
                    help=f"FP16 outlier fraction (default: {KVQ_OUTLIER_FRAC})")
+    p.add_argument("--skip-speed-ppl", action="store_true",
+                   help="skip speed + perplexity phases; preserve old fields from existing results.json")
     return p.parse_args()
 
 
@@ -441,11 +443,12 @@ def main():
         "outlier_frac":   KVQ_OUTLIER_FRAC,
     }
 
-    results.update(run_speed(model, tokenizer, args.model, device))
-    torch.cuda.empty_cache()
+    if not args.skip_speed_ppl:
+        results.update(run_speed(model, tokenizer, args.model, device))
+        torch.cuda.empty_cache()
 
-    results.update(run_ppl(model, tokenizer, args.model, device))
-    torch.cuda.empty_cache()
+        results.update(run_ppl(model, tokenizer, args.model, device))
+        torch.cuda.empty_cache()
 
     lb = run_longbench(model, tokenizer, args.model, device,
                        pp_logger=PerPromptLogger(out_dir / "per_prompt.jsonl",
@@ -459,6 +462,9 @@ def main():
             results[f"longbench_{k}"] = v
 
     out_path = out_dir / "results.json"
+    if out_path.exists():
+        old = json.loads(out_path.read_text())
+        results = {**old, **results}
     out_path.write_text(json.dumps(results, indent=2))
     print(f"\nSaved → {out_path}")
     print(json.dumps({k: v for k, v in results.items() if k != "longbench"}, indent=2))

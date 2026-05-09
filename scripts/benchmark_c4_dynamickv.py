@@ -444,6 +444,8 @@ def parse_args():
     p.add_argument("--output", default="runs/C4")
     p.add_argument("--budget", type=int, default=None,
                    help="override per-layer budget (default: 512 phi3 / 1024 llama3)")
+    p.add_argument("--skip-speed-ppl", action="store_true",
+                   help="skip speed + perplexity phases; preserve old fields from existing results.json")
     return p.parse_args()
 
 
@@ -489,15 +491,16 @@ def main():
         "kernel_size":       DKV_KERNEL_SIZE,
     }
 
-    results.update(run_speed(model, tokenizer, args.model, device))
-    torch.cuda.empty_cache()
+    if not args.skip_speed_ppl:
+        results.update(run_speed(model, tokenizer, args.model, device))
+        torch.cuda.empty_cache()
 
-    # PPL doesn't need attention scores; SDPA is much faster (eager on
-    # llama3-8B at 8192 tokens is O(N^2) per layer).
-    model.set_attn_implementation("sdpa")
-    results.update(run_ppl(model, tokenizer, args.model, device))
-    torch.cuda.empty_cache()
-    model.set_attn_implementation("eager")
+        # PPL doesn't need attention scores; SDPA is much faster (eager on
+        # llama3-8B at 8192 tokens is O(N^2) per layer).
+        model.set_attn_implementation("sdpa")
+        results.update(run_ppl(model, tokenizer, args.model, device))
+        torch.cuda.empty_cache()
+        model.set_attn_implementation("eager")
 
     lb = run_longbench(model, tokenizer, args.model, device,
                        pp_logger=PerPromptLogger(out_dir / "per_prompt.jsonl",
@@ -513,6 +516,9 @@ def main():
             results[f"longbench_{k}"] = v
 
     out_path = out_dir / "results.json"
+    if out_path.exists():
+        old = json.loads(out_path.read_text())
+        results = {**old, **results}
     out_path.write_text(json.dumps(results, indent=2))
     print(f"\nSaved → {out_path}")
     print(json.dumps({k: v for k, v in results.items() if k != "longbench"}, indent=2))

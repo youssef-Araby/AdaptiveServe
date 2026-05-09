@@ -67,13 +67,17 @@ SPEED_TEXT = (
 # ---------------------------------------------------------------------------
 
 LB_TASKS: dict[str, dict] = {
-    "narrativeqa": {"metric": "f1",       "max_new_tokens": 128, "chat": True,  "first_line": False},
-    "qasper":      {"metric": "f1",       "max_new_tokens": 128, "chat": True,  "first_line": False},
-    "hotpotqa":    {"metric": "f1",       "max_new_tokens": 32,  "chat": True,  "first_line": True},
-    "2wikimqa":    {"metric": "f1",       "max_new_tokens": 32,  "chat": True,  "first_line": True},
-    "gov_report":  {"metric": "rouge1",   "max_new_tokens": 512, "chat": True,  "first_line": False},
-    "trec":        {"metric": "accuracy", "max_new_tokens": 32,  "chat": False, "first_line": True},
-    "triviaqa":    {"metric": "f1",       "max_new_tokens": 32,  "chat": False, "first_line": True},
+    "narrativeqa":     {"metric": "f1",       "max_new_tokens": 128, "chat": True,  "first_line": False},
+    "qasper":          {"metric": "f1",       "max_new_tokens": 128, "chat": True,  "first_line": False},
+    "multifieldqa_en": {"metric": "f1",       "max_new_tokens": 64,  "chat": True,  "first_line": True},
+    "hotpotqa":        {"metric": "f1",       "max_new_tokens": 32,  "chat": True,  "first_line": True},
+    "2wikimqa":        {"metric": "f1",       "max_new_tokens": 32,  "chat": True,  "first_line": True},
+    "gov_report":      {"metric": "rouge1",   "max_new_tokens": 512, "chat": True,  "first_line": False},
+    "multi_news":      {"metric": "rouge1",   "max_new_tokens": 512, "chat": True,  "first_line": False},
+    "qmsum":           {"metric": "rouge1",   "max_new_tokens": 512, "chat": True,  "first_line": False},
+    "passage_count":   {"metric": "count_em", "max_new_tokens": 32,  "chat": True,  "first_line": True},
+    "trec":            {"metric": "accuracy", "max_new_tokens": 32,  "chat": False, "first_line": True},
+    "triviaqa":        {"metric": "f1",       "max_new_tokens": 32,  "chat": False, "first_line": True},
 }
 
 LB_TEMPLATES: dict[str, str] = {
@@ -118,6 +122,29 @@ LB_TEMPLATES: dict[str, str] = {
     "triviaqa": (
         "Answer the question based on the given passage. Only give me the answer and do not output "
         "any other words. The following are some examples.\n\n{context}\n\n{input}"
+    ),
+    "multifieldqa_en": (
+        "Read the following text and answer briefly.\n\n{context}\n\nNow, answer the following "
+        "question based on the above text, only give me the answer and do not output any other "
+        "words.\n\nQuestion: {input}\nAnswer:"
+    ),
+    "multi_news": (
+        "You are given several news passages. Write a one-page summary of all news.\n\nNews:\n"
+        "{context}\n\nNow, write a one-page summary of all the news.\n\nSummary:"
+    ),
+    "qmsum": (
+        "You are given a meeting transcript and a query containing a question or instruction. "
+        "Answer the query in one or more sentences.\n\nTranscript:\n{context}\n\nNow, answer the "
+        "query based on the above meeting transcript in one or more sentences.\n\n"
+        "Query: {input}\nAnswer:"
+    ),
+    "passage_count": (
+        "There are some paragraphs below sourced from Wikipedia. Some of them may be duplicates. "
+        "Please carefully read these paragraphs and determine how many unique paragraphs there are "
+        "after removing duplicates. In other words, how many non-repeating paragraphs are there in "
+        "total?\n\n{context}\n\nPlease enter the final count of unique paragraphs after removing "
+        "duplicates. The output format should only contain the number, such as 1, 2, 3, and so on."
+        "\n\nThe final answer is: "
     ),
 }
 
@@ -191,6 +218,29 @@ def _accuracy(pred: str, golds: list[str]) -> float:
     ))
 
 
+def _count_em(pred: str, golds: list[str]) -> float:
+    """Exact-match on first integer in prediction vs gold integer.
+    Used for passage_count."""
+    import re as _re
+    m = _re.search(r"-?\d+", pred)
+    if m is None:
+        return 0.0
+    try:
+        p = int(m.group(0))
+    except ValueError:
+        return 0.0
+    for g in golds:
+        gm = _re.search(r"-?\d+", str(g))
+        if gm is None:
+            continue
+        try:
+            if int(gm.group(0)) == p:
+                return 1.0
+        except ValueError:
+            continue
+    return 0.0
+
+
 def compute_score(metric: str, pred: str, golds: list[str]) -> float:
     if metric == "f1":
         return max(_token_f1(pred, g) for g in golds)
@@ -198,6 +248,8 @@ def compute_score(metric: str, pred: str, golds: list[str]) -> float:
         return max(_rouge1(pred, g) for g in golds)
     if metric == "accuracy":
         return _accuracy(pred, golds)
+    if metric == "count_em":
+        return _count_em(pred, golds)
     raise ValueError(f"Unknown metric: {metric}")
 
 

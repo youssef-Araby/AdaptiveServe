@@ -502,6 +502,8 @@ def parse_args():
     p.add_argument("--output", default="runs/C5")
     p.add_argument("--budget", type=int, default=None,
                    help="override per-head budget (default: 512 phi3 / 1024 llama3)")
+    p.add_argument("--skip-speed-ppl", action="store_true",
+                   help="skip speed + perplexity phases; preserve old fields from existing results.json")
     return p.parse_args()
 
 
@@ -545,14 +547,15 @@ def main():
         "kernel_size":       ADA_KERNEL_SIZE,
     }
 
-    results.update(run_speed(model, tokenizer, args.model, n_kv_heads, device))
-    torch.cuda.empty_cache()
+    if not args.skip_speed_ppl:
+        results.update(run_speed(model, tokenizer, args.model, n_kv_heads, device))
+        torch.cuda.empty_cache()
 
-    # PPL: SDPA is much faster than eager (no attention scores needed).
-    model.set_attn_implementation("sdpa")
-    results.update(run_ppl(model, tokenizer, args.model, device))
-    torch.cuda.empty_cache()
-    model.set_attn_implementation("eager")
+        # PPL: SDPA is much faster than eager (no attention scores needed).
+        model.set_attn_implementation("sdpa")
+        results.update(run_ppl(model, tokenizer, args.model, device))
+        torch.cuda.empty_cache()
+        model.set_attn_implementation("eager")
 
     lb = run_longbench(model, tokenizer, args.model, n_kv_heads, device,
                        pp_logger=PerPromptLogger(out_dir / "per_prompt.jsonl",
@@ -570,6 +573,9 @@ def main():
         results["longbench_avg_compression_ratio"] = c["avg_compression_ratio"]
 
     out_path = out_dir / "results.json"
+    if out_path.exists():
+        old = json.loads(out_path.read_text())
+        results = {**old, **results}
     out_path.write_text(json.dumps(results, indent=2))
     print(f"\nSaved → {out_path}")
     summary = {k: v for k, v in results.items() if k != "longbench"}

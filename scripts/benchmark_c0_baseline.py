@@ -182,6 +182,8 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--model",  required=True, choices=list(MODELS.keys()))
     p.add_argument("--output", default="runs/C0")
+    p.add_argument("--skip-speed-ppl", action="store_true",
+                   help="skip speed + perplexity phases; preserve old fields from existing results.json")
     return p.parse_args()
 
 
@@ -214,11 +216,12 @@ def main():
         "model_id": model_id,
     }
 
-    results.update(run_speed(model, tokenizer, args.model, device))
-    torch.cuda.empty_cache()
+    if not args.skip_speed_ppl:
+        results.update(run_speed(model, tokenizer, args.model, device))
+        torch.cuda.empty_cache()
 
-    results.update(run_ppl(model, tokenizer, args.model, device))
-    torch.cuda.empty_cache()
+        results.update(run_ppl(model, tokenizer, args.model, device))
+        torch.cuda.empty_cache()
 
     lb = run_longbench(model, tokenizer, args.model, device,
                        pp_logger=PerPromptLogger(out_dir / "per_prompt.jsonl",
@@ -230,6 +233,9 @@ def main():
         )
 
     out_path = out_dir / "results.json"
+    if out_path.exists():
+        old = json.loads(out_path.read_text())
+        results = {**old, **results}
     out_path.write_text(json.dumps(results, indent=2))
     print(f"\nSaved → {out_path}")
     print(json.dumps({k: v for k, v in results.items() if k != "longbench"}, indent=2))

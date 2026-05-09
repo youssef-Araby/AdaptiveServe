@@ -789,6 +789,8 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--model",  required=True, choices=list(MODELS.keys()))
     p.add_argument("--output", default="runs/C2")
+    p.add_argument("--skip-speed-ppl", action="store_true",
+                   help="skip speed + perplexity phases; reuse qaq_q_norm from existing results.json")
     return p.parse_args()
 
 
@@ -831,22 +833,32 @@ def main():
         "model_id": model_id,
     }
 
-    speed_results = run_speed(model, tokenizer, args.model, device,
-                              attn_aware_decode=attn_aware_decode)
-    results.update(speed_results)
-    q_norm = speed_results["qaq_q_norm"]
-    torch.cuda.empty_cache()
+    if args.skip_speed_ppl:
+        old_path = out_dir / "results.json"
+        if not old_path.exists():
+            raise FileNotFoundError(
+                f"--skip-speed-ppl requires existing {old_path} (need qaq_q_norm)")
+        old = json.loads(old_path.read_text())
+        if "qaq_q_norm" not in old:
+            raise KeyError(f"qaq_q_norm not found in {old_path}")
+        q_norm = old["qaq_q_norm"]
+    else:
+        speed_results = run_speed(model, tokenizer, args.model, device,
+                                  attn_aware_decode=attn_aware_decode)
+        results.update(speed_results)
+        q_norm = speed_results["qaq_q_norm"]
+        torch.cuda.empty_cache()
 
-    # PPL is teacher-forced and doesn't need attention scores. Switching to
-    # SDPA avoids eager attention's O(N^2) softmax tensor on llama3-8B at
-    # PPL_MAX_LEN=8192 (which would otherwise OOM / take an hour).
-    prev_impl = MODELS_CFG[args.model]["attn_impl"]
-    if prev_impl != "sdpa":
-        model.set_attn_implementation("sdpa")
-    results.update(run_ppl(model, tokenizer, args.model, device))
-    torch.cuda.empty_cache()
-    if prev_impl != "sdpa":
-        model.set_attn_implementation(prev_impl)
+        # PPL is teacher-forced and doesn't need attention scores. Switching to
+        # SDPA avoids eager attention's O(N^2) softmax tensor on llama3-8B at
+        # PPL_MAX_LEN=8192 (which would otherwise OOM / take an hour).
+        prev_impl = MODELS_CFG[args.model]["attn_impl"]
+        if prev_impl != "sdpa":
+            model.set_attn_implementation("sdpa")
+        results.update(run_ppl(model, tokenizer, args.model, device))
+        torch.cuda.empty_cache()
+        if prev_impl != "sdpa":
+            model.set_attn_implementation(prev_impl)
 
     lb = run_longbench(model, tokenizer, args.model, device, q_norm,
                        attn_aware_decode=attn_aware_decode,
@@ -859,6 +871,9 @@ def main():
         )
 
     out_path = out_dir / "results.json"
+    if out_path.exists():
+        old = json.loads(out_path.read_text())
+        results = {**old, **results}
     out_path.write_text(json.dumps(results, indent=2))
     print(f"\nSaved → {out_path}")
     print(json.dumps({k: v for k, v in results.items() if k != "longbench"}, indent=2))
