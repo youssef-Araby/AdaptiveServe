@@ -153,12 +153,85 @@ Picks at τ = 0.99 (the most useful regime): `2wikimqa→C1, gov_report→C3, ho
 
 ### Caveat
 
-This oracle is at **task** granularity (7 decisions per model). The real selector value lives in **per-prompt** variance within tasks. The next step is to instrument all benchmarks with per-prompt logging, re-run on LLaMA-3, and verify the oracle gap survives at prompt-level decisions before training the C7 classifier.
+This oracle is at **task** granularity (7 decisions per model). The real selector value lives in **per-prompt** variance within tasks — see the next section.
 
 Run the analysis:
 
 ```bash
 python scripts/oracle_analysis.py
+```
+
+---
+
+## Per-Prompt Oracle and C7 Router
+
+After the task-level analysis, every benchmark was instrumented to log per-prompt features and per-prompt scores so the oracle could be re-computed at **prompt** granularity (140 prompts on LLaMA-3 = 7 tasks × 20 each). Features are extracted in `<50 ms` from the prompt alone (no LLM forward pass): `seq_len_tokens`, `seq_len_chars`, `token_entropy`, `gzip_ratio`, `unique_token_ratio`, `question_position`, `newline_density`. Task identity is **deliberately excluded** to avoid label leakage — a deployable router cannot rely on knowing which dataset the prompt came from.
+
+### Per-prompt oracle — LLaMA-3 (one decision per prompt)
+
+| Policy                          | Quality | Compression | Notes |
+|---------------------------------|---------|-------------|-------|
+| always-C0 FP16                  | 0.5050  | 1.00×       | reference |
+| always-C3 KVQuant (best fixed)  | 0.5098  | 3.41×       | strongest fixed under quality-preserving regime |
+| always-C1 TailorKV              | 0.4510  | 34.60×      | strongest fixed under high-compression regime |
+| **Oracle τ = 0.99** (≤1% drop)  | 0.5136  | **8.17×**   | +0.4% quality and **2.4× compression** vs always-C3 |
+| **Oracle τ = 0.95** (≤5% drop)  | 0.5124  | **10.13×**  | now beats always-C1 quality at C1's compression range |
+| **Oracle τ = 0.90** (≤10% drop) | 0.5105  | 11.84×      | |
+| Oracle τ = 1.00 (max quality)   | 0.5277  | 1.21×       | upper bound on quality alone |
+
+The per-prompt oracle gap is **strictly larger** than the per-task gap (8.17× vs 6.90× at τ=0.99). The TailorKV-dominates-≥10× regime from the per-task analysis **breaks** at prompt level: oracle τ=0.95 reaches 10.13× at 0.5124, beating always-C1's 0.4510 at the same compression — meaning a per-prompt selector strictly Pareto-dominates every fixed method including TailorKV across the entire 1×–12× regime.
+
+### Per-task pick distribution at τ = 0.99
+
+| Task          | C0 | C1 | C2 | C3 | C4 | C5 |
+|---------------|---:|---:|---:|---:|---:|---:|
+| 2wikimqa      |  0 | 20 |  0 |  0 |  0 |  0 |
+| trec          |  0 | 19 |  0 |  0 |  1 |  0 |
+| triviaqa      |  0 | 19 |  0 |  0 |  1 |  0 |
+| hotpotqa      |  0 | 16 |  0 |  0 |  4 |  0 |
+| narrativeqa   |  0 | 15 |  0 |  0 |  5 |  0 |
+| qasper        |  0 |  9 |  2 |  3 |  6 |  0 |
+| gov_report    |  8 |  0 |  6 |  2 |  3 |  1 |
+
+Five tasks heavily prefer **C1** (long-context retrieval-style QA where TailorKV's 1-bit-quantized + sparse-prefix pattern wins). Two tasks (`gov_report`, `qasper` — long-form summarization / scientific QA) instead need much less aggressive compression and split across {C0, C2, C3, C4}.
+
+### C7 router result — honest negative finding
+
+A gradient-boosted classifier (`HistGradientBoostingClassifier`, 7 features → 6-class) trained on this dataset with **leave-one-task-out cross-validation** gets:
+
+| Eval                                              | Acc   | Quality | Compression | vs always-C1 (Acc=0.700) |
+|---------------------------------------------------|-------|---------|-------------|--------------------------|
+| Random 70/30 split (in-distribution)              | 0.667 | 0.4635  | 9.35×       | below baseline           |
+| Leave-one-task-out (OOD by task)                  | 0.657 | 0.4646  | 13.22×      | below baseline           |
+| LOTO + restricted classes {C0,C1,C2,C4} + balanced| 0.614 | 0.4701  | 6.39×       | below baseline           |
+
+**The classifier cannot realize the oracle gap on this dataset.** Per-held-task LOTO accuracy reveals the failure mode:
+
+| Held-out task | LOTO acc | Classifier quality | Oracle quality |
+|---------------|---------|--------------------|----------------|
+| 2wikimqa      | 1.00    | 0.401              | 0.401          |
+| trec          | 0.95    | 0.650              | 0.700          |
+| triviaqa      | 0.95    | 0.927              | 0.932          |
+| hotpotqa      | 0.85    | 0.384              | 0.454          |
+| narrativeqa   | 0.75    | 0.270              | 0.314          |
+| qasper        | 0.10    | 0.346              | 0.396          |
+| **gov_report**| **0.00**| **0.274**          | **0.399**      |
+
+When `gov_report` (the only task that truly prefers C0/C2/C3) is held out, the remaining 6 tasks send a unanimous "use C1" signal to the classifier, and `qasper` collapses similarly. This is a **task-coverage limitation, not a feature limitation**: 7 tasks where 5 prefer the same class is below the data scale needed for OOD generalization at task granularity.
+
+### Implication
+
+The per-prompt oracle gap is real and large enough to motivate adaptive routing, but a deployable C7 router needs either (a) **more diverse benchmark tasks** so the training distribution covers prompt patterns that prefer low-compression configs, (b) **probe-based features** (e.g., a few-layer attention-entropy probe on the first 512 tokens) that directly measure KV-importance rather than inferring it from surface-level prompt statistics, or (c) **a hybrid policy**: rule-based fallback to always-C0 when classifier confidence is low. Pure prompt-feature classifiers from LongBench's 7 tasks are insufficient.
+
+Reproduce:
+
+```bash
+# rebuild dataset from per-prompt logs
+python scripts/build_dataset.py --model llama3
+# per-prompt oracle
+python scripts/oracle_per_prompt.py --model llama3
+# train + LOTO eval router
+python scripts/train_c7_router.py --model llama3
 ```
 
 ---

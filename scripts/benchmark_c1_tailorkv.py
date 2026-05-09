@@ -66,8 +66,10 @@ from _common import (
     MODELS,
     SPEED_N_DECODE,
     SPEED_TEXT,
+    PerPromptLogger,
     apply_chat_template,
     compute_score,
+    extract_prompt_features,
     kv_cache_mb,
     load_longbench_task,
     run_ppl,
@@ -453,7 +455,7 @@ def _generate_tkv(
 
 
 def run_longbench(model, tokenizer, model_key: str, q_layers: set[int],
-                  device: str) -> dict:
+                  device: str, pp_logger=None) -> dict:
     print("\n=== LongBench (TailorKV) ===")
     max_input = LB_MAX_INPUT[model_key]
     results   = {}
@@ -482,7 +484,11 @@ def run_longbench(model, tokenizer, model_key: str, q_layers: set[int],
             seq_lens.append(st["seq_len"])
             if cfg["first_line"]:
                 pred = pred.split("\n")[0].strip()
-            scores.append(compute_score(metric, pred, golds))
+            s = compute_score(metric, pred, golds)
+            scores.append(s)
+            if pp_logger is not None:
+                pp_logger.log(task=task, sample_idx=j, metric=metric, score=s,
+                              features=extract_prompt_features(prompt, tokenizer))
             if (j + 1) % 5 == 0:
                 print(f"  {task} [{j+1}/{len(samples)}]  {metric}={sum(scores)/len(scores):.4f}")
 
@@ -580,7 +586,9 @@ def main():
     torch.cuda.empty_cache()
     model.set_attn_implementation("eager")
 
-    lb = run_longbench(model, tokenizer, args.model, q_set, device)
+    lb = run_longbench(model, tokenizer, args.model, q_set, device,
+                       pp_logger=PerPromptLogger(out_dir / "per_prompt.jsonl",
+                                                 config="C1", model=args.model))
     results["longbench"] = lb
     task_scores = [v["score"] for k, v in lb.items() if not k.startswith("_")]
     if task_scores:

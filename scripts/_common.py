@@ -265,3 +265,129 @@ def kv_cache_mb(past) -> float:
             total += k.numel() * k.element_size()
             total += v.numel() * v.element_size()
     return total / (1024 ** 2)
+
+
+# ---------------------------------------------------------------------------
+# Per-prompt feature extraction (for C7 selector)
+# ---------------------------------------------------------------------------
+#
+# All features are prompt-intrinsic — no LLM forward pass and no task label.
+# The classifier sees only what arrives at inference time.
+#
+#   seq_len_tokens     : prompt length in model tokens (dominant signal)
+#   seq_len_chars      : prompt length in characters (cheap fallback if no tokenizer)
+#   token_entropy      : Shannon entropy of the prompt's own token distribution
+#                        (low = repetitive context, high = diverse content)
+#   gzip_ratio         : len(gzip(prompt)) / len(prompt)
+#                        (information-theoretic redundancy proxy)
+#   unique_token_ratio : type/token ratio over model tokens
+#   question_position  : char-offset of last "?" / total length, NaN if absent
+#                        (proxy for "lost in the middle"-style long-range dependence)
+#   newline_density    : count("\n") / len(chars)  (RAG/multi-doc structure proxy)
+
+def _shannon_entropy(counts: list[int]) -> float:
+    total = sum(counts)
+    if total <= 0:
+        return 0.0
+    h = 0.0
+    for c in counts:
+        if c > 0:
+            p = c / total
+            h -= p * math.log2(p)
+    return h
+
+
+def extract_prompt_features(prompt: str, tokenizer=None) -> dict:
+    """Cheap (<50 ms), prompt-intrinsic features for the routing classifier.
+
+    Pass the model tokenizer for accurate token-level features; otherwise
+    falls back to whitespace splitting.
+    """
+    import gzip as _gzip
+
+    if not prompt:
+        return {
+            "seq_len_tokens":     0,
+            "seq_len_chars":      0,
+            "token_entropy":      0.0,
+            "gzip_ratio":         1.0,
+            "unique_token_ratio": 0.0,
+            "question_position":  None,
+            "newline_density":    0.0,
+        }
+
+    if tokenizer is not None:
+        try:
+            ids = tokenizer.encode(prompt, add_special_tokens=False)
+        except Exception:
+            ids = prompt.split()
+    else:
+        ids = prompt.split()
+
+    n_tokens   = len(ids)
+    counts     = Counter(ids)
+    n_unique   = len(counts)
+
+    raw_bytes  = prompt.encode("utf-8", errors="ignore")
+    gzip_bytes = len(_gzip.compress(raw_bytes, compresslevel=6))
+    gzip_ratio = gzip_bytes / max(len(raw_bytes), 1)
+
+    last_q  = prompt.rfind("?")
+    q_pos   = (last_q / len(prompt)) if last_q >= 0 else float("nan")
+    nl_dens = prompt.count("\n") / max(len(prompt), 1)
+
+    return {
+        "seq_len_tokens":     n_tokens,
+        "seq_len_chars":      len(prompt),
+        "token_entropy":      round(_shannon_entropy(list(counts.values())), 4),
+        "gzip_ratio":         round(gzip_ratio, 4),
+        "unique_token_ratio": round(n_unique / max(n_tokens, 1), 4),
+        "question_position":  round(q_pos, 4) if q_pos == q_pos else None,
+        "newline_density":    round(nl_dens, 4),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Per-prompt logging (for oracle / classifier dataset construction)
+# ---------------------------------------------------------------------------
+
+class PerPromptLogger:
+    """Append-only JSONL writer.  One record per LongBench sample.
+
+    Each record:
+      {
+        "config":       "C0" / "C1" / ...,
+        "model":        "llama3" / "phi3",
+        "task":         "narrativeqa" / ...,
+        "sample_idx":   int,
+        "metric":       "f1" / "rouge1" / "accuracy",
+        "score":        float,
+        "features":     {...prompt-intrinsic features...},
+      }
+
+    Features are extracted once per (task, sample_idx) regardless of config —
+    callers may pre-extract and pass them in to avoid redundant work, but the
+    logger will compute them lazily if not provided.
+    """
+
+    def __init__(self, path: Path | str, config: str, model: str):
+        self.path   = Path(path)
+        self.config = config
+        self.model  = model
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        # Truncate at start of run so reruns don't accumulate stale rows.
+        self.path.write_text("")
+
+    def log(self, *, task: str, sample_idx: int, metric: str, score: float,
+            features: dict) -> None:
+        rec = {
+            "config":     self.config,
+            "model":      self.model,
+            "task":       task,
+            "sample_idx": sample_idx,
+            "metric":     metric,
+            "score":      round(float(score), 6),
+            "features":   features,
+        }
+        with self.path.open("a") as f:
+            f.write(json.dumps(rec) + "\n")

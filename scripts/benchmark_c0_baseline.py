@@ -30,8 +30,10 @@ from _common import (
     MODELS,
     SPEED_N_DECODE,
     SPEED_TEXT,
+    PerPromptLogger,
     apply_chat_template,
     compute_score,
+    extract_prompt_features,
     kv_cache_mb,
     load_longbench_task,
     run_ppl,
@@ -133,7 +135,8 @@ def _generate(model, tokenizer, prompt: str, max_new: int, max_input: int, devic
     return tokenizer.decode(out[0, len(ids):], skip_special_tokens=True).strip()
 
 
-def run_longbench(model, tokenizer, model_key: str, device: str) -> dict:
+def run_longbench(model, tokenizer, model_key: str, device: str,
+                  pp_logger=None) -> dict:
     print("\n=== LongBench ===")
     max_input = LB_MAX_INPUT[model_key]
     results   = {}
@@ -156,7 +159,11 @@ def run_longbench(model, tokenizer, model_key: str, device: str) -> dict:
                                use_chat=cfg["chat"])
             if cfg["first_line"]:
                 pred = pred.split("\n")[0].strip()
-            scores.append(compute_score(metric, pred, golds))
+            s = compute_score(metric, pred, golds)
+            scores.append(s)
+            if pp_logger is not None:
+                pp_logger.log(task=task, sample_idx=j, metric=metric, score=s,
+                              features=extract_prompt_features(prompt, tokenizer))
             if (j + 1) % 5 == 0:
                 print(f"  {task} [{j+1}/{len(samples)}]  {metric}={sum(scores)/len(scores):.4f}")
 
@@ -213,7 +220,9 @@ def main():
     results.update(run_ppl(model, tokenizer, args.model, device))
     torch.cuda.empty_cache()
 
-    lb = run_longbench(model, tokenizer, args.model, device)
+    lb = run_longbench(model, tokenizer, args.model, device,
+                       pp_logger=PerPromptLogger(out_dir / "per_prompt.jsonl",
+                                                 config="C0", model=args.model))
     results["longbench"] = lb
     if lb:
         results["longbench_avg"] = round(
