@@ -13,7 +13,7 @@
     "newline_density"
   ],
   "n_features": 7,
-  "router_overhead_us_per_prompt": 61.22,
+  "router_overhead_us_per_prompt": 63.58,
   "longbench": {
     "2wikimqa": {
       "score": 0.1261,
@@ -145,7 +145,10 @@
     "C5": 4
   },
   "eval_split_70_30": {
+    "n_train": 154,
     "n_test": 66,
+    "longbench_avg_train": 0.3292,
+    "longbench_avg_compression_ratio_train": 3.718,
     "longbench_avg": 0.3472,
     "longbench_avg_compression_ratio": 2.428,
     "picks": {
@@ -156,5 +159,52 @@
       "C5": 1,
       "C3": 1
     }
+  },
+  "regressor_fit": {
+    "model": "HistGradientBoostingRegressor(max_iter=300, max_depth=4, learning_rate=0.05, random_state=0)",
+    "n_train": 154,
+    "n_test": 66,
+    "per_config": {
+      "C0": {
+        "r2_train": 0.8366,
+        "r2_test": -0.1868,
+        "mae_train": 0.1032,
+        "mae_test": 0.245
+      },
+      "C1": {
+        "r2_train": 0.8485,
+        "r2_test": -0.0082,
+        "mae_train": 0.0989,
+        "mae_test": 0.2248
+      },
+      "C2": {
+        "r2_train": 0.8399,
+        "r2_test": -0.0863,
+        "mae_train": 0.1032,
+        "mae_test": 0.2326
+      },
+      "C3": {
+        "r2_train": 0.8388,
+        "r2_test": -0.1311,
+        "mae_train": 0.099,
+        "mae_test": 0.235
+      },
+      "C4": {
+        "r2_train": 0.843,
+        "r2_test": -0.0649,
+        "mae_train": 0.0997,
+        "mae_test": 0.2334
+      },
+      "C5": {
+        "r2_train": 0.8448,
+        "r2_test": -0.0836,
+        "mae_train": 0.0978,
+        "mae_test": 0.2328
+      }
+    },
+    "mean_r2_train": 0.8419,
+    "mean_r2_test": -0.0935,
+    "mean_mae_train": 0.1003,
+    "mean_mae_test": 0.2339
   }
 }

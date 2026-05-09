@@ -98,6 +98,24 @@ The two layers compose. C6 picks DynamicKV; DynamicKV still does its per-layer b
 
 ---
 
+## Test Bench
+
+All measurements in this README come from a single workstation:
+
+| Component | Value |
+|---|---|
+| GPU | NVIDIA GeForce RTX 3090 Ti (24 GiB VRAM, Ampere) |
+| CPU | AMD Ryzen 9 9900X (12 cores / 24 threads) |
+| RAM | 32 GiB DDR5 |
+| OS | Linux 6.6.87 (WSL2 on Windows 11) |
+| Python | 3.13.11 |
+| PyTorch | 2.11.0 + CUDA 13.0 |
+| transformers | 5.7.0 |
+| scikit-learn | 1.8.0 (router only) |
+| Precision | Models loaded in `bfloat16`; KV cache compressors operate at their declared bit widths (1–16 bit) |
+
+---
+
 ## Results
 
 Speed phase uses a fixed prompt of 3 500 tokens (Phi-3) or 7 500 tokens (LLaMA-3) — both near the model context limit so reported compression reflects realistic long-context use.
@@ -147,9 +165,25 @@ The single-method tables above show no fixed config dominates: KVQuant wins LLaM
 | Component | Choice |
 |---|---|
 | **Features** (7, prompt-only, no model forward) | `seq_len_tokens`, `seq_len_chars`, `token_entropy`, `gzip_ratio`, `unique_token_ratio`, `question_position`, `newline_density`. Task identity is **deliberately excluded** — a deployable router cannot rely on knowing which dataset a prompt came from. |
-| **Model** | 6 `HistGradientBoostingRegressor`s (one per config) trained to predict the per-prompt LongBench score under that config. |
+| **Regressor** | One `sklearn.ensemble.HistGradientBoostingRegressor` per config (6 total), each trained to predict the per-prompt LongBench score under that config. Hyperparameters: `max_iter=300, max_depth=4, learning_rate=0.05, random_state=0`. Inputs are standardized with `StandardScaler`. |
 | **Routing rule** | Iso-quality dispatch: pick the config with the highest measured compression whose predicted score is at least τ × predicted score of C0. Defaults to C0 if no config qualifies. |
 | **Overhead** | **64 µs per prompt** (sklearn `predict` over 6 regressors), vs ~1.8 s prefill on LLaMA-3 — ~0.0035 % of inference cost. |
+
+#### Regressor fit on the random 70/30 split (n_train = 154, n_test = 66)
+
+Per-config R² / MAE on the predicted per-prompt score. Mean is over the 6 regressors.
+
+| | LLaMA-3 R² train | LLaMA-3 R² test | LLaMA-3 MAE train | LLaMA-3 MAE test | Phi-3 R² train | Phi-3 R² test | Phi-3 MAE train | Phi-3 MAE test |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| C0 | +0.776 | −0.213 | 0.133 | 0.299 | +0.837 | −0.187 | 0.103 | 0.245 |
+| C1 | +0.761 | +0.022 | 0.139 | 0.270 | +0.849 | −0.008 | 0.099 | 0.225 |
+| C2 | +0.777 | −0.174 | 0.135 | 0.283 | +0.840 | −0.086 | 0.103 | 0.233 |
+| C3 | +0.775 | −0.243 | 0.134 | 0.294 | +0.839 | −0.131 | 0.099 | 0.235 |
+| C4 | +0.779 | −0.159 | 0.135 | 0.289 | +0.843 | −0.065 | 0.100 | 0.233 |
+| C5 | +0.784 | −0.192 | 0.134 | 0.291 | +0.845 | −0.084 | 0.098 | 0.233 |
+| **mean** | **+0.775** | **−0.160** | **0.135** | **0.288** | **+0.842** | **−0.093** | **0.100** | **0.234** |
+
+**Why does the router still dominate when test R² is negative?** Per-prompt LongBench scores are extremely noisy (a single F1 score on a 20-prompt task fluctuates a lot prompt-to-prompt), so absolute-score regression is hard. But the router does not need accurate scores — it only needs the *ordering* between configs to be approximately right at the iso-quality threshold. Even a regressor that under-shoots on raw R² produces ranking signal that is good enough for the dispatch rule, because the picks are coarse (6 classes) and concentrated on a few prompts where the choice actually matters (long-form summarization vs. extractive QA). The Pareto-dominance results below confirm this empirically.
 
 ### Per-prompt oracle (upper bound)
 

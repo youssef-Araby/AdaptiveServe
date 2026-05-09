@@ -38,6 +38,7 @@ from statistics import harmonic_mean, mean
 
 import numpy as np
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
 
 REPO     = Path(__file__).resolve().parents[1]
@@ -154,10 +155,27 @@ def split_picks(rows: list[dict], X: np.ndarray, tau: float, seed: int = 0):
     n_tr = int(0.7 * len(rows))
     tr, te = idx[:n_tr].tolist(), idx[n_tr:].tolist()
     models = fit_regressors(X[tr], [rows[i] for i in tr])
-    q_pred = predict_q(models, X[te])
+    # Per-config train/test fit quality (R^2 and MAE) on the predicted score.
+    fit_metrics = {}
+    for c in CONFIGS:
+        sc, reg = models[c]
+        y_tr = np.array([rows[i]["scores"][c] for i in tr], dtype=np.float32)
+        y_te = np.array([rows[i]["scores"][c] for i in te], dtype=np.float32)
+        p_tr = reg.predict(sc.transform(X[tr]))
+        p_te = reg.predict(sc.transform(X[te]))
+        fit_metrics[c] = {
+            "r2_train":  round(float(r2_score(y_tr, p_tr)), 4),
+            "r2_test":   round(float(r2_score(y_te, p_te)), 4),
+            "mae_train": round(float(mean_absolute_error(y_tr, p_tr)), 4),
+            "mae_test":  round(float(mean_absolute_error(y_te, p_te)), 4),
+        }
+    q_pred_tr = predict_q(models, X[tr])
+    q_pred_te = predict_q(models, X[te])
     rows_te = [rows[i] for i in te]
-    picks_te = route(rows_te, q_pred, tau)
-    return rows_te, picks_te
+    rows_tr = [rows[i] for i in tr]
+    picks_te = route(rows_te, q_pred_te, tau)
+    picks_tr = route(rows_tr, q_pred_tr, tau)
+    return rows_te, picks_te, rows_tr, picks_tr, fit_metrics
 
 
 def measure_overhead_us(models, X: np.ndarray, n_rep: int = 100) -> float:
@@ -193,11 +211,26 @@ def main() -> None:
           f"picks={agg_loto['picks']}")
 
     # ---- Random 70/30 split (in-dist)
-    rows_te, picks_te = split_picks(rows, X, args.tau, seed=0)
+    rows_te, picks_te, rows_tr, picks_tr, fit_metrics = split_picks(rows, X, args.tau, seed=0)
     agg_split = aggregate(rows_te, picks_te)
-    print(f"Split    : q={agg_split['longbench_avg']:.4f}  "
+    agg_split_tr = aggregate(rows_tr, picks_tr)
+    print(f"Split-tr : q={agg_split_tr['longbench_avg']:.4f}  "
+          f"cr={agg_split_tr['longbench_avg_compression_ratio']:.2f}x  "
+          f"(n_train={len(rows_tr)})")
+    print(f"Split-te : q={agg_split['longbench_avg']:.4f}  "
           f"cr={agg_split['longbench_avg_compression_ratio']:.2f}x  "
           f"picks={agg_split['picks']}  (n_test={len(rows_te)})")
+    r2_tr_mean = float(np.mean([m["r2_train"] for m in fit_metrics.values()]))
+    r2_te_mean = float(np.mean([m["r2_test"]  for m in fit_metrics.values()]))
+    mae_tr_mean = float(np.mean([m["mae_train"] for m in fit_metrics.values()]))
+    mae_te_mean = float(np.mean([m["mae_test"]  for m in fit_metrics.values()]))
+    print(f"Regressor fit (mean over 6 configs): "
+          f"R2 train={r2_tr_mean:.3f} test={r2_te_mean:.3f}  "
+          f"MAE train={mae_tr_mean:.3f} test={mae_te_mean:.3f}")
+    for c in CONFIGS:
+        m = fit_metrics[c]
+        print(f"  {c}: R2 tr={m['r2_train']:+.3f} te={m['r2_test']:+.3f}  "
+              f"MAE tr={m['mae_train']:.3f} te={m['mae_test']:.3f}")
 
     # ---- Routing overhead
     full_models = fit_regressors(X, rows)
@@ -223,10 +256,25 @@ def main() -> None:
 
         # In-distribution random-split summary (workload-calibrated regime).
         "eval_split_70_30": {
+            "n_train":                         len(rows_tr),
             "n_test":                          len(rows_te),
+            "longbench_avg_train":             agg_split_tr["longbench_avg"],
+            "longbench_avg_compression_ratio_train": agg_split_tr["longbench_avg_compression_ratio"],
             "longbench_avg":                   agg_split["longbench_avg"],
             "longbench_avg_compression_ratio": agg_split["longbench_avg_compression_ratio"],
             "picks":                           agg_split["picks"],
+        },
+
+        # Regressor fit quality per config (HistGradientBoosting, predicting q[c]).
+        "regressor_fit": {
+            "model":      "HistGradientBoostingRegressor(max_iter=300, max_depth=4, learning_rate=0.05, random_state=0)",
+            "n_train":    len(rows_tr),
+            "n_test":     len(rows_te),
+            "per_config": fit_metrics,
+            "mean_r2_train":  round(r2_tr_mean, 4),
+            "mean_r2_test":   round(r2_te_mean, 4),
+            "mean_mae_train": round(mae_tr_mean, 4),
+            "mean_mae_test":  round(mae_te_mean, 4),
         },
     }
 

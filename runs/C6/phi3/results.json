@@ -2,7 +2,7 @@
   "config": "C6",
   "method": "per-prompt feature-based router (HistGradientBoosting regression)",
   "model": "phi3",
-  "tau": 0.99,
+  "tau": 0.9,
   "features": [
     "seq_len_tokens",
     "seq_len_chars",
@@ -13,16 +13,15 @@
     "newline_density"
   ],
   "n_features": 7,
-  "router_overhead_us_per_prompt": 61.22,
+  "router_overhead_us_per_prompt": 65.17,
   "longbench": {
     "2wikimqa": {
       "score": 0.1261,
       "n": 20,
-      "compression": 5.299,
+      "compression": 7.279,
       "picks": {
-        "C1": 17,
-        "C2": 1,
-        "C0": 2
+        "C1": 19,
+        "C0": 1
       }
     },
     "gov_report": {
@@ -39,87 +38,84 @@
     "hotpotqa": {
       "score": 0.2051,
       "n": 20,
-      "compression": 2.91,
+      "compression": 4.87,
       "picks": {
-        "C1": 7,
-        "C2": 4,
-        "C0": 4,
-        "C4": 2,
-        "C3": 3
-      }
-    },
-    "multi_news": {
-      "score": 0.2612,
-      "n": 20,
-      "compression": 3.816,
-      "picks": {
-        "C1": 12,
-        "C4": 2,
-        "C2": 3,
-        "C0": 3
-      }
-    },
-    "multifieldqa_en": {
-      "score": 0.3603,
-      "n": 20,
-      "compression": 5.126,
-      "picks": {
-        "C2": 7,
-        "C4": 2,
         "C1": 10,
+        "C2": 5,
+        "C3": 3,
+        "C4": 1,
         "C0": 1
       }
     },
-    "narrativeqa": {
-      "score": 0.1302,
+    "multi_news": {
+      "score": 0.2635,
       "n": 20,
-      "compression": 3.783,
+      "compression": 4.7,
       "picks": {
-        "C1": 13,
-        "C5": 2,
-        "C3": 2,
-        "C0": 3
+        "C1": 14,
+        "C4": 1,
+        "C2": 2,
+        "C0": 2,
+        "C3": 1
+      }
+    },
+    "multifieldqa_en": {
+      "score": 0.3814,
+      "n": 20,
+      "compression": 7.585,
+      "picks": {
+        "C1": 14,
+        "C4": 2,
+        "C2": 4
+      }
+    },
+    "narrativeqa": {
+      "score": 0.1524,
+      "n": 20,
+      "compression": 9.105,
+      "picks": {
+        "C1": 17,
+        "C2": 3
       }
     },
     "passage_count": {
       "score": 0.0,
       "n": 20,
-      "compression": 1.242,
+      "compression": 2.768,
       "picks": {
-        "C0": 15,
-        "C5": 1,
-        "C2": 4
+        "C0": 4,
+        "C2": 10,
+        "C4": 1,
+        "C1": 3,
+        "C3": 2
       }
     },
     "qasper": {
-      "score": 0.2012,
+      "score": 0.1784,
       "n": 20,
-      "compression": 6.581,
+      "compression": 7.587,
       "picks": {
-        "C1": 12,
-        "C2": 4,
-        "C3": 2,
-        "C4": 2
+        "C1": 14,
+        "C2": 5,
+        "C3": 1
       }
     },
     "qmsum": {
-      "score": 0.2634,
+      "score": 0.2552,
       "n": 20,
-      "compression": 6.357,
+      "compression": 6.878,
       "picks": {
-        "C1": 16,
+        "C1": 18,
         "C4": 1,
-        "C2": 2,
         "C0": 1
       }
     },
     "trec": {
       "score": 0.65,
       "n": 20,
-      "compression": 7.279,
+      "compression": 10.873,
       "picks": {
-        "C1": 19,
-        "C0": 1
+        "C1": 20
       }
     },
     "triviaqa": {
@@ -129,32 +125,80 @@
       "picks": {
         "C1": 11,
         "C0": 7,
-        "C5": 1,
-        "C4": 1
+        "C4": 2
       }
     }
   },
-  "longbench_avg": 0.3093,
-  "longbench_avg_compression_ratio": 3.582,
+  "longbench_avg": 0.3106,
+  "longbench_avg_compression_ratio": 5.255,
   "picks": {
-    "C1": 131,
-    "C2": 26,
-    "C0": 37,
-    "C4": 14,
-    "C3": 8,
-    "C5": 4
+    "C1": 154,
+    "C0": 16,
+    "C4": 12,
+    "C2": 30,
+    "C3": 8
   },
   "eval_split_70_30": {
+    "n_train": 154,
     "n_test": 66,
-    "longbench_avg": 0.3472,
-    "longbench_avg_compression_ratio": 2.428,
+    "longbench_avg_train": 0.3205,
+    "longbench_avg_compression_ratio_train": 6.445,
+    "longbench_avg": 0.346,
+    "longbench_avg_compression_ratio": 3.847,
     "picks": {
-      "C0": 20,
-      "C1": 24,
-      "C2": 15,
-      "C4": 5,
+      "C0": 9,
+      "C1": 36,
+      "C2": 14,
+      "C4": 3,
       "C5": 1,
-      "C3": 1
+      "C3": 3
     }
+  },
+  "regressor_fit": {
+    "model": "HistGradientBoostingRegressor(max_iter=300, max_depth=4, learning_rate=0.05, random_state=0)",
+    "n_train": 154,
+    "n_test": 66,
+    "per_config": {
+      "C0": {
+        "r2_train": 0.8366,
+        "r2_test": -0.1868,
+        "mae_train": 0.1032,
+        "mae_test": 0.245
+      },
+      "C1": {
+        "r2_train": 0.8485,
+        "r2_test": -0.0082,
+        "mae_train": 0.0989,
+        "mae_test": 0.2248
+      },
+      "C2": {
+        "r2_train": 0.8399,
+        "r2_test": -0.0863,
+        "mae_train": 0.1032,
+        "mae_test": 0.2326
+      },
+      "C3": {
+        "r2_train": 0.8388,
+        "r2_test": -0.1311,
+        "mae_train": 0.099,
+        "mae_test": 0.235
+      },
+      "C4": {
+        "r2_train": 0.843,
+        "r2_test": -0.0649,
+        "mae_train": 0.0997,
+        "mae_test": 0.2334
+      },
+      "C5": {
+        "r2_train": 0.8448,
+        "r2_test": -0.0836,
+        "mae_train": 0.0978,
+        "mae_test": 0.2328
+      }
+    },
+    "mean_r2_train": 0.8419,
+    "mean_r2_test": -0.0935,
+    "mean_mae_train": 0.1003,
+    "mean_mae_test": 0.2339
   }
 }
