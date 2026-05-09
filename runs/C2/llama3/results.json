@@ -3,12 +3,12 @@
   "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
   "model": "llama3",
   "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
-  "ttft_ms": 2374.73,
-  "tpot_ms": 163.451,
-  "tokens_per_sec": 6.12,
+  "ttft_ms": 2550.02,
+  "tpot_ms": 197.913,
+  "tokens_per_sec": 5.05,
   "peak_vram_mb": 18168.3,
-  "kv_cache_mb": 534.99,
-  "kv_compression_ratio": 1.764,
+  "kv_cache_mb": 176.83,
+  "kv_compression_ratio": 5.337,
   "speed_prompt_tokens": 7500,
   "speed_n_decode": 50,
   "qaq_n_bits_min": 2,
@@ -17,33 +17,33 @@
   "qaq_target_error": 1.0,
   "qaq_window": 5,
   "qaq_q_norm": 248.77,
-  "qaq_avg_bits": 9.07,
+  "qaq_avg_bits": 2.998,
   "ppl_wikitext2": 7.4601,
   "ppl_n_chunks": 35,
   "longbench": {
     "narrativeqa": {
       "metric": "f1",
-      "score": 0.3461,
+      "score": 0.3006,
       "n": 20
     },
     "qasper": {
       "metric": "f1",
-      "score": 0.3354,
+      "score": 0.3568,
       "n": 20
     },
     "hotpotqa": {
       "metric": "f1",
-      "score": 0.4452,
+      "score": 0.4599,
       "n": 20
     },
     "2wikimqa": {
       "metric": "f1",
-      "score": 0.4012,
+      "score": 0.4083,
       "n": 20
     },
     "gov_report": {
       "metric": "rouge1",
-      "score": 0.3823,
+      "score": 0.3723,
       "n": 20
     },
     "trec": {
@@ -57,5 +57,5 @@
       "n": 20
     }
   },
-  "longbench_avg": 0.505
+  "longbench_avg": 0.5033
 }

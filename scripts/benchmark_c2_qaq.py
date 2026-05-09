@@ -10,10 +10,10 @@ This implements the FULL QAQ algorithm (not the fixed-bit ablation):
   - Key cache: bits derived from query-norm bound (Section 4.1, Eq. key formula)
       q_norm precomputed as upper-10th-percentile of ||Q||^2 across layers/heads
       σ_t(K) ≤ sqrt(12 / q_norm * log(T^3/(T-1) * σ_max^2 + 1))
-      B_t(K) = ceil(log2((K_max - K_min) / (2*sqrt(3)*σ_t(K))))
+      B_t(K) = ceil(log2((K_max - K_min) / (2*σ_t(K)) + 1))
   - Value cache: bits inversely proportional to attention score (Section 4.1, Eq. value)
       σ_t(V) ≤ sqrt(12/T) * σ_max / attention_t
-      B_t(V) = ceil(log2((V_max - V_min) / (2*sqrt(3)*σ_t(V))))
+      B_t(V) = ceil(log2((V_max - V_min) / (2*σ_t(V)) + 1))
   - Attention window n=5: use max attention over last 5 steps (avoids over-quantizing
     tokens that will become important)
   - 1% outliers kept at FP16 (mixed precision)
@@ -142,9 +142,9 @@ def _qaq_calc_bits_value(
     """
     Per-token per-head bit allocation for VALUE cache.
 
-    Paper formula (Section 4.1):
+    Paper formula (Section 4.1, matches official source quantizer.py):
         σ_t(V) ≤ sqrt(12/T) * σ_max / S_t
-        B_t(V) = ceil(log2((V_max - V_min) / (2*sqrt(3)*σ_t(V))))
+        B_t(V) = ceil(log2((V_max - V_min) / (2*σ_t(V)) + 1))
 
     Returns: (batch, n_heads, seq_len) int64 tensor of bits per token-head.
     """
@@ -166,8 +166,8 @@ def _qaq_calc_bits_value(
     else:
         range_v = (x.amax(dim=-1) - x.amin(dim=-1)).clamp(min=1e-8)
 
-    # B = ceil(log2(range / (2*sqrt(3)*sigma)))
-    n_bits_float = torch.log2(range_v / (2.0 * math.sqrt(3.0) * sigma_v + 1e-30))
+    # B = ceil(log2(range / (2*sigma) + 1))    [matches QAQ source: quantizer.py L_calc_quantization_bits]
+    n_bits_float = torch.log2(range_v / (2.0 * sigma_v + 1e-30) + 1.0)
     n_bits = torch.ceil(n_bits_float).to(torch.int64)
     return n_bits.clamp(n_bits_min, n_bits_max)
 
@@ -183,9 +183,9 @@ def _qaq_calc_bits_key(
     """
     Per-token per-head bit allocation for KEY cache.
 
-    Paper formula (Section 4.1):
+    Paper formula (Section 4.1, matches official source quantizer.py):
         σ_t(K) ≤ sqrt(12 / ||Q||^2 * log(T^3/(T-1) * σ_max^2 + 1))
-        B_t(K) = ceil(log2((K_max - K_min) / (2*sqrt(3)*σ_t(K))))
+        B_t(K) = ceil(log2((K_max - K_min) / (2*σ_t(K)) + 1))
 
     σ_t(K) is the same for all tokens in a given context (depends on seq_len and q_norm).
     Returns: (batch, n_heads, seq_len) int64 tensor.
@@ -207,7 +207,7 @@ def _qaq_calc_bits_key(
     else:
         range_k = (x.amax(dim=-1) - x.amin(dim=-1)).clamp(min=1e-8)
 
-    n_bits_float = torch.log2(range_k / (2.0 * math.sqrt(3.0) * sigma_k + 1e-30))
+    n_bits_float = torch.log2(range_k / (2.0 * sigma_k + 1e-30) + 1.0)
     n_bits = torch.ceil(n_bits_float).to(torch.int64)
     return n_bits.clamp(n_bits_min, n_bits_max)
 
@@ -383,6 +383,8 @@ def _qaq_quantize_full_cache_aware(
     """
     n_layers = len(cache.layers)
     state    = QAQState(n_layers, QAQ_LAST_N_ATTENTIONS)
+    _bits_sum = 0.0
+    _bits_n   = 0
 
     for i, layer in enumerate(cache.layers):
         k = layer.keys    # (batch, n_kv_heads, seq_len, head_dim)
@@ -422,6 +424,8 @@ def _qaq_quantize_full_cache_aware(
         # ----- Apply quantization -----
         layer.keys   = _qaq_apply_variable_bits(k, k_bits, QAQ_OUTLIER_RATIO)
         layer.values = _qaq_apply_variable_bits(v, v_bits, QAQ_OUTLIER_RATIO)
+        _bits_sum += float(k_bits.float().sum().item()) + float(v_bits.float().sum().item())
+        _bits_n   += int(k_bits.numel()) + int(v_bits.numel())
 
         # Initialise attention history
         if last_attn is not None:
@@ -431,6 +435,10 @@ def _qaq_quantize_full_cache_aware(
             state.step_attns[i] = []
             state.attn_max[i]   = None
 
+    measured_avg_bits = (_bits_sum / max(_bits_n, 1)) if _bits_n > 0 else float("nan")
+    # Account for outlier overhead (outlier_ratio of channels stored at 16 bits)
+    measured_avg_bits = (1.0 - QAQ_OUTLIER_RATIO) * measured_avg_bits + QAQ_OUTLIER_RATIO * 16.0
+    state.measured_avg_bits = measured_avg_bits
     return cache, state
 
 
@@ -631,15 +639,14 @@ def run_speed(model, tokenizer, model_key: str, device: str,
     tokens_per_sec = 1000.0 / tpot_ms
     peak_vram_mb   = torch.cuda.max_memory_allocated() / (1024 ** 2)
 
-    # Conservative compression estimate: assume average bits ≈ (min+max)/2 for non-outliers
-    avg_bits          = (1.0 - QAQ_OUTLIER_RATIO) * ((QAQ_N_BITS_MIN + QAQ_N_BITS_MAX) / 2) \
-                        + QAQ_OUTLIER_RATIO * 16.0
+    # Measured avg bits from actual prefill bit allocation (K + V combined)
+    avg_bits          = float(getattr(state, "measured_avg_bits", float("nan")))
     theoretical_mb    = _theoretical_kv_mb_variable(past, avg_bits)
     compression_ratio = 16.0 / avg_bits
 
     print(f"  TPOT (incl. attn+quantize): {tpot_ms:.2f} ms/tok  ({tokens_per_sec:.1f} tok/s)")
     print(f"  Peak VRAM: {peak_vram_mb:.0f} MB")
-    print(f"  Est. avg bits: {avg_bits:.2f}  Est. compression: {compression_ratio:.2f}×")
+    print(f"  Measured avg bits: {avg_bits:.2f}  Compression: {compression_ratio:.2f}×")
 
     return {
         "ttft_ms":              round(ttft_ms, 2),
