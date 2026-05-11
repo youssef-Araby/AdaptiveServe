@@ -1,0 +1,193 @@
+% adaptiveserve.bib
+% BibTeX bibliography for AdaptiveServe paper
+% ─────────────────────────────────────────────────────────────────────────────
+
+% ── KV Cache compression ──────────────────────────────────────────────────────
+
+@inproceedings{hooper2024kvquant,
+  author    = {Hooper, Coleman and Kim, Sehoon and Mohammadzadeh, Hasan and
+               Mahoney, Michael W. and Shao, Yakun Sophia and Keutzer, Kurt
+               and Gholami, Amir},
+  title     = {{KVQuant}: Towards 10 Million Context Length {LLM} Inference
+               with {KV} Cache Quantization},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2401.18079},
+  eprint    = {2401.18079},
+  archivePrefix = {arXiv}
+}
+
+@article{dynamickv,
+  author    = {Zhou, Xiabin and Wang, Wenbin and Zeng, Minyan and Shi, Yunrui
+               and Li, Xuebo and Shen, Li and Liu, Tianyi and Wang, Qingsong},
+  title     = {{DynamicKV}: Task-Aware Adaptive {KV} Cache Compression for
+               Long Context {LLMs}},
+  journal   = {arXiv preprint arXiv:2412.14838},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2412.14838},
+  eprint    = {2412.14838},
+  archivePrefix = {arXiv}
+}
+
+@article{adakv,
+  author    = {Feng, Yuan and Lv, Junlin and Cao, Yukun and Xie, Xike and
+               Zhou, S. Kevin},
+  title     = {{Ada-KV}: Optimizing {KV} Cache Eviction by Adaptive Budget
+               Allocation for Efficient {LLM} Inference},
+  journal   = {arXiv preprint arXiv:2407.11550},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2407.11550},
+  eprint    = {2407.11550},
+  archivePrefix = {arXiv}
+}
+
+@article{tailorkv,
+  author    = {Yao, Jiayi and others},
+  title     = {{TailorKV}: A Hybrid Framework for Long-Context Inference via
+               Tailored {KV} Cache Optimization},
+  journal   = {arXiv preprint arXiv:2505.19586},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2505.19586},
+  eprint    = {2505.19586},
+  archivePrefix = {arXiv},
+  note      = {Offline KV cache compression; arXiv ID to be confirmed}
+}
+
+% ── Weight sparsity ───────────────────────────────────────────────────────────
+
+@inproceedings{sun2024wanda,
+  author    = {Sun, Mingjie and Liu, Zhuang and Bair, Anna and Kolter, J. Zico},
+  title     = {A Simple and Effective Pruning Approach for Large Language
+               Models},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2306.11695},
+  eprint    = {2306.11695},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{frantar2023sparsegpt,
+  author    = {Frantar, Elias and Alistarh, Dan},
+  title     = {{SparseGPT}: Massive Language Models Can Be Accurately Pruned
+               in One Shot},
+  booktitle = {International Conference on Machine Learning},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2301.00774},
+  eprint    = {2301.00774},
+  archivePrefix = {arXiv}
+}
+
+@article{rsparse,
+  author    = {[Authors TBD]},
+  title     = {{R-Sparse}: Dynamic Activation Sparsity for Efficient
+               {LLM} Inference},
+  journal   = {arXiv preprint},
+  year      = {2024},
+  note      = {Custom CUDA kernels not publicly released as of evaluation date;
+               arXiv ID to be confirmed}
+}
+
+% ── Speculative decoding / model routing ─────────────────────────────────────
+
+@inproceedings{leviathan2023speculative,
+  author    = {Leviathan, Yaniv and Kalman, Matan and Matias, Yossi},
+  title     = {Fast Inference from Transformers via Speculative Decoding},
+  booktitle = {International Conference on Machine Learning},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2211.17192},
+  eprint    = {2211.17192},
+  archivePrefix = {arXiv}
+}
+
+@article{chen2023speculative,
+  author    = {Chen, Charlie and Borgeaud, Sebastian and Irving, Geoffrey and
+               Lespiau, Jean-Baptiste and Sifre, Laurent and Jumper, John},
+  title     = {Accelerating Large Language Model Decoding with Speculative
+               Sampling},
+  journal   = {arXiv preprint arXiv:2302.01318},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2302.01318},
+  eprint    = {2302.01318},
+  archivePrefix = {arXiv}
+}
+
+% ── Base models ───────────────────────────────────────────────────────────────
+
+@article{llama3,
+  author    = {Dubey, Abhimanyu and others},
+  title     = {The {Llama} 3 Herd of Models},
+  journal   = {arXiv preprint arXiv:2407.21783},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2407.21783},
+  eprint    = {2407.21783},
+  archivePrefix = {arXiv}
+}
+
+@article{phi3,
+  author    = {Abdin, Marah and others},
+  title     = {{Phi-3} Technical Report: {A} Highly Capable Language Model
+               Locally on Your Phone},
+  journal   = {arXiv preprint arXiv:2404.14219},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2404.14219},
+  eprint    = {2404.14219},
+  archivePrefix = {arXiv}
+}
+
+% ── Inference engines ─────────────────────────────────────────────────────────
+
+@inproceedings{vllm,
+  author    = {Kwon, Woosuk and Li, Zhuohan and Zhuang, Siyuan and Sheng,
+               Ying and Zheng, Lianmin and Yu, Cody Hao and Gonzalez, Joseph
+               E. and Zhang, Hao and Stoica, Ion},
+  title     = {Efficient Memory Management for Large Language Model Serving
+               with {PagedAttention}},
+  booktitle = {ACM Symposium on Operating Systems Principles},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2309.06180},
+  eprint    = {2309.06180},
+  archivePrefix = {arXiv}
+}
+
+% ── Benchmarks ────────────────────────────────────────────────────────────────
+
+@article{longbench,
+  author    = {Bai, Yushi and Lv, Xin and Zhang, Jiajie and Lyu, Hongchang
+               and Tang, Jiankai and Huang, Zhidian and Du, Zhengxiao and Liu,
+               Xiao and Zeng, Aohan and Hou, Lei and Dong, Yuxiao and Tang,
+               Jie and Li, Juanzi},
+  title     = {{LongBench}: {A} Bilingual, Multitask Benchmark for Long
+               Context Understanding},
+  journal   = {arXiv preprint arXiv:2308.14508},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2308.14508},
+  eprint    = {2308.14508},
+  archivePrefix = {arXiv}
+}
+
+@inproceedings{piqa,
+  author    = {Bisk, Yonatan and Zellers, Rowan and Bras, Ronan Le and Gao,
+               Jianfeng and Choi, Yejin},
+  title     = {{PIQA}: Reasoning about Physical Commonsense in Natural
+               Language},
+  booktitle = {AAAI Conference on Artificial Intelligence},
+  year      = {2020},
+  url       = {https://arxiv.org/abs/1911.11641},
+  eprint    = {1911.11641},
+  archivePrefix = {arXiv}
+}
+
+@misc{lmeval,
+  author    = {Gao, Leo and Tow, Jonathan and Abbasi, Baber and Biderman,
+               Stella and Black, Sid and DiPofi, Anthony and Foster, Charles
+               and Golding, Laurence and Hsu, Jeffrey and Le Noac'h, Alain
+               and Li, Haonan and McDonell, Kyle and Muennighoff, Niklas and
+               Ociepa, Chris and Phang, Jason and Reynolds, Laria and
+               Schoelkopf, Hailey and Skowron, Aviya and Sutawika, Lintang
+               and Tang, Eric and Thite, Anish and Wang, Ben and Wang, Kevin
+               and Zou, Andy},
+  title     = {A Framework for Few-Shot Language Model Evaluation},
+  year      = {2023},
+  howpublished = {\url{https://github.com/EleutherAI/lm-evaluation-harness}},
+  note      = {Version 0.4.x}
+}
