@@ -24,4 +24,10 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Secrets & local cost-tracking caches (MT-Bench harness)
+.env
+*.env
+runs/mtbench/judge_cache/
+runs/mtbench/budget.log
 *.pdf

@@ -80,6 +80,18 @@ MODELS_CFG: dict[str, dict] = {
         "attn_impl":        "sdpa",    # phi3 eager is 43× slower than SDPA
         "attn_aware_decode": False,
     },
+    # Llama-3.x family shares the same eager-attention behavior as Llama-3-8B,
+    # so we keep the attention-aware decode path enabled for QAQ fidelity.
+    "llama31_8b": {
+        "id":               MODELS["llama31_8b"],
+        "attn_impl":        "eager",
+        "attn_aware_decode": True,
+    },
+    "llama32_3b": {
+        "id":               MODELS["llama32_3b"],
+        "attn_impl":        "eager",
+        "attn_aware_decode": True,
+    },
 }
 
 # QAQ config (full attention-aware, variable-bit)

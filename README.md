@@ -106,7 +106,7 @@ All measurements in this README come from a single workstation:
 |---|---|
 | GPU | NVIDIA GeForce RTX 3090 Ti (24 GiB VRAM, Ampere) |
 | CPU | AMD Ryzen 9 9900X (12 cores / 24 threads) |
-| RAM | 32 GiB DDR5 |
+| RAM | 64 GiB DDR5 |
 | OS | Linux 6.6.87 (WSL2 on Windows 11) |
 | Python | 3.13.11 |
 | PyTorch | 2.11.0 + CUDA 13.0 |

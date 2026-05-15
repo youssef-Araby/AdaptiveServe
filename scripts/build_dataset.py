@@ -59,7 +59,7 @@ def _config_compression(model: str) -> dict[str, float]:
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--model", required=True, choices=["llama3", "phi3"])
+    p.add_argument("--model", required=True, choices=["llama3", "phi3", "llama31_8b", "llama32_3b"])
     p.add_argument("--out",   default=None)
     args = p.parse_args()
 

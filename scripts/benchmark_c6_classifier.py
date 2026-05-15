@@ -42,7 +42,9 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
 
 REPO     = Path(__file__).resolve().parents[1]
-CONFIGS  = ["C0", "C1", "C2", "C3", "C4", "C5"]
+CONFIGS     = ["C0", "C1", "C2", "C3", "C4", "C5"]
+CANDIDATES  = ["C1", "C2", "C3", "C4", "C5"]  # configs the router may CHOOSE
+REFERENCE   = "C0"                            # quality yardstick only — never chosen
 FEATURE_KEYS = [
     "seq_len_tokens", "seq_len_chars", "token_entropy",
     "gzip_ratio", "unique_token_ratio", "question_position",
@@ -90,18 +92,49 @@ def predict_q(models, X: np.ndarray) -> dict[str, np.ndarray]:
     return {c: reg.predict(sc.transform(X)) for c, (sc, reg) in models.items()}
 
 
-def route(rows: list[dict], q_pred: dict[str, np.ndarray], tau: float) -> list[str]:
-    """Pick the config with the highest measured compression whose predicted
-    quality is at least ``tau`` * predicted quality of C0."""
+def route(
+    rows: list[dict],
+    q_pred: dict[str, np.ndarray],
+    tau: float,
+    c0_floor: float = 0.0,
+) -> list[str]:
+    """Pick the compressed candidate with the highest measured compression
+    whose predicted quality is at least ``tau`` * max(predicted q[C0], c0_floor).
+
+    C0 (uncompressed) is the quality YARDSTICK only — it is never a routing
+    choice. The router always selects from ``CANDIDATES`` = {C1..C5}.
+
+    If no candidate clears the iso-quality bar, the safest fallback is the
+    candidate with the highest predicted quality (NOT C0): the goal is to
+    deliver compression, so we pick the best-quality compressed option rather
+    than abandoning compression entirely.
+
+    ``c0_floor`` defends against the regressor systematically under-predicting
+    C0 quality on hard tasks: when the predicted C0 collapses, the floor (set
+    to the training-set empirical mean of actual C0 scores) keeps the
+    iso-quality bar honest. Set to 0.0 to disable.
+    """
     picks: list[str] = []
     for i, r in enumerate(rows):
-        thresh = tau * q_pred["C0"][i]
-        best_c, best_cr = "C0", r["compression"]["C0"]
-        for c in CONFIGS:
+        anchor = max(float(q_pred[REFERENCE][i]), c0_floor)
+        thresh = tau * anchor
+        # Among candidates that clear the bar, pick the highest-compression one.
+        best_c, best_cr = None, -1.0
+        for c in CANDIDATES:
             if q_pred[c][i] >= thresh and r["compression"][c] > best_cr:
                 best_c, best_cr = c, r["compression"][c]
+        if best_c is None:
+            # Nothing clears the bar: pick the safest candidate (highest
+            # predicted quality), still never C0.
+            best_c = max(CANDIDATES, key=lambda c: float(q_pred[c][i]))
         picks.append(best_c)
     return picks
+
+
+def c0_floor_from_train(rows_tr: list[dict]) -> float:
+    """Empirical mean of ACTUAL C0 scores on the training fold."""
+    ys = [r["scores"]["C0"] for r in rows_tr]
+    return float(mean(ys)) if ys else 0.0
 
 
 def aggregate(rows: list[dict], picks: list[str]) -> dict:
@@ -135,21 +168,23 @@ def aggregate(rows: list[dict], picks: list[str]) -> dict:
     }
 
 
-def loto_picks(rows: list[dict], X: np.ndarray, tau: float) -> list[str]:
+def loto_picks(rows: list[dict], X: np.ndarray, tau: float, use_floor: bool = True) -> list[str]:
     tasks = sorted({r["task"] for r in rows})
     picks: list[str | None] = [None] * len(rows)
     for held in tasks:
         tr = [i for i, r in enumerate(rows) if r["task"] != held]
         te = [i for i, r in enumerate(rows) if r["task"] == held]
-        models = fit_regressors(X[tr], [rows[i] for i in tr])
+        rows_tr = [rows[i] for i in tr]
+        models = fit_regressors(X[tr], rows_tr)
         q_pred = predict_q(models, X[te])
         rows_te = [rows[i] for i in te]
-        for i, c in zip(te, route(rows_te, q_pred, tau)):
+        floor = c0_floor_from_train(rows_tr) if use_floor else 0.0
+        for i, c in zip(te, route(rows_te, q_pred, tau, c0_floor=floor)):
             picks[i] = c
     return picks  # type: ignore[return-value]
 
 
-def split_picks(rows: list[dict], X: np.ndarray, tau: float, seed: int = 0):
+def split_picks(rows: list[dict], X: np.ndarray, tau: float, seed: int = 0, use_floor: bool = True):
     rng = np.random.default_rng(seed)
     idx = rng.permutation(len(rows))
     n_tr = int(0.7 * len(rows))
@@ -173,8 +208,9 @@ def split_picks(rows: list[dict], X: np.ndarray, tau: float, seed: int = 0):
     q_pred_te = predict_q(models, X[te])
     rows_te = [rows[i] for i in te]
     rows_tr = [rows[i] for i in tr]
-    picks_te = route(rows_te, q_pred_te, tau)
-    picks_tr = route(rows_tr, q_pred_tr, tau)
+    floor = c0_floor_from_train(rows_tr) if use_floor else 0.0
+    picks_te = route(rows_te, q_pred_te, tau, c0_floor=floor)
+    picks_tr = route(rows_tr, q_pred_tr, tau, c0_floor=floor)
     return rows_te, picks_te, rows_tr, picks_tr, fit_metrics
 
 
@@ -196,22 +232,83 @@ def main() -> None:
     ap.add_argument("--model", required=True, choices=["llama3", "phi3"])
     ap.add_argument("--tau", type=float, default=0.99,
                     help="iso-quality threshold (predicted q[c] >= tau * predicted q[C0])")
+    ap.add_argument("--no-floor", action="store_true",
+                    help="disable the C0 empirical-mean floor on the iso-quality anchor "
+                         "(restores legacy behavior where thresh = tau * pred_C0)")
+    ap.add_argument("--tau-sweep", type=str, default=None,
+                    help="comma-separated tau values to evaluate; writes a summary "
+                         "to runs/C6/{model}/tau_sweep.json and skips the headline run")
     args = ap.parse_args()
+    use_floor = not args.no_floor
 
     rows = load_dataset(args.model)
     X    = featurize(rows)
-    print(f"\n=== C6 router  model={args.model}  tau={args.tau}  "
+
+    # ---- Tau-sweep mode: evaluate many taus on existing dataset, no GPU.
+    if args.tau_sweep:
+        taus = [float(t) for t in args.tau_sweep.split(",") if t.strip()]
+        print(f"\n=== C6 tau-sweep  model={args.model}  use_floor={use_floor}  "
+              f"taus={taus}  n={len(rows)} ===\n")
+        sweep = []
+        for tau in taus:
+            picks_loto_t = loto_picks(rows, X, tau, use_floor=use_floor)
+            agg_loto_t   = aggregate(rows, picks_loto_t)
+            rows_te_t, picks_te_t, rows_tr_t, picks_tr_t, _ = split_picks(
+                rows, X, tau, seed=0, use_floor=use_floor)
+            agg_split_t    = aggregate(rows_te_t, picks_te_t)
+            agg_split_tr_t = aggregate(rows_tr_t, picks_tr_t)
+            # iso-quality contract violation rate (per-prompt): picked_score < tau * actual_C0
+            def viol_rate(rs, ps):
+                v = sum(1 for r, c in zip(rs, ps) if r["scores"][c] < tau * r["scores"]["C0"])
+                return round(v / max(len(rs), 1), 4)
+            entry = {
+                "tau": tau,
+                "loto": {
+                    "q":  agg_loto_t["longbench_avg"],
+                    "cr": agg_loto_t["longbench_avg_compression_ratio"],
+                    "picks": agg_loto_t["picks"],
+                    "violation_rate": viol_rate(rows, picks_loto_t),
+                },
+                "split_test": {
+                    "q":  agg_split_t["longbench_avg"],
+                    "cr": agg_split_t["longbench_avg_compression_ratio"],
+                    "picks": agg_split_t["picks"],
+                    "violation_rate": viol_rate(rows_te_t, picks_te_t),
+                },
+                "split_train": {
+                    "q":  agg_split_tr_t["longbench_avg"],
+                    "cr": agg_split_tr_t["longbench_avg_compression_ratio"],
+                },
+            }
+            sweep.append(entry)
+            print(f"tau={tau:.2f}  "
+                  f"LOTO q={entry['loto']['q']:.3f} cr={entry['loto']['cr']:.2f}x "
+                  f"viol={entry['loto']['violation_rate']:.0%}  |  "
+                  f"Split-te q={entry['split_test']['q']:.3f} cr={entry['split_test']['cr']:.2f}x "
+                  f"viol={entry['split_test']['violation_rate']:.0%}  "
+                  f"picks={entry['split_test']['picks']}")
+        out_dir = REPO / "runs" / "C6" / args.model
+        out_dir.mkdir(parents=True, exist_ok=True)
+        suffix = "_nofloor" if not use_floor else ""
+        (out_dir / f"tau_sweep{suffix}.json").write_text(json.dumps({
+            "model": args.model, "use_floor": use_floor, "sweep": sweep,
+        }, indent=2))
+        print(f"\nwrote {out_dir/('tau_sweep'+suffix+'.json')}")
+        return
+
+    print(f"\n=== C6 router  model={args.model}  tau={args.tau}  use_floor={use_floor}  "
           f"features={len(FEATURE_KEYS)}  n={len(rows)} ===\n")
 
     # ---- LOTO (OOD by task) -- headline numbers
-    picks_loto = loto_picks(rows, X, args.tau)
+    picks_loto = loto_picks(rows, X, args.tau, use_floor=use_floor)
     agg_loto   = aggregate(rows, picks_loto)
     print(f"LOTO (OOD): q={agg_loto['longbench_avg']:.4f}  "
           f"cr={agg_loto['longbench_avg_compression_ratio']:.2f}x  "
           f"picks={agg_loto['picks']}")
 
     # ---- Random 70/30 split (in-dist)
-    rows_te, picks_te, rows_tr, picks_tr, fit_metrics = split_picks(rows, X, args.tau, seed=0)
+    rows_te, picks_te, rows_tr, picks_tr, fit_metrics = split_picks(
+        rows, X, args.tau, seed=0, use_floor=use_floor)
     agg_split = aggregate(rows_te, picks_te)
     agg_split_tr = aggregate(rows_tr, picks_tr)
     print(f"Split-tr : q={agg_split_tr['longbench_avg']:.4f}  "
@@ -244,6 +341,7 @@ def main() -> None:
         "method": "per-prompt feature-based router (HistGradientBoosting regression)",
         "model":  args.model,
         "tau":    args.tau,
+        "use_floor": use_floor,
         "features": FEATURE_KEYS,
         "n_features": len(FEATURE_KEYS),
         "router_overhead_us_per_prompt": round(overhead_us, 2),

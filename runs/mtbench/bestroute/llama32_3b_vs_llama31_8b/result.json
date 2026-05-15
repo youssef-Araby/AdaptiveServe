@@ -1,0 +1,180 @@
+{
+  "n_prompts": 80,
+  "judge": "gpt-4o",
+  "small": "llama32_3b",
+  "large": "llama31_8b",
+  "margin": 0.0,
+  "classifier": "logreg",
+  "feature_keys": [
+    "seq_len_tokens",
+    "seq_len_chars",
+    "token_entropy",
+    "gzip_ratio",
+    "unique_token_ratio",
+    "newline_density",
+    "cat_coding",
+    "cat_extraction",
+    "cat_humanities",
+    "cat_math",
+    "cat_reasoning",
+    "cat_roleplay",
+    "cat_stem",
+    "cat_writing"
+  ],
+  "base_rate_small_wins": 0.6375,
+  "reference_policies": {
+    "always_small": {
+      "quality": 7.7375,
+      "latency_s": 1043.179,
+      "frac_small": 1.0
+    },
+    "always_large": {
+      "quality": 8.3625,
+      "latency_s": 1252.961,
+      "frac_small": 0.0
+    },
+    "random_50_50": {
+      "quality": 7.975,
+      "latency_s": 1143.0430000000001,
+      "frac_small": 0.4875
+    },
+    "oracle": {
+      "quality": 8.7,
+      "latency_s": 1152.9660000000001,
+      "frac_small": 0.6375
+    },
+    "category_loo": {
+      "quality": 7.9375,
+      "latency_s": 1050.127,
+      "frac_small": 0.75
+    }
+  },
+  "best_route_pareto": [
+    {
+      "threshold": 0.0,
+      "quality": 7.7375,
+      "latency_s": 1043.179,
+      "frac_small": 1.0
+    },
+    {
+      "threshold": 0.05,
+      "quality": 7.7375,
+      "latency_s": 1043.179,
+      "frac_small": 1.0
+    },
+    {
+      "threshold": 0.1,
+      "quality": 7.7375,
+      "latency_s": 1041.499,
+      "frac_small": 0.975
+    },
+    {
+      "threshold": 0.15000000000000002,
+      "quality": 7.7375,
+      "latency_s": 1041.499,
+      "frac_small": 0.975
+    },
+    {
+      "threshold": 0.2,
+      "quality": 7.7375,
+      "latency_s": 1041.499,
+      "frac_small": 0.975
+    },
+    {
+      "threshold": 0.25,
+      "quality": 7.65,
+      "latency_s": 1043.788,
+      "frac_small": 0.95
+    },
+    {
+      "threshold": 0.30000000000000004,
+      "quality": 7.65,
+      "latency_s": 1038.213,
+      "frac_small": 0.875
+    },
+    {
+      "threshold": 0.35000000000000003,
+      "quality": 7.8375,
+      "latency_s": 1043.831,
+      "frac_small": 0.7625
+    },
+    {
+      "threshold": 0.4,
+      "quality": 8.0125,
+      "latency_s": 1064.638,
+      "frac_small": 0.6625
+    },
+    {
+      "threshold": 0.45,
+      "quality": 8.1125,
+      "latency_s": 1103.2649999999999,
+      "frac_small": 0.5375
+    },
+    {
+      "threshold": 0.5,
+      "quality": 8.2,
+      "latency_s": 1139.004,
+      "frac_small": 0.4125
+    },
+    {
+      "threshold": 0.55,
+      "quality": 8.35,
+      "latency_s": 1201.663,
+      "frac_small": 0.325
+    },
+    {
+      "threshold": 0.6000000000000001,
+      "quality": 8.4125,
+      "latency_s": 1210.8029999999999,
+      "frac_small": 0.2875
+    },
+    {
+      "threshold": 0.65,
+      "quality": 8.425,
+      "latency_s": 1214.431,
+      "frac_small": 0.275
+    },
+    {
+      "threshold": 0.7000000000000001,
+      "quality": 8.4375,
+      "latency_s": 1221.513,
+      "frac_small": 0.2625
+    },
+    {
+      "threshold": 0.75,
+      "quality": 8.4375,
+      "latency_s": 1221.513,
+      "frac_small": 0.2625
+    },
+    {
+      "threshold": 0.8,
+      "quality": 8.5125,
+      "latency_s": 1228.118,
+      "frac_small": 0.2375
+    },
+    {
+      "threshold": 0.8500000000000001,
+      "quality": 8.5,
+      "latency_s": 1213.8270000000002,
+      "frac_small": 0.1375
+    },
+    {
+      "threshold": 0.9,
+      "quality": 8.5,
+      "latency_s": 1213.8270000000002,
+      "frac_small": 0.1375
+    },
+    {
+      "threshold": 0.9500000000000001,
+      "quality": 8.5,
+      "latency_s": 1217.989,
+      "frac_small": 0.1125
+    },
+    {
+      "threshold": 1.0,
+      "quality": 8.3625,
+      "latency_s": 1252.961,
+      "frac_small": 0.0
+    }
+  ]
+}

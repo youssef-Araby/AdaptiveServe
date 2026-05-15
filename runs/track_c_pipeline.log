@@ -1,0 +1,144 @@
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Config : C0 (FP16 full KV cache, no compression)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C0/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<01:16,  3.30it/s]Loading weights:  15%|█▌        | 39/254 [00:00<00:01, 121.91it/s]Loading weights:  26%|██▌       | 66/254 [00:00<00:01, 154.69it/s]Loading weights:  37%|███▋      | 93/254 [00:00<00:00, 177.70it/s]Loading weights:  45%|████▌     | 115/254 [00:00<00:00, 189.31it/s]Loading weights:  54%|█████▍    | 138/254 [00:00<00:00, 194.32it/s]Loading weights:  65%|██████▍   | 165/254 [00:00<00:00, 200.60it/s]Loading weights:  76%|███████▌  | 192/254 [00:01<00:00, 207.81it/s]Loading weights:  86%|████████▌ | 219/254 [00:01<00:00, 210.49it/s]Loading weights:  97%|█████████▋| 246/254 [00:01<00:00, 214.47it/s]Loading weights: 100%|██████████| 254/254 [00:01<00:00, 184.85it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+
+=== Speed benchmark ===
+  Prompt: 7500 tokens
+  TTFT: 877.7 ms
+  KV cache after prefill: 820.3 MB
+  TPOT: 37.53 ms/tok  (26.6 tok/s)
+  Peak VRAM: 8847 MB
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 2  (chunk_size=131072, score all tokens)
+Traceback (most recent call last):
+  File "/home/youssef/projects/research/AdaptiveServe/scripts/benchmark_c0_baseline.py", line 245, in <module>
+    main()
+    ~~~~^^
+  File "/home/youssef/projects/research/AdaptiveServe/scripts/benchmark_c0_baseline.py", line 223, in main
+    results.update(run_ppl(model, tokenizer, args.model, device))
+                   ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/youssef/projects/research/AdaptiveServe/scripts/_common.py", line 349, in run_ppl
+    log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+  File "/home/youssef/miniconda3/lib/python3.13/site-packages/torch/nn/functional.py", line 2267, in log_softmax
+    ret = input.log_softmax(dim)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 31.31 GiB. GPU 0 has a total capacity of 23.99 GiB of which 0 bytes is free. Of the allocated memory 37.31 GiB is allocated by PyTorch, and 11.04 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Config : C0 (FP16 full KV cache, no compression)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C0/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<01:12,  3.47it/s]Loading weights:  15%|█▌        | 39/254 [00:00<00:01, 127.31it/s]Loading weights:  24%|██▍       | 62/254 [00:00<00:01, 157.11it/s]Loading weights:  33%|███▎      | 84/254 [00:00<00:00, 171.33it/s]Loading weights:  44%|████▎     | 111/254 [00:00<00:00, 188.27it/s]Loading weights:  54%|█████▍    | 138/254 [00:00<00:00, 197.04it/s]Loading weights:  65%|██████▍   | 165/254 [00:00<00:00, 202.86it/s]Loading weights:  76%|███████▌  | 192/254 [00:01<00:00, 203.87it/s]Loading weights:  86%|████████▌ | 219/254 [00:01<00:00, 210.78it/s]Loading weights:  96%|█████████▌| 244/254 [00:01<00:00, 220.31it/s]Loading weights: 100%|██████████| 254/254 [00:01<00:00, 185.90it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== Speed benchmark ===
+  Prompt: 7500 tokens
+  TTFT: 833.4 ms
+  KV cache after prefill: 820.3 MB
+  TPOT: 45.40 ms/tok  (22.0 tok/s)
+  Peak VRAM: 8847 MB
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 35  (chunk_size=8192, score all tokens)
+  chunk 5/35  PPL=9.880
+  chunk 10/35  PPL=9.144
+  chunk 15/35  PPL=9.428
+  chunk 20/35  PPL=9.282
+  chunk 25/35  PPL=9.627
+  chunk 30/35  PPL=9.581
+  chunk 35/35  PPL=9.573
+  Final PPL: 9.5731
+
+=== LongBench ===
+  narrativeqa [5/20]  f1=0.1668
+  narrativeqa [10/20]  f1=0.2588
+  narrativeqa [15/20]  f1=0.3232
+  narrativeqa [20/20]  f1=0.3077
+  narrativeqa  FINAL f1=0.3077  (n=20)
+  qasper [5/20]  f1=0.2248
+  qasper [10/20]  f1=0.2831
+  qasper [15/20]  f1=0.3119
+  qasper [20/20]  f1=0.3435
+  qasper  FINAL f1=0.3435  (n=20)
+  multifieldqa_en [5/20]  f1=0.5066
+  multifieldqa_en [10/20]  f1=0.5490
+  multifieldqa_en [15/20]  f1=0.5540
+  multifieldqa_en [20/20]  f1=0.4491
+  multifieldqa_en  FINAL f1=0.4491  (n=20)
+  hotpotqa [5/20]  f1=0.1467
+  hotpotqa [10/20]  f1=0.2213
+  hotpotqa [15/20]  f1=0.2587
+  hotpotqa [20/20]  f1=0.3440
+  hotpotqa  FINAL f1=0.3440  (n=20)
+  2wikimqa [5/20]  f1=0.2364
+  2wikimqa [10/20]  f1=0.3182
+  2wikimqa [15/20]  f1=0.4988
+  2wikimqa [20/20]  f1=0.4741
+  2wikimqa  FINAL f1=0.4741  (n=20)
+  gov_report [5/20]  rouge1=0.4986
+  gov_report [10/20]  rouge1=0.4657
+  gov_report [15/20]  rouge1=0.4469
+  gov_report [20/20]  rouge1=0.4360
+  gov_report  FINAL rouge1=0.4360  (n=20)
+  multi_news [5/20]  rouge1=0.3321
+  multi_news [10/20]  rouge1=0.3297
+  multi_news [15/20]  rouge1=0.3341
+  multi_news [20/20]  rouge1=0.3362
+  multi_news  FINAL rouge1=0.3362  (n=20)
+  qmsum [5/20]  rouge1=0.3100
+  qmsum [10/20]  rouge1=0.3217
+  qmsum [15/20]  rouge1=0.2984
+  qmsum [20/20]  rouge1=0.2918
+  qmsum  FINAL rouge1=0.2918  (n=20)
+  passage_count [5/20]  count_em=0.2000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.0500
+  passage_count  FINAL count_em=0.0500  (n=20)
+  trec [5/20]  accuracy=0.6000
+  trec [10/20]  accuracy=0.6000
+  trec [15/20]  accuracy=0.6000
+  trec [20/20]  accuracy=0.6500
+  trec  FINAL accuracy=0.6500  (n=20)
+  triviaqa [5/20]  f1=0.9143
+  triviaqa [10/20]  f1=0.9571
+  triviaqa [15/20]  f1=0.9714
+  triviaqa [20/20]  f1=0.9519
+  triviaqa  FINAL f1=0.9519  (n=20)
+
+Saved → runs/C0/llama32_3b/results.json
+{
+  "config": "C0",
+  "method": "none (FP16 full KV cache)",
+  "model": "llama32_3b",
+  "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+  "ttft_ms": 833.37,
+  "tpot_ms": 45.4,
+  "tokens_per_sec": 22.03,
+  "peak_vram_mb": 8847.3,
+  "kv_cache_mb": 820.31,
+  "kv_compression_ratio": 1.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 9.5731,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4213
+}
+
+Config : C3 (KVQuant — 4-bit per-channel K + per-token V, 1.0% FP16 outliers)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C3/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<00:48,  5.27it/s]Loading weights:  19%|█▉        | 48/254 [00:00<00:01, 198.41it/s]Loading weights:  37%|███▋      | 93/254 [00:00<00:00, 276.27it/s]Loading weights:  54%|█████▍    | 138/254 [00:00<00:00, 334.01it/s]Loading weights:  72%|███████▏  | 182/254 [00:00<00:00, 365.70it/s]Loading weights:  87%|████████▋ | 222/254 [00:00<00:00, 364.94it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 322.20it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
