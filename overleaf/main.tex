@@ -1,0 +1,147 @@
+\documentclass[10pt, conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\bibliographystyle{IEEEtran}
+
+\begin{document}
+
+\title{AdaptiveServe: A Multi-Layer Optimization Framework for Cloud-Native LLM Inference}
+
+\author{\IEEEauthorblockN{Youssef Araby, Rodaina Hebishy, Ayah Nasser Mohamed, Omar Farid, Fakhry}
+\IEEEauthorblockA{\textit{Faculty of Informatics and Computer Science} \\
+Egypt \\
+}
+}
+
+\maketitle
+
+\begin{abstract}
+Serving Large Language Models (LLMs) in cloud-native environments is
+bottlenecked by memory (Key-Value cache), compute (dense feed-forward
+networks), and cost (uniform model routing). Existing literature offers
+isolated solutions that often fail to generalize or break down in modern
+production engines. In this paper, we present AdaptiveServe, a multi-layer
+inference framework. We first introduce a two-layer adaptive KV-cache
+compression system. We identify a per-prompt routability signal in some
+LLM families: across long-context tasks, different KV-cache compression
+techniques produce variable per-prompt quality outcomes. By exploiting
+this signal with a classifier routing over five published compressors
+(TailorKV, QAQ, KVQuant, DynamicKV, Ada-KV)---using surface features
+extracted in 64\,$\mu$s---we achieve strict Pareto dominance over every
+fixed compressor on LLaMA-3-8B and Phi-3-mini, delivering 6.54$\times$
+and 6.20$\times$ KV-cache compression while improving full LongBench
+quality by 5.6\% and 11.0\% respectively over the FP16 baseline. Second,
+we present an empirical critique of activation sparsity in production,
+documenting the failure of custom R-Sparse kernels and a severe 18.2
+percentage point accuracy regression when deploying Wanda 2:4 on vLLM
+due to deprecated sparse tensor support. Finally, we analyze query
+routing dynamics, demonstrating that (a) modern small models
+(Phi-3-mini) can outperform larger models (LLaMA-3-8B) on open-ended
+chat benchmarks (MT-Bench, GPT-4o judge), and (b) even on same-family
+distill pairs (LLaMA-3.2-3B vs LLaMA-3.1-8B), reproduced
+BEST-Route~\cite{ding2025bestroute} gains fall within judge
+variance---suggesting that the cost-saving claims of the published
+model-routing literature~\cite{chen2023frugalgpt, ding2024hybridllm,
+ong2024routellm} depend on capability gaps wider than modern same-family
+LLM pairs provide.
+\end{abstract}
+
+\begin{IEEEkeywords}
+LLM Inference, KV Cache, Quantization, Sparsity, vLLM, Query Routing
+\end{IEEEkeywords}
+\section{Introduction}
+Large language models (LLMs) have become foundational infrastructure for a wide range of natural language processing tasks, from conversational agents to code generation and scientific reasoning \cite{brown2020language, touvron2023llama}. As model capabilities scale with parameter count and context window length, the computational and memory demands of inference have emerged as a critical bottleneck for deployment. Among these demands, the key-value (KV) cache stands out as a particularly acute constraint \cite{pope2023efficiently}. During autoregressive generation, the model maintains a cache of key and value tensors for every previously processed token so that it does not need to recompute attention over the full prefix. This cache grows linearly with sequence length and can consume tens of gigabytes of GPU memory—often exceeding the memory footprint of the model weights themselves \cite{kwon2023efficient}. On a single-GPU workstation, an LLM serving long contexts may devote over half its available memory to the KV cache alone, severely limiting batch size, concurrent user capacity, and maximum context length. The practical consequence is clear: every gigabyte that the KV cache does not consume is a gigabyte that the operator can allocate to a larger model, more concurrent requests, or longer supported contexts.
+Beyond the memory constraints of the KV cache, LLM deployment is further bottlenecked by computational density and hosting costs. To optimize compute, theoretical methods like dynamic activation pruning \cite{wang2023rsparse} and static weight pruning \cite{sun2023wanda} have been proposed. However, translating these theoretical sparsity optimizations into production environments presents significant friction \cite{hoefler2021sparsity, gale2019state}. Similarly, to mitigate deployment costs, query-level routing between large and small models is often utilized \cite{chen2023frugalgpt}, though this strategy is increasingly complicated by the rapid capability advancements of modern small models. In this paper, we present AdaptiveServe, a multi-layer framework that investigates these real-world deployment barriers. We introduce a prompt-level router to solve the KV-cache memory fragmentation, expose the realities of applying compute sparsity in modern engines, and analyze the limitations of cost-based model routing.
+
+The primary contributions of our work are summarized as follows:
+\begin{itemize}
+    \item \textbf{We propose} AdaptiveServe-KV, a per-prompt router that selects among five published KV-cache compressors (TailorKV, QAQ, KVQuant, DynamicKV, Ada-KV) using low-overhead prompt surface features. \textbf{We show} that this inter-method scheduling achieves strict Pareto dominance over every fixed compressor on suitable model families, and characterize the regimes where compressors converge in quality and routing degenerates.
+    \item \textbf{We document} the friction of deploying compute-sparsity optimizations in production engines, identifying a severe accuracy regression for Wanda 2:4 on vLLM and the absence of speedup for R-Sparse in HuggingFace---both arising from deprecated sparse-tensor kernel paths, not from the algorithms themselves.
+    \item \textbf{We empirically test} the limits of cost-based model routing by reproducing BEST-Route on two model pairs, showing that modern small models can match or exceed larger ones on open-ended chat, and that same-family distill pairs yield routing gains within judge variance---challenging the cost-saving claims of the routing literature.
+\end{itemize}
+
+\section{Related Work}
+
+\subsection{KV-Cache Compression}\label{sec:related-kv}
+KV-cache compression for long-context LLM inference falls into three method families.
+\textit{Quantization} reduces numerical precision per element: KVQuant~\cite{hooper2024kvquant} applies per-channel key and per-token value quantization with $1\%$ FP16 outliers, while QAQ~\cite{dong2024qaq} allocates per-token-head bits adaptively based on attention magnitude.
+\textit{Eviction} discards low-importance tokens: earlier work pioneered token eviction (SnapKV~\cite{li2024snapkv}, H$_2$O~\cite{zhang2023h2o}, StreamingLLM~\cite{xiao2024streamingllm}); the methods we evaluate build on this lineage with per-layer (DynamicKV~\cite{zhou2024dynamickv}) and per-head (Ada-KV~\cite{feng2024adakv}) budget allocation.
+\textit{Hybrid} methods combine both: TailorKV~\cite{yao2025tailorkv} applies 1-bit quantization on dense-attention layers and SnapKV-style eviction on sparse-attention layers, reaching $33\times$ compression on long contexts.
+Recent work also addresses adaptivity \textit{within} a single method: AdaptCache~\cite{feng2025adaptcache} selects a compression algorithm per stored cache entry from offline-profiled quality--delay curves, optimizing the cross-request reuse setting (e.g., RAG, multi-turn).
+
+\subsection{Compute Sparsity in LLM Inference}
+Compute-sparsity work spans two complementary directions. Dynamic activation sparsity (R-Sparse~\cite{wang2023rsparse}) predicts and skips inactive neurons at runtime, while static weight pruning (Wanda~\cite{sun2023wanda}) produces structured-sparse weight matrices (e.g., 2{:}4 patterns) offline. Both lines depend on specialized kernels to realize speedups, and the gap between published algorithmic gains and production-engine support is well-documented~\cite{hoefler2021sparsity, gale2019state}.
+
+\subsection{Query and Model Routing}
+FrugalGPT~\cite{chen2023frugalgpt} introduced cost-based query routing: cheap models handle easy queries, expensive models handle hard ones. HybridLLM~\cite{ding2024hybridllm} formalized this as a binary pair-wise router with a small classifier. RouteLLM~\cite{ong2024routellm} trained routers on Chatbot Arena preference data and reported $40$--$85\%$ cost reductions versus GPT-4 baselines. BEST-Route~\cite{ding2025bestroute} extended pair-wise routing with best-of-$N$ sampling, claiming up to $60\%$ cost reduction at $<1\%$ quality loss. Across these works the routing pairs span a wide capability gap (e.g., GPT-4 versus Llama-7B, Claude-3-Opus versus Llama-3-8B), leaving the regime of same-family distill pairs largely unexplored.
+
+\section{Dataset}\label{sec:dataset}
+
+Our router relies on a routing dataset constructed specifically for this work. Each entry pairs a prompt with seven cheap surface features extracted from its text and with the per-prompt quality and compression ratio that every KV-cache configuration delivered on that prompt. The features are organised along three axes---length, redundancy, and document structure---which we claim carry enough signal to predict the best configuration per prompt without any model forward pass; we validate this empirically in Section~\ref{sec:results-kv}.
+
+\subsection{Surface Features}\label{sec:features}
+The seven features, summarised in Table~\ref{tab:features}, are organised along the three axes introduced above.
+
+\begin{table}[t]
+\centering
+\caption{Surface features extracted per prompt. All are computable in microseconds without any model forward pass.}
+\label{tab:features}
+\begin{tabular}{lll}
+\toprule
+\textbf{Name} & \textbf{Definition} & \textbf{Axis} \\
+\midrule
+\texttt{seq\_len\_tokens}     & Token count                                & Length \\
+\texttt{seq\_len\_chars}      & Character count                            & Length \\
+\texttt{token\_entropy}       & Shannon entropy of tokens                  & Redundancy \\
+\texttt{gzip\_ratio}          & gzip bytes / raw bytes                     & Redundancy \\
+\texttt{unique\_token\_ratio} & Type-token ratio                           & Redundancy \\
+\texttt{question\_position}   & Offset of last `?' / length                & Structure \\
+\texttt{newline\_density}     & count(\texttt{\textbackslash n}) / length  & Structure \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Length signals}
+Length is the dominant signal for fixed-budget eviction methods, whose compression ratio scales approximately linearly with sequence length above the budget threshold.
+
+\paragraph{Redundancy signals}
+The three redundancy features are complementary proxies for information density. Low-redundancy prompts (dense scientific text) tolerate aggressive quantization poorly; high-redundancy prompts (multi-document RAG) sustain it well.
+
+\paragraph{Document structure}
+Question position and newline density capture task layout: late-question / high-newline prompts suit question-aware retention, while low-newline narratives suit conservative full-cache retention.
+
+All seven features are computed before any model forward pass; combined with the six regressor predicts of Section~\ref{sec:router-training}, end-to-end routing overhead averages $64\,\mu$s per prompt on a single CPU thread---under 0.01\% of typical prefill latency. We deliberately exclude task identity from the feature set: a deployable router cannot rely on knowing which benchmark a prompt came from at request time.
+
+\subsection{Data Collection}\label{sec:data-collection}
+Labels are collected via an offline pass over LongBench~\cite{bai2023longbench}, the standard suite for long-context LLM evaluation (11 tasks $\times$ 20 prompts $=$ 220 prompts per model). LongBench spans extractive QA (NarrativeQA, Qasper, MultiFieldQA-en), multi-hop reasoning (HotpotQA, 2WikiMQA), summarisation (GovReport, MultiNews, QMSum), and three short-form tasks (PassageCount, TREC, TriviaQA). For each prompt $p$, we run every configuration $c \in \mathcal{C}$ end-to-end and record both the per-prompt quality $q(c, p)$ (scored under the task-specific LongBench metric) and the per-prompt effective compression ratio $\mathrm{CR}(c, p)$. The resulting dataset contains 220 routing examples per (model, configuration) pair, performed once per deployment offline.
+
+\section{Methodology}
+
+\subsection{AdaptiveServe-KV: Per-Prompt KV-Cache Router}
+
+\subsubsection{Problem Formulation}
+Given a set of $K{+}1$ KV-cache configurations $\mathcal{C} = \{c_0, c_1, \ldots, c_K\}$ where $c_0$ denotes the uncompressed FP16 baseline and $c_1, \ldots, c_K$ are published compression methods, the per-prompt routing problem is: for each incoming prompt $p$, select a configuration $c^\star(p) \in \mathcal{C}$ that maximises a target objective. We adopt an \emph{iso-quality} objective: pick the configuration whose \emph{predicted} quality on $p$ is at least $\tau$ times the predicted FP16 baseline quality (where $\tau \in (0, 1]$ is a user-supplied tolerance), breaking ties by compression ratio. Predictions are produced by lightweight regressors over the surface features of Section~\ref{sec:features}, so the entire decision is made before any model forward pass; the decision overhead must be negligible compared to prefill latency.
+
+We instantiate $\mathcal{C}$ with $K=5$ inner methods spanning the three families surveyed in Section~\ref{sec:related-kv} (TailorKV~\cite{yao2025tailorkv}, QAQ~\cite{dong2024qaq}, KVQuant~\cite{hooper2024kvquant}, DynamicKV~\cite{zhou2024dynamickv}, and Ada-KV~\cite{feng2024adakv}) plus the FP16 baseline ($c_0$).
+
+\subsubsection{Regressor Training}\label{sec:router-training}
+For each configuration $c \in \mathcal{C}$ we train one gradient-boosted regressor (\texttt{HistGradientBoostingRegressor} from scikit-learn) to predict the per-prompt quality $\hat{q}(c, p)$ from the seven-feature vector (Section~\ref{sec:features}), using the per-prompt scores collected in Section~\ref{sec:data-collection} as labels. All regressors share the same hyperparameters: \texttt{max\_iter}$=300$ boosting iterations, \texttt{max\_depth}$=4$ per tree, \texttt{learning\_rate}$=0.05$. Features are standardised with a per-fold \texttt{StandardScaler}. Gradient-boosted trees suit the small-data regime ($\sim$220 prompts per model) where neural alternatives would overfit; they also expose per-feature importance for post-hoc inspection.
+
+\subsubsection{Iso-quality Decision Rule}\label{sec:router-rule}
+At inference time, given the features of incoming prompt $p$, the six regressors produce $\hat{q}(c_0, p), \ldots, \hat{q}(c_K, p)$. The router selects
+\[
+c^\star(p) = \arg\max_{c \in \mathcal{C} \setminus \{c_0\}} \mathrm{CR}(c, p)
+\quad\text{subject to}\quad
+\hat{q}(c, p) \geq \tau \cdot \max\bigl(\hat{q}(c_0, p),\, \bar{q}_0\bigr),
+\]
+where $\mathrm{CR}(c, p)$ is the per-prompt compression ratio and $\bar{q}_0$ is the training-set mean baseline quality (a floor that prevents the iso-quality bar from collapsing on hard prompts where $\hat{q}(c_0, p)$ is itself low). The FP16 baseline $c_0$ is excluded from the candidate set: it serves only as the quality yardstick. If no candidate clears the bar, the router falls back to the highest-predicted-quality candidate.
+
+\bibliography{ref}
+\end{document}

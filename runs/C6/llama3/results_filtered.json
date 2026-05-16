@@ -1,0 +1,189 @@
+{
+  "config": "C6",
+  "method": "per-prompt feature-based router (HistGradientBoosting regression)",
+  "model": "llama3",
+  "tau": 0.99,
+  "use_floor": true,
+  "features": [
+    "seq_len_tokens",
+    "seq_len_chars",
+    "token_entropy",
+    "gzip_ratio",
+    "unique_token_ratio",
+    "question_position",
+    "newline_density"
+  ],
+  "n_features": 7,
+  "router_overhead_us_per_prompt": 65.58,
+  "longbench": {
+    "2wikimqa": {
+      "score": 0.4012,
+      "n": 20,
+      "compression": 4.818,
+      "picks": {
+        "C5": 4,
+        "C3": 7,
+        "C4": 9
+      }
+    },
+    "gov_report": {
+      "score": 0.3352,
+      "n": 20,
+      "compression": 4.437,
+      "picks": {
+        "C5": 6,
+        "C4": 6,
+        "C3": 8
+      }
+    },
+    "hotpotqa": {
+      "score": 0.4599,
+      "n": 20,
+      "compression": 5.353,
+      "picks": {
+        "C5": 14,
+        "C3": 6
+      }
+    },
+    "multi_news": {
+      "score": 0.3562,
+      "n": 20,
+      "compression": 3.295,
+      "picks": {
+        "C3": 19,
+        "C5": 1
+      }
+    },
+    "multifieldqa_en": {
+      "score": 0.5321,
+      "n": 20,
+      "compression": 3.412,
+      "picks": {
+        "C3": 20
+      }
+    },
+    "narrativeqa": {
+      "score": 0.3264,
+      "n": 20,
+      "compression": 3.412,
+      "picks": {
+        "C3": 20
+      }
+    },
+    "passage_count": {
+      "score": 0.2,
+      "n": 20,
+      "compression": 3.938,
+      "picks": {
+        "C5": 4,
+        "C3": 15,
+        "C4": 1
+      }
+    },
+    "qasper": {
+      "score": 0.3432,
+      "n": 20,
+      "compression": 4.4,
+      "picks": {
+        "C5": 13,
+        "C4": 7
+      }
+    },
+    "qmsum": {
+      "score": 0.2822,
+      "n": 20,
+      "compression": 6.679,
+      "picks": {
+        "C5": 19,
+        "C3": 1
+      }
+    },
+    "trec": {
+      "score": 0.7,
+      "n": 20,
+      "compression": 3.441,
+      "picks": {
+        "C3": 15,
+        "C5": 1,
+        "C4": 4
+      }
+    },
+    "triviaqa": {
+      "score": 0.9319,
+      "n": 20,
+      "compression": 4.053,
+      "picks": {
+        "C5": 8,
+        "C3": 12
+      }
+    }
+  },
+  "longbench_avg": 0.4426,
+  "longbench_avg_compression_ratio": 4.108,
+  "picks": {
+    "C5": 70,
+    "C3": 123,
+    "C4": 27
+  },
+  "eval_split_70_30": {
+    "n_train": 154,
+    "n_test": 66,
+    "longbench_avg_train": 0.444,
+    "longbench_avg_compression_ratio_train": 4.692,
+    "longbench_avg": 0.4723,
+    "longbench_avg_compression_ratio": 4.435,
+    "picks": {
+      "C5": 10,
+      "C4": 28,
+      "C3": 28
+    }
+  },
+  "regressor_fit": {
+    "model": "HistGradientBoostingRegressor(max_iter=300, max_depth=4, learning_rate=0.05, random_state=0)",
+    "n_train": 154,
+    "n_test": 66,
+    "per_config": {
+      "C0": {
+        "r2_train": 0.7761,
+        "r2_test": -0.2127,
+        "mae_train": 0.1327,
+        "mae_test": 0.2992
+      },
+      "C1": {
+        "r2_train": 0.7613,
+        "r2_test": 0.0223,
+        "mae_train": 0.1385,
+        "mae_test": 0.2696
+      },
+      "C2": {
+        "r2_train": 0.7812,
+        "r2_test": -0.0769,
+        "mae_train": 0.1333,
+        "mae_test": 0.2741
+      },
+      "C3": {
+        "r2_train": 0.775,
+        "r2_test": -0.2433,
+        "mae_train": 0.1337,
+        "mae_test": 0.2941
+      },
+      "C4": {
+        "r2_train": 0.7787,
+        "r2_test": -0.159,
+        "mae_train": 0.1348,
+        "mae_test": 0.2892
+      },
+      "C5": {
+        "r2_train": 0.7838,
+        "r2_test": -0.1915,
+        "mae_train": 0.1344,
+        "mae_test": 0.2907
+      }
+    },
+    "mean_r2_train": 0.776,
+    "mean_r2_test": -0.1435,
+    "mean_mae_train": 0.1346,
+    "mean_mae_test": 0.2862
+  },
+  "filter_candidates": true
+}

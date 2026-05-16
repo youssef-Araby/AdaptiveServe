@@ -1,0 +1,209 @@
+{
+  "config": "C6",
+  "method": "per-prompt feature-based router (HistGradientBoosting regression)",
+  "model": "llama32_3b",
+  "tau": 0.95,
+  "use_floor": true,
+  "features": [
+    "seq_len_tokens",
+    "seq_len_chars",
+    "token_entropy",
+    "gzip_ratio",
+    "unique_token_ratio",
+    "question_position",
+    "newline_density"
+  ],
+  "n_features": 7,
+  "router_overhead_us_per_prompt": 60.54,
+  "longbench": {
+    "2wikimqa": {
+      "score": 0.4408,
+      "n": 20,
+      "compression": 9.304,
+      "picks": {
+        "C4": 8,
+        "C1": 8,
+        "C2": 3,
+        "C5": 1
+      }
+    },
+    "gov_report": {
+      "score": 0.346,
+      "n": 20,
+      "compression": 5.643,
+      "picks": {
+        "C1": 6,
+        "C3": 8,
+        "C2": 2,
+        "C5": 4
+      }
+    },
+    "hotpotqa": {
+      "score": 0.3586,
+      "n": 20,
+      "compression": 7.823,
+      "picks": {
+        "C4": 14,
+        "C5": 1,
+        "C1": 3,
+        "C2": 2
+      }
+    },
+    "multi_news": {
+      "score": 0.3339,
+      "n": 20,
+      "compression": 5.35,
+      "picks": {
+        "C2": 16,
+        "C3": 1,
+        "C1": 1,
+        "C4": 2
+      }
+    },
+    "multifieldqa_en": {
+      "score": 0.4568,
+      "n": 20,
+      "compression": 6.43,
+      "picks": {
+        "C2": 12,
+        "C1": 4,
+        "C3": 1,
+        "C5": 3
+      }
+    },
+    "narrativeqa": {
+      "score": 0.2772,
+      "n": 20,
+      "compression": 14.393,
+      "picks": {
+        "C1": 12,
+        "C4": 8
+      }
+    },
+    "passage_count": {
+      "score": 0.05,
+      "n": 20,
+      "compression": 4.824,
+      "picks": {
+        "C4": 3,
+        "C2": 10,
+        "C3": 6,
+        "C5": 1
+      }
+    },
+    "qasper": {
+      "score": 0.3438,
+      "n": 20,
+      "compression": 5.536,
+      "picks": {
+        "C1": 4,
+        "C5": 8,
+        "C4": 1,
+        "C2": 3,
+        "C3": 4
+      }
+    },
+    "qmsum": {
+      "score": 0.2698,
+      "n": 20,
+      "compression": 10.906,
+      "picks": {
+        "C4": 6,
+        "C1": 11,
+        "C5": 1,
+        "C3": 2
+      }
+    },
+    "trec": {
+      "score": 0.65,
+      "n": 20,
+      "compression": 6.496,
+      "picks": {
+        "C1": 10,
+        "C3": 8,
+        "C2": 2
+      }
+    },
+    "triviaqa": {
+      "score": 0.909,
+      "n": 20,
+      "compression": 7.995,
+      "picks": {
+        "C4": 15,
+        "C1": 4,
+        "C2": 1
+      }
+    }
+  },
+  "longbench_avg": 0.4033,
+  "longbench_avg_compression_ratio": 6.948,
+  "picks": {
+    "C4": 57,
+    "C1": 63,
+    "C2": 51,
+    "C5": 19,
+    "C3": 30
+  },
+  "eval_split_70_30": {
+    "n_train": 154,
+    "n_test": 66,
+    "longbench_avg_train": 0.4312,
+    "longbench_avg_compression_ratio_train": 6.39,
+    "longbench_avg": 0.4108,
+    "longbench_avg_compression_ratio": 6.145,
+    "picks": {
+      "C4": 16,
+      "C5": 5,
+      "C1": 13,
+      "C2": 20,
+      "C3": 12
+    }
+  },
+  "regressor_fit": {
+    "model": "HistGradientBoostingRegressor(max_iter=300, max_depth=4, learning_rate=0.05, random_state=0)",
+    "n_train": 154,
+    "n_test": 66,
+    "per_config": {
+      "C0": {
+        "r2_train": 0.747,
+        "r2_test": 0.0263,
+        "mae_train": 0.1435,
+        "mae_test": 0.2676
+      },
+      "C1": {
+        "r2_train": 0.766,
+        "r2_test": 0.1742,
+        "mae_train": 0.134,
+        "mae_test": 0.2423
+      },
+      "C2": {
+        "r2_train": 0.7604,
+        "r2_test": 0.1542,
+        "mae_train": 0.1357,
+        "mae_test": 0.2559
+      },
+      "C3": {
+        "r2_train": 0.7495,
+        "r2_test": 0.0976,
+        "mae_train": 0.1397,
+        "mae_test": 0.2583
+      },
+      "C4": {
+        "r2_train": 0.7586,
+        "r2_test": 0.0709,
+        "mae_train": 0.1386,
+        "mae_test": 0.2629
+      },
+      "C5": {
+        "r2_train": 0.7585,
+        "r2_test": 0.1356,
+        "mae_train": 0.1401,
+        "mae_test": 0.2543
+      }
+    },
+    "mean_r2_train": 0.7567,
+    "mean_r2_test": 0.1098,
+    "mean_mae_train": 0.1386,
+    "mean_mae_test": 0.2569
+  }
+}

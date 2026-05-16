@@ -83,8 +83,10 @@ from _common import (
 # Phi-3 isn't in the paper; using Q={0} as a sensible default (overridable
 # via --q-layers).
 TKV_Q_LAYERS: dict[str, list[int]] = {
-    "phi3":   [0],
-    "llama3": [0],
+    "phi3":       [0],
+    "llama3":     [0],
+    "llama31_8b": [0],
+    "llama32_3b": [0],
 }
 
 TKV_BITS         = 1     # quantization bit width for Q layers

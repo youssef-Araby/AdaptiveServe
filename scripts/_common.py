@@ -494,7 +494,7 @@ class PerPromptLogger:
         self.path.write_text("")
 
     def log(self, *, task: str, sample_idx: int, metric: str, score: float,
-            features: dict) -> None:
+            features: dict, compression: float | None = None) -> None:
         rec = {
             "config":     self.config,
             "model":      self.model,
@@ -504,5 +504,7 @@ class PerPromptLogger:
             "score":      round(float(score), 6),
             "features":   features,
         }
+        if compression is not None:
+            rec["compression"] = round(float(compression), 4)
         with self.path.open("a") as f:
             f.write(json.dumps(rec) + "\n")

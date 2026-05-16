@@ -1,0 +1,87 @@
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "ttft_ms": 2519.47,
+  "tpot_ms": 230.225,
+  "tokens_per_sec": 4.34,
+  "peak_vram_mb": 18164.6,
+  "kv_cache_mb": 178.34,
+  "kv_compression_ratio": 5.292,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 247.36,
+  "qaq_avg_bits": 3.023,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench": {
+    "narrativeqa": {
+      "metric": "f1",
+      "score": 0.2826,
+      "n": 20
+    },
+    "qasper": {
+      "metric": "f1",
+      "score": 0.3703,
+      "n": 20
+    },
+    "multifieldqa_en": {
+      "metric": "f1",
+      "score": 0.5323,
+      "n": 20
+    },
+    "hotpotqa": {
+      "metric": "f1",
+      "score": 0.3958,
+      "n": 20
+    },
+    "2wikimqa": {
+      "metric": "f1",
+      "score": 0.5733,
+      "n": 20
+    },
+    "gov_report": {
+      "metric": "rouge1",
+      "score": 0.4056,
+      "n": 20
+    },
+    "multi_news": {
+      "metric": "rouge1",
+      "score": 0.3414,
+      "n": 20
+    },
+    "qmsum": {
+      "metric": "rouge1",
+      "score": 0.2756,
+      "n": 20
+    },
+    "passage_count": {
+      "metric": "count_em",
+      "score": 0.1,
+      "n": 20
+    },
+    "trec": {
+      "metric": "accuracy",
+      "score": 0.8,
+      "n": 20
+    },
+    "triviaqa": {
+      "metric": "f1",
+      "score": 0.95,
+      "n": 20
+    },
+    "_compression": {
+      "avg_bits": 2.974,
+      "avg_compression_ratio": 5.379
+    }
+  },
+  "longbench_avg": 0.457,
+  "longbench_avg_bits": 2.974,
+  "longbench_avg_compression_ratio": 5.379
+}

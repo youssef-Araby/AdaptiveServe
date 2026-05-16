@@ -23,47 +23,47 @@
   "longbench": {
     "narrativeqa": {
       "metric": "f1",
-      "score": 0.3006,
+      "score": 0.2931,
       "n": 20
     },
     "qasper": {
       "metric": "f1",
-      "score": 0.3568,
+      "score": 0.3563,
       "n": 20
     },
     "multifieldqa_en": {
       "metric": "f1",
-      "score": 0.5168,
+      "score": 0.5282,
       "n": 20
     },
     "hotpotqa": {
       "metric": "f1",
-      "score": 0.4599,
+      "score": 0.4433,
       "n": 20
     },
     "2wikimqa": {
       "metric": "f1",
-      "score": 0.4083,
+      "score": 0.3912,
       "n": 20
     },
     "gov_report": {
       "metric": "rouge1",
-      "score": 0.3723,
+      "score": 0.363,
       "n": 20
     },
     "multi_news": {
       "metric": "rouge1",
-      "score": 0.3466,
+      "score": 0.3534,
       "n": 20
     },
     "qmsum": {
       "metric": "rouge1",
-      "score": 0.285,
+      "score": 0.2695,
       "n": 20
     },
     "passage_count": {
       "metric": "count_em",
-      "score": 0.2,
+      "score": 0.1,
       "n": 20
     },
     "trec": {
@@ -75,7 +75,13 @@
       "metric": "f1",
       "score": 0.925,
       "n": 20
+    },
+    "_compression": {
+      "avg_bits": 2.971,
+      "avg_compression_ratio": 5.386
     }
   },
-  "longbench_avg": 0.4428
+  "longbench_avg": 0.4294,
+  "longbench_avg_bits": 2.971,
+  "longbench_avg_compression_ratio": 5.386
 }

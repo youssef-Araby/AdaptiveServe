@@ -1,0 +1,94 @@
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=K-formula (SDPA))
+Model  : microsoft/Phi-3-mini-4k-instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/phi3/results.json
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   1%|          | 1/195 [00:00<00:36,  5.25it/s]Loading weights:  16%|█▋        | 32/195 [00:00<00:01, 131.89it/s]Loading weights:  30%|██▉       | 58/195 [00:00<00:00, 178.82it/s]Loading weights:  43%|████▎     | 83/195 [00:00<00:00, 201.70it/s]Loading weights:  56%|█████▋    | 110/195 [00:00<00:00, 217.31it/s]Loading weights:  70%|███████   | 137/195 [00:00<00:00, 214.83it/s]Loading weights:  86%|████████▌ | 167/195 [00:00<00:00, 236.09it/s]Loading weights: 100%|██████████| 195/195 [00:00<00:00, 207.96it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35536 > 4096). Running this sequence through the model will result in indexing errors
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  narrativeqa [5/20]  f1=0.1149
+  narrativeqa [10/20]  f1=0.1192
+  narrativeqa [15/20]  f1=0.1313
+  narrativeqa [20/20]  f1=0.1381
+  narrativeqa  FINAL f1=0.1381  (n=20)
+  qasper [5/20]  f1=0.0356
+  qasper [10/20]  f1=0.3348
+  qasper [15/20]  f1=0.2365
+  qasper [20/20]  f1=0.1974
+  qasper  FINAL f1=0.1974  (n=20)
+  multifieldqa_en [5/20]  f1=0.4878
+  multifieldqa_en [10/20]  f1=0.4297
+  multifieldqa_en [15/20]  f1=0.3737
+  multifieldqa_en [20/20]  f1=0.3690
+  multifieldqa_en  FINAL f1=0.3690  (n=20)
+  hotpotqa [5/20]  f1=0.3067
+  hotpotqa [10/20]  f1=0.2600
+  hotpotqa [15/20]  f1=0.2148
+  hotpotqa [20/20]  f1=0.2144
+  hotpotqa  FINAL f1=0.2144  (n=20)
+  2wikimqa [5/20]  f1=0.1444
+  2wikimqa [10/20]  f1=0.0722
+  2wikimqa [15/20]  f1=0.1681
+  2wikimqa [20/20]  f1=0.1261
+  2wikimqa  FINAL f1=0.1261  (n=20)
+  gov_report [5/20]  rouge1=0.3341
+  gov_report [10/20]  rouge1=0.3548
+  gov_report [15/20]  rouge1=0.3549
+  gov_report [20/20]  rouge1=0.3557
+  gov_report  FINAL rouge1=0.3557  (n=20)
+  multi_news [5/20]  rouge1=0.3354
+  multi_news [10/20]  rouge1=0.3224
+  multi_news [15/20]  rouge1=0.3300
+  multi_news [20/20]  rouge1=0.3316
+  multi_news  FINAL rouge1=0.3316  (n=20)
+  qmsum [5/20]  rouge1=0.2624
+  qmsum [10/20]  rouge1=0.2707
+  qmsum [15/20]  rouge1=0.2556
+  qmsum [20/20]  rouge1=0.2473
+  qmsum  FINAL rouge1=0.2473  (n=20)
+  passage_count [5/20]  count_em=0.0000
+  passage_count [10/20]  count_em=0.0000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.0500
+  passage_count  FINAL count_em=0.0500  (n=20)
+  trec [5/20]  accuracy=0.4000
+  trec [10/20]  accuracy=0.6000
+  trec [15/20]  accuracy=0.6000
+  trec [20/20]  accuracy=0.6500
+  trec  FINAL accuracy=0.6500  (n=20)
+  triviaqa [5/20]  f1=0.8727
+  triviaqa [10/20]  f1=0.9030
+  triviaqa [15/20]  f1=0.9354
+  triviaqa [20/20]  f1=0.9348
+  triviaqa  FINAL f1=0.9348  (n=20)
+
+  LongBench QAQ avg bits: 2.744  (5.83× compression, n=220 prompts)
+
+Saved → runs/C2/phi3/results.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=K-formula (SDPA))",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "ttft_ms": 1326.15,
+  "tpot_ms": 35.059,
+  "tokens_per_sec": 28.52,
+  "peak_vram_mb": 9007.3,
+  "kv_cache_mb": 161.93,
+  "kv_compression_ratio": 4.738,
+  "speed_prompt_tokens": 3500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 247.45,
+  "qaq_avg_bits": 3.377,
+  "ppl_wikitext2": 5.6349,
+  "ppl_n_chunks": 83,
+  "longbench_avg": 0.3286,
+  "longbench_avg_bits": 2.744,
+  "longbench_avg_compression_ratio": 5.83
+}

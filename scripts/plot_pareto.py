@@ -64,7 +64,8 @@ def load_router(model: str):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True, choices=["llama3", "phi3"])
+    ap.add_argument("--model", required=True,
+                    choices=["llama3", "phi3", "llama31_8b", "llama32_3b"])
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 

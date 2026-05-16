@@ -1,0 +1,96 @@
+{
+  "config": "C1",
+  "method": "TailorKV (hybrid: 1-bit quant on Q-layers + SnapKV 64+128 on S-layers)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "q_layers": [
+    0
+  ],
+  "bits": 1,
+  "group_size": 64,
+  "n_local": 64,
+  "n_topk": 128,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1895.36,
+  "tpot_ms": 39.937,
+  "tokens_per_sec": 25.04,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 23.32,
+  "kv_compression_ratio": 40.201,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench": {
+    "narrativeqa": {
+      "metric": "f1",
+      "score": 0.2275,
+      "n": 20
+    },
+    "qasper": {
+      "metric": "f1",
+      "score": 0.2144,
+      "n": 20
+    },
+    "multifieldqa_en": {
+      "metric": "f1",
+      "score": 0.515,
+      "n": 20
+    },
+    "hotpotqa": {
+      "metric": "f1",
+      "score": 0.3904,
+      "n": 20
+    },
+    "2wikimqa": {
+      "metric": "f1",
+      "score": 0.505,
+      "n": 20
+    },
+    "gov_report": {
+      "metric": "rouge1",
+      "score": 0.2495,
+      "n": 20
+    },
+    "multi_news": {
+      "metric": "rouge1",
+      "score": 0.2669,
+      "n": 20
+    },
+    "qmsum": {
+      "metric": "rouge1",
+      "score": 0.2884,
+      "n": 20
+    },
+    "passage_count": {
+      "metric": "count_em",
+      "score": 0.1,
+      "n": 20
+    },
+    "trec": {
+      "metric": "accuracy",
+      "score": 0.8,
+      "n": 20
+    },
+    "triviaqa": {
+      "metric": "f1",
+      "score": 0.8574,
+      "n": 20
+    },
+    "_compression": {
+      "avg_seq_len": 6195.9,
+      "avg_kept_per_layer": 192.0,
+      "avg_kv_cache_mb_full": 774.49,
+      "avg_kv_cache_mb": 23.32,
+      "avg_compression_ratio": 33.211
+    }
+  },
+  "longbench_avg": 0.4013,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 192.0,
+  "longbench_avg_kv_cache_mb_full": 774.49,
+  "longbench_avg_kv_cache_mb": 23.32,
+  "longbench_avg_compression_ratio": 33.211
+}

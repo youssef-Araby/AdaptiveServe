@@ -1,0 +1,70 @@
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=prefill-only (SDPA, K-formula))",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "longbench": {
+    "narrativeqa": {
+      "metric": "f1",
+      "score": 0.25,
+      "n": 1
+    },
+    "qasper": {
+      "metric": "f1",
+      "score": 0.0,
+      "n": 1
+    },
+    "multifieldqa_en": {
+      "metric": "f1",
+      "score": 0.75,
+      "n": 1
+    },
+    "hotpotqa": {
+      "metric": "f1",
+      "score": 0.3333,
+      "n": 1
+    },
+    "2wikimqa": {
+      "metric": "f1",
+      "score": 0.0,
+      "n": 1
+    },
+    "gov_report": {
+      "metric": "rouge1",
+      "score": 0.3432,
+      "n": 1
+    },
+    "multi_news": {
+      "metric": "rouge1",
+      "score": 0.2903,
+      "n": 1
+    },
+    "qmsum": {
+      "metric": "rouge1",
+      "score": 0.2128,
+      "n": 1
+    },
+    "passage_count": {
+      "metric": "count_em",
+      "score": 0.0,
+      "n": 1
+    },
+    "trec": {
+      "metric": "accuracy",
+      "score": 1.0,
+      "n": 1
+    },
+    "triviaqa": {
+      "metric": "f1",
+      "score": 1.0,
+      "n": 1
+    },
+    "_compression": {
+      "avg_bits": 2.744,
+      "avg_compression_ratio": 5.831
+    }
+  },
+  "longbench_avg": 0.38,
+  "longbench_avg_bits": 2.744,
+  "longbench_avg_compression_ratio": 5.831
+}

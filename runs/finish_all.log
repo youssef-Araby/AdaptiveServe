@@ -1,0 +1,1388 @@
+
+========================================================================
+[23:06:46 | +    0s] finish_all START
+========================================================================
+Log file: /home/youssef/projects/research/AdaptiveServe/runs/finish_all.log
+
+========================================================================
+[23:06:46 | +    0s] C2 llama3 (re-run)
+========================================================================
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)
+Model  : meta-llama/Meta-Llama-3-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/llama3/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<03:17,  1.46it/s]Loading weights:   8%|▊         | 23/291 [00:00<00:06, 39.26it/s]Loading weights:  12%|█▏        | 36/291 [00:00<00:04, 57.12it/s]Loading weights:  17%|█▋        | 49/291 [00:01<00:03, 61.46it/s]Loading weights:  23%|██▎       | 67/291 [00:01<00:02, 74.99it/s]Loading weights:  27%|██▋       | 78/291 [00:01<00:02, 78.71it/s]Loading weights:  32%|███▏      | 94/291 [00:01<00:02, 84.76it/s]Loading weights:  36%|███▌      | 104/291 [00:01<00:02, 87.59it/s]Loading weights:  39%|███▉      | 114/291 [00:01<00:02, 86.75it/s]Loading weights:  45%|████▍     | 130/291 [00:01<00:01, 96.44it/s]Loading weights:  48%|████▊     | 141/291 [00:02<00:01, 95.12it/s]Loading weights:  54%|█████▍    | 157/291 [00:02<00:01, 94.28it/s]Loading weights:  57%|█████▋    | 167/291 [00:02<00:01, 95.16it/s]Loading weights:  61%|██████    | 177/291 [00:02<00:01, 95.05it/s]Loading weights:  66%|██████▋   | 193/291 [00:02<00:01, 93.75it/s]Loading weights:  70%|██████▉   | 203/291 [00:02<00:00, 94.11it/s]Loading weights:  73%|███████▎  | 213/291 [00:02<00:00, 94.24it/s]Loading weights:  77%|███████▋  | 223/291 [00:02<00:00, 94.38it/s]Loading weights:  82%|████████▏ | 238/291 [00:03<00:00, 93.90it/s]Loading weights:  85%|████████▌ | 248/291 [00:03<00:00, 95.09it/s]Loading weights:  89%|████████▊ | 258/291 [00:03<00:00, 95.64it/s]Loading weights:  93%|█████████▎| 271/291 [00:03<00:00, 103.01it/s]Loading weights:  97%|█████████▋| 283/291 [00:03<00:00, 100.38it/s]Loading weights: 100%|██████████| 291/291 [00:03<00:00, 83.16it/s] 
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  narrativeqa [5/20]  f1=0.1124
+  narrativeqa [10/20]  f1=0.2283
+  narrativeqa [15/20]  f1=0.2855
+  narrativeqa [20/20]  f1=0.2931
+  narrativeqa  FINAL f1=0.2931  (n=20)
+  qasper [5/20]  f1=0.2688
+  qasper [10/20]  f1=0.3950
+  qasper [15/20]  f1=0.3334
+  qasper [20/20]  f1=0.3563
+  qasper  FINAL f1=0.3563  (n=20)
+  multifieldqa_en [5/20]  f1=0.8000
+  multifieldqa_en [10/20]  f1=0.7393
+  multifieldqa_en [15/20]  f1=0.6182
+  multifieldqa_en [20/20]  f1=0.5282
+  multifieldqa_en  FINAL f1=0.5282  (n=20)
+  hotpotqa [5/20]  f1=0.3943
+  hotpotqa [10/20]  f1=0.4471
+  hotpotqa [15/20]  f1=0.4799
+  hotpotqa [20/20]  f1=0.4433
+  hotpotqa  FINAL f1=0.4433  (n=20)
+  2wikimqa [5/20]  f1=0.1333
+  2wikimqa [10/20]  f1=0.4467
+  2wikimqa [15/20]  f1=0.4549
+  2wikimqa [20/20]  f1=0.3912
+  2wikimqa  FINAL f1=0.3912  (n=20)
+  gov_report [5/20]  rouge1=0.3308
+  gov_report [10/20]  rouge1=0.3472
+  gov_report [15/20]  rouge1=0.3584
+  gov_report [20/20]  rouge1=0.3630
+  gov_report  FINAL rouge1=0.3630  (n=20)
+  multi_news [5/20]  rouge1=0.3231
+  multi_news [10/20]  rouge1=0.3367
+  multi_news [15/20]  rouge1=0.3492
+  multi_news [20/20]  rouge1=0.3534
+  multi_news  FINAL rouge1=0.3534  (n=20)
+  qmsum [5/20]  rouge1=0.3098
+  qmsum [10/20]  rouge1=0.2988
+  qmsum [15/20]  rouge1=0.2775
+  qmsum [20/20]  rouge1=0.2695
+  qmsum  FINAL rouge1=0.2695  (n=20)
+  passage_count [5/20]  count_em=0.2000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.1000
+  passage_count  FINAL count_em=0.1000  (n=20)
+  trec [5/20]  accuracy=0.4000
+  trec [10/20]  accuracy=0.6000
+  trec [15/20]  accuracy=0.6000
+  trec [20/20]  accuracy=0.7000
+  trec  FINAL accuracy=0.7000  (n=20)
+  triviaqa [5/20]  f1=0.8667
+  triviaqa [10/20]  f1=0.8833
+  triviaqa [15/20]  f1=0.9222
+  triviaqa [20/20]  f1=0.9250
+  triviaqa  FINAL f1=0.9250  (n=20)
+
+  LongBench QAQ avg bits: 2.971  (5.39× compression, n=220 prompts)
+
+Saved → runs/C2/llama3/results.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "ttft_ms": 2595.21,
+  "tpot_ms": 194.648,
+  "tokens_per_sec": 5.14,
+  "peak_vram_mb": 18168.3,
+  "kv_cache_mb": 176.83,
+  "kv_compression_ratio": 5.337,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 248.77,
+  "qaq_avg_bits": 2.998,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4294,
+  "longbench_avg_bits": 2.971,
+  "longbench_avg_compression_ratio": 5.386
+}
+
+========================================================================
+[00:02:44 | + 3358s] Track C pipeline
+========================================================================
+
+========================================================================
+[00:02:44 | +   0s] Track C pipeline START  (models: llama32_3b llama31_8b)
+========================================================================
+Log file: /home/youssef/projects/research/AdaptiveServe/runs/track_c_pipeline.log
+
+========================================================================
+[00:02:44 | +   0s] SKIP  C0/llama32_3b  (results.json already exists)
+========================================================================
+
+========================================================================
+[00:02:44 | +   0s] SKIP  C3/llama32_3b  (results.json already exists)
+========================================================================
+
+========================================================================
+[00:02:44 | +   0s] SKIP  C4/llama32_3b  (results.json already exists)
+========================================================================
+
+========================================================================
+[00:02:44 | +   0s] SKIP  C5/llama32_3b  (results.json already exists)
+========================================================================
+
+========================================================================
+[00:02:44 | +   0s] SKIP  C1/llama32_3b  (results.json already exists)
+========================================================================
+
+========================================================================
+[00:02:44 | +   0s] RUN   C2/llama32_3b   (script: scripts/benchmark_c2_qaq.py)
+========================================================================
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<01:10,  3.59it/s]Loading weights:  15%|█▌        | 39/254 [00:00<00:01, 130.38it/s]Loading weights:  26%|██▌       | 66/254 [00:00<00:01, 162.71it/s]Loading weights:  35%|███▍      | 88/254 [00:00<00:00, 179.24it/s]Loading weights:  44%|████▎     | 111/254 [00:00<00:00, 184.51it/s]Loading weights:  54%|█████▍    | 138/254 [00:00<00:00, 200.08it/s]Loading weights:  65%|██████▍   | 165/254 [00:00<00:00, 201.26it/s]Loading weights:  76%|███████▌  | 192/254 [00:01<00:00, 208.46it/s]Loading weights:  86%|████████▌ | 219/254 [00:01<00:00, 212.84it/s]Loading weights:  97%|█████████▋| 246/254 [00:01<00:00, 215.17it/s]Loading weights: 100%|██████████| 254/254 [00:01<00:00, 188.41it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== Speed benchmark (Full QAQ, attention-aware variable-bit) ===
+  Prompt: 7500 tokens
+  QAQ: bits=[2,16], outliers=1%, window=5, target_error=1.0
+  Precomputing q_norm (upper-10th-pct of ||Q||^2)...
+  q_norm = 295.2
+  TTFT (incl. quantize): 1338.4 ms
+  KV cache after prefill: 820.3 MB actual (FP16 sim)
+  Theoretical: bits range [2,16], outliers at 16-bit
+  TPOT (incl. attn+quantize): 179.02 ms/tok  (5.6 tok/s)
+  Peak VRAM: 8847 MB
+  Measured avg bits: 3.00  Compression: 5.34×
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 35  (chunk_size=8192, score all tokens)
+  chunk 5/35  PPL=9.880
+  chunk 10/35  PPL=9.144
+  chunk 15/35  PPL=9.428
+  chunk 20/35  PPL=9.282
+  chunk 25/35  PPL=9.627
+  chunk 30/35  PPL=9.581
+  chunk 35/35  PPL=9.573
+  Final PPL: 9.5731
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  narrativeqa [5/20]  f1=0.1722
+  narrativeqa [10/20]  f1=0.2519
+  narrativeqa [15/20]  f1=0.3184
+  narrativeqa [20/20]  f1=0.2856
+  narrativeqa  FINAL f1=0.2856  (n=20)
+  qasper [5/20]  f1=0.2402
+  qasper [10/20]  f1=0.2764
+  qasper [15/20]  f1=0.3124
+  qasper [20/20]  f1=0.3310
+  qasper  FINAL f1=0.3310  (n=20)
+  multifieldqa_en [5/20]  f1=0.5566
+  multifieldqa_en [10/20]  f1=0.5505
+  multifieldqa_en [15/20]  f1=0.5386
+  multifieldqa_en [20/20]  f1=0.4540
+  multifieldqa_en  FINAL f1=0.4540  (n=20)
+  hotpotqa [5/20]  f1=0.2667
+  hotpotqa [10/20]  f1=0.2810
+  hotpotqa [15/20]  f1=0.3207
+  hotpotqa [20/20]  f1=0.3905
+  hotpotqa  FINAL f1=0.3905  (n=20)
+  2wikimqa [5/20]  f1=0.2364
+  2wikimqa [10/20]  f1=0.3182
+  2wikimqa [15/20]  f1=0.4988
+  2wikimqa [20/20]  f1=0.4741
+  2wikimqa  FINAL f1=0.4741  (n=20)
+  gov_report [5/20]  rouge1=0.4426
+  gov_report [10/20]  rouge1=0.4264
+  gov_report [15/20]  rouge1=0.4051
+  gov_report [20/20]  rouge1=0.3994
+  gov_report  FINAL rouge1=0.3994  (n=20)
+  multi_news [5/20]  rouge1=0.3205
+  multi_news [10/20]  rouge1=0.3213
+  multi_news [15/20]  rouge1=0.3250
+  multi_news [20/20]  rouge1=0.3316
+  multi_news  FINAL rouge1=0.3316  (n=20)
+  qmsum [5/20]  rouge1=0.2951
+  qmsum [10/20]  rouge1=0.2886
+  qmsum [15/20]  rouge1=0.2820
+  qmsum [20/20]  rouge1=0.2764
+  qmsum  FINAL rouge1=0.2764  (n=20)
+  passage_count [5/20]  count_em=0.2000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.0500
+  passage_count  FINAL count_em=0.0500  (n=20)
+  trec [5/20]  accuracy=0.6000
+  trec [10/20]  accuracy=0.6000
+  trec [15/20]  accuracy=0.6000
+  trec [20/20]  accuracy=0.6500
+  trec  FINAL accuracy=0.6500  (n=20)
+  triviaqa [5/20]  f1=0.9143
+  triviaqa [10/20]  f1=0.9571
+  triviaqa [15/20]  f1=0.9714
+  triviaqa [20/20]  f1=0.9519
+  triviaqa  FINAL f1=0.9519  (n=20)
+
+  LongBench QAQ avg bits: 2.942  (5.44× compression, n=220 prompts)
+
+Saved → runs/C2/llama32_3b/results.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
+  "model": "llama32_3b",
+  "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+  "ttft_ms": 1338.38,
+  "tpot_ms": 179.016,
+  "tokens_per_sec": 5.59,
+  "peak_vram_mb": 8847.2,
+  "kv_cache_mb": 154.74,
+  "kv_compression_ratio": 5.337,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 295.18,
+  "qaq_avg_bits": 2.998,
+  "ppl_wikitext2": 9.5731,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4177,
+  "longbench_avg_bits": 2.942,
+  "longbench_avg_compression_ratio": 5.439
+}
+
+========================================================================
+[01:04:49 | +3725s] DONE  C2/llama32_3b
+========================================================================
+
+========================================================================
+[01:04:49 | +3725s] BUILD dataset for llama32_3b
+========================================================================
+wrote 220 rows → /home/youssef/projects/research/AdaptiveServe/runs/dataset/llama32_3b.jsonl  (skipped 0 incomplete)
+
+features per prompt (7): ['gzip_ratio', 'newline_density', 'question_position', 'seq_len_chars', 'seq_len_tokens', 'token_entropy', 'unique_token_ratio']
+per-prompt compression (harmonic mean): C0=1.00x  C1=27.08x  C2=5.44x  C3=3.41x  C4=4.96x  C5=4.96x
+per-prompt compression (min .. max):   C0=1.00..1.00x  C1=4.54..40.37x  C2=5.26..5.49x  C3=3.41..3.41x  C4=1.00..7.32x  C5=1.00..7.32x
+
+per-config quality on training data (mean over all prompts):
+  always-C0: q=0.4213  cr_hmean=1.00x
+  always-C1: q=0.3552  cr_hmean=27.08x
+  always-C2: q=0.4177  cr_hmean=5.44x
+  always-C3: q=0.4162  cr_hmean=3.41x
+  always-C4: q=0.4160  cr_hmean=4.96x
+  always-C5: q=0.4130  cr_hmean=4.96x
+
+per-prompt oracle (upper bound the classifier targets):
+  oracle@tau=0.99: q=0.4414  cr=6.07x
+  oracle@tau=0.95: q=0.4398  cr=7.34x
+  oracle@tau=0.90: q=0.4381  cr=8.84x
+
+label distribution (which config wins):
+  best_quality            C0=148  C1=13  C2=22  C3=16  C4=13  C5=8
+  best_iso_quality_99     C0=19  C1=131  C2=32  C3=11  C4=21  C5=6
+  best_iso_quality_95     C0=12  C1=136  C2=33  C3=12  C4=20  C5=7
+  best_iso_quality_90     C0=6  C1=137  C2=37  C3=12  C4=24  C5=4
+
+========================================================================
+[01:04:49 | +3725s] RUN   C0/llama31_8b   (script: scripts/benchmark_c0_baseline.py)
+========================================================================
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Config : C0 (FP16 full KV cache, no compression)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C0/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:34,  1.87it/s]Loading weights:   4%|▍         | 13/291 [00:00<00:10, 25.50it/s]Loading weights:  11%|█         | 31/291 [00:00<00:05, 50.54it/s]Loading weights:  17%|█▋        | 49/291 [00:00<00:03, 74.48it/s]Loading weights:  21%|██        | 60/291 [00:01<00:03, 74.64it/s]Loading weights:  24%|██▍       | 70/291 [00:01<00:02, 78.25it/s]Loading weights:  29%|██▉       | 85/291 [00:01<00:02, 83.15it/s]Loading weights:  33%|███▎      | 95/291 [00:01<00:02, 86.44it/s]Loading weights:  38%|███▊      | 112/291 [00:01<00:01, 92.25it/s]Loading weights:  42%|████▏     | 122/291 [00:01<00:01, 93.01it/s]Loading weights:  45%|████▌     | 132/291 [00:01<00:01, 91.87it/s]Loading weights:  49%|████▉     | 142/291 [00:01<00:01, 92.95it/s]Loading weights:  52%|█████▏    | 152/291 [00:02<00:01, 93.38it/s]Loading weights:  56%|█████▌    | 162/291 [00:02<00:01, 90.32it/s]Loading weights:  59%|█████▉    | 172/291 [00:02<00:01, 91.02it/s]Loading weights:  63%|██████▎   | 182/291 [00:02<00:01, 93.28it/s]Loading weights:  66%|██████▌   | 192/291 [00:02<00:01, 93.92it/s]Loading weights:  69%|██████▉   | 202/291 [00:02<00:01, 78.89it/s]Loading weights:  73%|███████▎  | 211/291 [00:02<00:01, 77.15it/s]Loading weights:  76%|███████▋  | 222/291 [00:02<00:00, 85.36it/s]Loading weights:  79%|███████▉  | 231/291 [00:03<00:00, 86.52it/s]Loading weights:  83%|████████▎ | 242/291 [00:03<00:00, 92.89it/s]Loading weights:  87%|████████▋ | 253/291 [00:03<00:00, 97.71it/s]Loading weights:  91%|█████████ | 265/291 [00:03<00:00, 87.53it/s]Loading weights:  95%|█████████▍| 275/291 [00:03<00:00, 84.46it/s]Loading weights:  98%|█████████▊| 284/291 [00:03<00:00, 85.39it/s]Loading weights: 100%|██████████| 291/291 [00:03<00:00, 80.49it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== Speed benchmark ===
+  Prompt: 7500 tokens
+  TTFT: 1745.5 ms
+  KV cache after prefill: 937.5 MB
+  TPOT: 40.66 ms/tok  (24.6 tok/s)
+  Peak VRAM: 18169 MB
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 35  (chunk_size=8192, score all tokens)
+  chunk 5/35  PPL=6.545
+  chunk 10/35  PPL=6.206
+  chunk 15/35  PPL=6.363
+  chunk 20/35  PPL=6.330
+  chunk 25/35  PPL=6.581
+  chunk 30/35  PPL=6.508
+  chunk 35/35  PPL=6.497
+  Final PPL: 6.4974
+
+=== LongBench ===
+  narrativeqa [5/20]  f1=0.1690
+  narrativeqa [10/20]  f1=0.2623
+  narrativeqa [15/20]  f1=0.2415
+  narrativeqa [20/20]  f1=0.2853
+  narrativeqa  FINAL f1=0.2853  (n=20)
+  qasper [5/20]  f1=0.2961
+  qasper [10/20]  f1=0.3442
+  qasper [15/20]  f1=0.3655
+  qasper [20/20]  f1=0.3891
+  qasper  FINAL f1=0.3891  (n=20)
+  multifieldqa_en [5/20]  f1=0.7625
+  multifieldqa_en [10/20]  f1=0.7027
+  multifieldqa_en [15/20]  f1=0.6167
+  multifieldqa_en [20/20]  f1=0.4983
+  multifieldqa_en  FINAL f1=0.4983  (n=20)
+  hotpotqa [5/20]  f1=0.4000
+  hotpotqa [10/20]  f1=0.3900
+  hotpotqa [15/20]  f1=0.4418
+  hotpotqa [20/20]  f1=0.4397
+  hotpotqa  FINAL f1=0.4397  (n=20)
+  2wikimqa [5/20]  f1=0.4133
+  2wikimqa [10/20]  f1=0.6067
+  2wikimqa [15/20]  f1=0.5911
+  2wikimqa [20/20]  f1=0.5433
+  2wikimqa  FINAL f1=0.5433  (n=20)
+  gov_report [5/20]  rouge1=0.4288
+  gov_report [10/20]  rouge1=0.4250
+  gov_report [15/20]  rouge1=0.4112
+  gov_report [20/20]  rouge1=0.4095
+  gov_report  FINAL rouge1=0.4095  (n=20)
+  multi_news [5/20]  rouge1=0.3408
+  multi_news [10/20]  rouge1=0.3517
+  multi_news [15/20]  rouge1=0.3521
+  multi_news [20/20]  rouge1=0.3541
+  multi_news  FINAL rouge1=0.3541  (n=20)
+  qmsum [5/20]  rouge1=0.3164
+  qmsum [10/20]  rouge1=0.3059
+  qmsum [15/20]  rouge1=0.2958
+  qmsum [20/20]  rouge1=0.2821
+  qmsum  FINAL rouge1=0.2821  (n=20)
+  passage_count [5/20]  count_em=0.0000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.1000
+  passage_count  FINAL count_em=0.1000  (n=20)
+  trec [5/20]  accuracy=0.4000
+  trec [10/20]  accuracy=0.7000
+  trec [15/20]  accuracy=0.7333
+  trec [20/20]  accuracy=0.8000
+  trec  FINAL accuracy=0.8000  (n=20)
+  triviaqa [5/20]  f1=1.0000
+  triviaqa [10/20]  f1=0.9000
+  triviaqa [15/20]  f1=0.9333
+  triviaqa [20/20]  f1=0.9500
+  triviaqa  FINAL f1=0.9500  (n=20)
+
+Saved → runs/C0/llama31_8b/results.json
+{
+  "config": "C0",
+  "method": "none (FP16 full KV cache)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "ttft_ms": 1745.51,
+  "tpot_ms": 40.661,
+  "tokens_per_sec": 24.59,
+  "peak_vram_mb": 18169.5,
+  "kv_cache_mb": 937.5,
+  "kv_compression_ratio": 1.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4592
+}
+
+========================================================================
+[01:26:44 | +5040s] DONE  C0/llama31_8b
+========================================================================
+
+========================================================================
+[01:26:44 | +5040s] RUN   C3/llama31_8b   (script: scripts/benchmark_c3_kvquant.py)
+========================================================================
+
+Config : C3 (KVQuant — 4-bit per-channel K + per-token V, 1.0% FP16 outliers)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C3/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:14,  2.16it/s]Loading weights:   5%|▍         | 14/291 [00:00<00:08, 32.26it/s]Loading weights:  11%|█▏        | 33/291 [00:00<00:03, 70.48it/s]Loading weights:  17%|█▋        | 49/291 [00:00<00:02, 91.71it/s]Loading weights:  23%|██▎       | 67/291 [00:00<00:01, 113.27it/s]Loading weights:  30%|██▉       | 87/291 [00:00<00:01, 133.51it/s]Loading weights:  35%|███▌      | 103/291 [00:01<00:01, 139.66it/s]Loading weights:  42%|████▏     | 122/291 [00:01<00:01, 149.49it/s]Loading weights:  48%|████▊     | 140/291 [00:01<00:00, 155.93it/s]Loading weights:  57%|█████▋    | 166/291 [00:01<00:00, 171.04it/s]Loading weights:  63%|██████▎   | 184/291 [00:01<00:00, 167.70it/s]Loading weights:  70%|██████▉   | 203/291 [00:01<00:00, 168.14it/s]Loading weights:  76%|███████▌  | 221/291 [00:01<00:00, 170.95it/s]Loading weights:  82%|████████▏ | 239/291 [00:01<00:00, 171.39it/s]Loading weights:  88%|████████▊ | 257/291 [00:01<00:00, 173.18it/s]Loading weights:  95%|█████████▍| 275/291 [00:02<00:00, 171.95it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 136.14it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== Speed benchmark (KVQuant) ===
+  Prompt: 7500 tokens   bits: 4  group: 128  outliers: 1.0%
+  TTFT (incl. quantization): 1879.6 ms
+  Full KV: 937.5 MB → compressed: 274.8 MB (3.41× compression, 32 layers)
+  TPOT: 45.07 ms/tok  (22.2 tok/s)
+  Peak VRAM: 19184 MB
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 35  (chunk_size=8192, score all tokens)
+  chunk 5/35  PPL=6.545
+  chunk 10/35  PPL=6.206
+  chunk 15/35  PPL=6.363
+  chunk 20/35  PPL=6.330
+  chunk 25/35  PPL=6.581
+  chunk 30/35  PPL=6.508
+  chunk 35/35  PPL=6.497
+  Final PPL: 6.4974
+
+=== LongBench (KVQuant) ===
+  narrativeqa [5/20]  f1=0.1690
+  narrativeqa [10/20]  f1=0.2617
+  narrativeqa [15/20]  f1=0.2411
+  narrativeqa [20/20]  f1=0.2850
+  narrativeqa  FINAL f1=0.2850  (n=20)
+  qasper [5/20]  f1=0.3152
+  qasper [10/20]  f1=0.3537
+  qasper [15/20]  f1=0.3719
+  qasper [20/20]  f1=0.3926
+  qasper  FINAL f1=0.3926  (n=20)
+  multifieldqa_en [5/20]  f1=0.7625
+  multifieldqa_en [10/20]  f1=0.6713
+  multifieldqa_en [15/20]  f1=0.5958
+  multifieldqa_en [20/20]  f1=0.4829
+  multifieldqa_en  FINAL f1=0.4829  (n=20)
+  hotpotqa [5/20]  f1=0.4000
+  hotpotqa [10/20]  f1=0.3900
+  hotpotqa [15/20]  f1=0.4418
+  hotpotqa [20/20]  f1=0.4397
+  hotpotqa  FINAL f1=0.4397  (n=20)
+  2wikimqa [5/20]  f1=0.4133
+  2wikimqa [10/20]  f1=0.6067
+  2wikimqa [15/20]  f1=0.5911
+  2wikimqa [20/20]  f1=0.5433
+  2wikimqa  FINAL f1=0.5433  (n=20)
+  gov_report [5/20]  rouge1=0.4265
+  gov_report [10/20]  rouge1=0.4237
+  gov_report [15/20]  rouge1=0.4148
+  gov_report [20/20]  rouge1=0.4168
+  gov_report  FINAL rouge1=0.4168  (n=20)
+  multi_news [5/20]  rouge1=0.3461
+  multi_news [10/20]  rouge1=0.3440
+  multi_news [15/20]  rouge1=0.3428
+  multi_news [20/20]  rouge1=0.3477
+  multi_news  FINAL rouge1=0.3477  (n=20)
+  qmsum [5/20]  rouge1=0.3176
+  qmsum [10/20]  rouge1=0.3118
+  qmsum [15/20]  rouge1=0.3038
+  qmsum [20/20]  rouge1=0.2928
+  qmsum  FINAL rouge1=0.2928  (n=20)
+  passage_count [5/20]  count_em=0.0000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.1000
+  passage_count  FINAL count_em=0.1000  (n=20)
+  trec [5/20]  accuracy=0.4000
+  trec [10/20]  accuracy=0.7000
+  trec [15/20]  accuracy=0.7333
+  trec [20/20]  accuracy=0.8000
+  trec  FINAL accuracy=0.8000  (n=20)
+  triviaqa [5/20]  f1=1.0000
+  triviaqa [10/20]  f1=0.9000
+  triviaqa [15/20]  f1=0.9333
+  triviaqa [20/20]  f1=0.9500
+  triviaqa  FINAL f1=0.9500  (n=20)
+
+  LongBench compression: full 774.5 MB → compressed 227.0 MB (3.41×, avg seq 6196)
+
+Saved → runs/C3/llama31_8b/results.json
+{
+  "config": "C3",
+  "method": "KVQuant (4-bit per-channel K + per-token V, 1.0% FP16 outliers)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "bits": 4,
+  "group_size": 128,
+  "outlier_frac": 0.01,
+  "ttft_ms": 1879.56,
+  "tpot_ms": 45.07,
+  "tokens_per_sec": 22.19,
+  "peak_vram_mb": 19183.6,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 274.8,
+  "kv_compression_ratio": 3.412,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4592,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kv_cache_mb_full": 774.49,
+  "longbench_avg_kv_cache_mb": 227.02,
+  "longbench_avg_compression_ratio": 3.412
+}
+
+========================================================================
+[01:51:58 | +6554s] DONE  C3/llama31_8b
+========================================================================
+
+========================================================================
+[01:51:58 | +6554s] RUN   C4/llama31_8b   (script: scripts/benchmark_c4_dynamickv.py)
+========================================================================
+
+Config : C4 (DynamicKV, per-layer budget=1024, window=32, kernel=7)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C4/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:18,  2.09it/s]Loading weights:   8%|▊         | 22/291 [00:00<00:05, 49.66it/s]Loading weights:  14%|█▎        | 40/291 [00:00<00:03, 78.81it/s]Loading weights:  22%|██▏       | 63/291 [00:00<00:02, 111.87it/s]Loading weights:  29%|██▊       | 83/291 [00:00<00:01, 134.05it/s]Loading weights:  35%|███▌      | 103/291 [00:01<00:01, 140.30it/s]Loading weights:  42%|████▏     | 122/291 [00:01<00:01, 150.75it/s]Loading weights:  48%|████▊     | 141/291 [00:01<00:00, 158.28it/s]Loading weights:  55%|█████▍    | 159/291 [00:01<00:00, 164.10it/s]Loading weights:  61%|██████    | 177/291 [00:01<00:00, 168.44it/s]Loading weights:  67%|██████▋   | 195/291 [00:01<00:00, 169.43it/s]Loading weights:  76%|███████▌  | 220/291 [00:01<00:00, 171.54it/s]Loading weights:  82%|████████▏ | 239/291 [00:01<00:00, 172.14it/s]Loading weights:  89%|████████▉ | 259/291 [00:01<00:00, 178.82it/s]Loading weights:  96%|█████████▌| 278/291 [00:02<00:00, 181.49it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 140.70it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== Speed benchmark (DynamicKV) ===
+  Prompt: 7500 tokens  budget/layer: 1024
+  TTFT (incl. compression): 1837.0 ms
+  Full KV: 937.5 MB → compressed: 128.0 MB (7.32× compression, avg 1024 tok/layer)
+  TPOT: 36.79 ms/tok  (27.2 tok/s)
+  Peak VRAM: 18151 MB
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 35  (chunk_size=8192, score all tokens)
+  chunk 5/35  PPL=6.545
+  chunk 10/35  PPL=6.206
+  chunk 15/35  PPL=6.363
+  chunk 20/35  PPL=6.330
+  chunk 25/35  PPL=6.581
+  chunk 30/35  PPL=6.508
+  chunk 35/35  PPL=6.497
+  Final PPL: 6.4974
+
+=== LongBench (DynamicKV) ===
+  narrativeqa [5/20]  f1=0.2115
+  narrativeqa [10/20]  f1=0.2835
+  narrativeqa [15/20]  f1=0.2557
+  narrativeqa [20/20]  f1=0.2894
+  narrativeqa  FINAL f1=0.2894  (n=20)
+  qasper [5/20]  f1=0.3105
+  qasper [10/20]  f1=0.3371
+  qasper [15/20]  f1=0.3325
+  qasper [20/20]  f1=0.3640
+  qasper  FINAL f1=0.3640  (n=20)
+  multifieldqa_en [5/20]  f1=0.8500
+  multifieldqa_en [10/20]  f1=0.7151
+  multifieldqa_en [15/20]  f1=0.6285
+  multifieldqa_en [20/20]  f1=0.5198
+  multifieldqa_en  FINAL f1=0.5198  (n=20)
+  hotpotqa [5/20]  f1=0.4000
+  hotpotqa [10/20]  f1=0.3900
+  hotpotqa [15/20]  f1=0.4418
+  hotpotqa [20/20]  f1=0.4397
+  hotpotqa  FINAL f1=0.4397  (n=20)
+  2wikimqa [5/20]  f1=0.4133
+  2wikimqa [10/20]  f1=0.6067
+  2wikimqa [15/20]  f1=0.5911
+  2wikimqa [20/20]  f1=0.5433
+  2wikimqa  FINAL f1=0.5433  (n=20)
+  gov_report [5/20]  rouge1=0.3640
+  gov_report [10/20]  rouge1=0.3464
+  gov_report [15/20]  rouge1=0.3349
+  gov_report [20/20]  rouge1=0.3381
+  gov_report  FINAL rouge1=0.3381  (n=20)
+  multi_news [5/20]  rouge1=0.3384
+  multi_news [10/20]  rouge1=0.3364
+  multi_news [15/20]  rouge1=0.3390
+  multi_news [20/20]  rouge1=0.3338
+  multi_news  FINAL rouge1=0.3338  (n=20)
+  qmsum [5/20]  rouge1=0.3566
+  qmsum [10/20]  rouge1=0.3251
+  qmsum [15/20]  rouge1=0.3106
+  qmsum [20/20]  rouge1=0.3039
+  qmsum  FINAL rouge1=0.3039  (n=20)
+  passage_count [5/20]  count_em=0.0000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.1000
+  passage_count  FINAL count_em=0.1000  (n=20)
+  trec [5/20]  accuracy=0.4000
+  trec [10/20]  accuracy=0.7000
+  trec [15/20]  accuracy=0.7333
+  trec [20/20]  accuracy=0.8000
+  trec  FINAL accuracy=0.8000  (n=20)
+  triviaqa [5/20]  f1=1.0000
+  triviaqa [10/20]  f1=0.9000
+  triviaqa [15/20]  f1=0.9333
+  triviaqa [20/20]  f1=0.9500
+  triviaqa  FINAL f1=0.9500  (n=20)
+
+  LongBench compression: full 774.5 MB → compressed 127.9 MB (6.06×, avg seq 6196 → 1023 kept)
+
+Saved → runs/C4/llama31_8b/results.json
+{
+  "config": "C4",
+  "method": "DynamicKV (per-layer dynamic token retention)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "max_capacity": 1024,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1837.04,
+  "tpot_ms": 36.786,
+  "tokens_per_sec": 27.18,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 128.0,
+  "kv_compression_ratio": 7.324,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4529,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 1022.8,
+  "longbench_avg_kv_cache_mb_full": 774.49,
+  "longbench_avg_kv_cache_mb": 127.85,
+  "longbench_avg_compression_ratio": 6.058
+}
+
+========================================================================
+[02:18:18 | +8134s] DONE  C4/llama31_8b
+========================================================================
+
+========================================================================
+[02:18:18 | +8134s] RUN   C5/llama31_8b   (script: scripts/benchmark_c5_adakv.py)
+========================================================================
+
+Config : C5 (Ada-KV, head-wise adaptive budget, per-head=1024, window=32, kernel=7)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C5/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:06,  2.29it/s]Loading weights:   3%|▎         | 8/291 [00:00<00:15, 18.80it/s]Loading weights:   8%|▊         | 24/291 [00:00<00:04, 54.96it/s]Loading weights:  14%|█▍        | 41/291 [00:00<00:02, 84.88it/s]Loading weights:  20%|█▉        | 58/291 [00:00<00:02, 106.17it/s]Loading weights:  26%|██▌       | 76/291 [00:00<00:01, 124.59it/s]Loading weights:  33%|███▎      | 95/291 [00:01<00:01, 142.10it/s]Loading weights:  39%|███▉      | 114/291 [00:01<00:01, 154.74it/s]Loading weights:  45%|████▌     | 131/291 [00:01<00:01, 158.17it/s]Loading weights:  52%|█████▏    | 150/291 [00:01<00:00, 162.02it/s]Loading weights:  58%|█████▊    | 168/291 [00:01<00:00, 165.02it/s]Loading weights:  64%|██████▍   | 186/291 [00:01<00:00, 166.50it/s]Loading weights:  70%|███████   | 204/291 [00:01<00:00, 168.33it/s]Loading weights:  77%|███████▋  | 223/291 [00:01<00:00, 169.76it/s]Loading weights:  83%|████████▎ | 241/291 [00:01<00:00, 172.64it/s]Loading weights:  89%|████████▉ | 259/291 [00:02<00:00, 173.19it/s]Loading weights:  96%|█████████▌| 279/291 [00:02<00:00, 179.87it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 134.52it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== Speed benchmark (Ada-KV) ===
+  Prompt: 7500 tokens  budget/head: 1024  kv_heads: 8
+  TTFT (incl. compression): 1909.0 ms
+  Full KV: 937.5 MB → compressed: 128.0 MB (7.32× compression, avg 1024 tok/layer)
+  TPOT: 52.80 ms/tok  (18.9 tok/s)
+  Peak VRAM: 18151 MB
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 35  (chunk_size=8192, score all tokens)
+  chunk 5/35  PPL=6.545
+  chunk 10/35  PPL=6.206
+  chunk 15/35  PPL=6.363
+  chunk 20/35  PPL=6.330
+  chunk 25/35  PPL=6.581
+  chunk 30/35  PPL=6.508
+  chunk 35/35  PPL=6.497
+  Final PPL: 6.4974
+
+=== LongBench (Ada-KV) ===
+  narrativeqa [5/20]  f1=0.1943
+  narrativeqa [10/20]  f1=0.2749
+  narrativeqa [15/20]  f1=0.2499
+  narrativeqa [20/20]  f1=0.2851
+  narrativeqa  FINAL f1=0.2851  (n=20)
+  qasper [5/20]  f1=0.2627
+  qasper [10/20]  f1=0.3125
+  qasper [15/20]  f1=0.3158
+  qasper [20/20]  f1=0.3494
+  qasper  FINAL f1=0.3494  (n=20)
+  multifieldqa_en [5/20]  f1=0.8500
+  multifieldqa_en [10/20]  f1=0.7151
+  multifieldqa_en [15/20]  f1=0.6241
+  multifieldqa_en [20/20]  f1=0.5197
+  multifieldqa_en  FINAL f1=0.5197  (n=20)
+  hotpotqa [5/20]  f1=0.4000
+  hotpotqa [10/20]  f1=0.3900
+  hotpotqa [15/20]  f1=0.4418
+  hotpotqa [20/20]  f1=0.4397
+  hotpotqa  FINAL f1=0.4397  (n=20)
+  2wikimqa [5/20]  f1=0.4133
+  2wikimqa [10/20]  f1=0.6067
+  2wikimqa [15/20]  f1=0.5911
+  2wikimqa [20/20]  f1=0.5433
+  2wikimqa  FINAL f1=0.5433  (n=20)
+  gov_report [5/20]  rouge1=0.4061
+  gov_report [10/20]  rouge1=0.3635
+  gov_report [15/20]  rouge1=0.3498
+  gov_report [20/20]  rouge1=0.3490
+  gov_report  FINAL rouge1=0.3490  (n=20)
+  multi_news [5/20]  rouge1=0.3316
+  multi_news [10/20]  rouge1=0.3238
+  multi_news [15/20]  rouge1=0.3292
+  multi_news [20/20]  rouge1=0.3323
+  multi_news  FINAL rouge1=0.3323  (n=20)
+  qmsum [5/20]  rouge1=0.3497
+  qmsum [10/20]  rouge1=0.3202
+  qmsum [15/20]  rouge1=0.3180
+  qmsum [20/20]  rouge1=0.3165
+  qmsum  FINAL rouge1=0.3165  (n=20)
+  passage_count [5/20]  count_em=0.0000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.1000
+  passage_count  FINAL count_em=0.1000  (n=20)
+  trec [5/20]  accuracy=0.4000
+  trec [10/20]  accuracy=0.7000
+  trec [15/20]  accuracy=0.7333
+  trec [20/20]  accuracy=0.8000
+  trec  FINAL accuracy=0.8000  (n=20)
+  triviaqa [5/20]  f1=1.0000
+  triviaqa [10/20]  f1=0.9000
+  triviaqa [15/20]  f1=0.9333
+  triviaqa [20/20]  f1=0.9500
+  triviaqa  FINAL f1=0.9500  (n=20)
+
+  LongBench compression: full 774.5 MB → compressed 127.9 MB (6.06×, avg seq 6196 → 1023 kept)
+
+Saved → runs/C5/llama31_8b/results.json
+{
+  "config": "C5",
+  "method": "Ada-KV (head-wise adaptive budget allocation, vote-aggregated to uniform layer length)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "budget_per_head": 1024,
+  "n_kv_heads": 8,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1909.04,
+  "tpot_ms": 52.802,
+  "tokens_per_sec": 18.94,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 128.0,
+  "kv_compression_ratio": 7.324,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4532,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 1022.8,
+  "longbench_avg_kv_cache_mb_full": 774.49,
+  "longbench_avg_kv_cache_mb": 127.85,
+  "longbench_avg_compression_ratio": 6.058
+}
+
+========================================================================
+[02:39:42 | +9418s] DONE  C5/llama31_8b
+========================================================================
+
+========================================================================
+[02:39:42 | +9418s] RUN   C1/llama31_8b   (script: scripts/benchmark_c1_tailorkv.py)
+========================================================================
+
+Config : C1 (TailorKV — hybrid: 1-bit quant on Q-layers + SnapKV Top-K on S-layers)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C1/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:30,  1.92it/s]Loading weights:   8%|▊         | 23/291 [00:00<00:05, 48.85it/s]Loading weights:  14%|█▎        | 40/291 [00:00<00:03, 77.19it/s]Loading weights:  20%|█▉        | 58/291 [00:00<00:02, 102.12it/s]Loading weights:  26%|██▌       | 76/291 [00:00<00:01, 119.28it/s]Loading weights:  33%|███▎      | 95/291 [00:01<00:01, 136.54it/s]Loading weights:  38%|███▊      | 112/291 [00:01<00:01, 140.37it/s]Loading weights:  45%|████▌     | 132/291 [00:01<00:01, 154.14it/s]Loading weights:  52%|█████▏    | 150/291 [00:01<00:00, 157.65it/s]Loading weights:  57%|█████▋    | 167/291 [00:01<00:00, 159.15it/s]Loading weights:  64%|██████▍   | 186/291 [00:01<00:00, 164.43it/s]Loading weights:  70%|███████   | 204/291 [00:01<00:00, 168.06it/s]Loading weights:  76%|███████▋  | 222/291 [00:01<00:00, 169.55it/s]Loading weights:  82%|████████▏ | 240/291 [00:01<00:00, 170.95it/s]Loading weights:  89%|████████▊ | 258/291 [00:01<00:00, 170.60it/s]Loading weights:  95%|█████████▍| 276/291 [00:02<00:00, 170.08it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 134.99it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== Speed benchmark (TailorKV) ===
+  Prompt: 7500 tokens   Q-layers: [0]   S-budget: 64+(128)  bits: 1
+  TTFT (incl. compression): 1895.4 ms
+  Full KV: 937.5 MB → compressed: 23.3 MB (40.20× compression)
+  Q-layers: 1 (1-bit), S-layers: 31 (64+128 tokens)
+  TPOT: 39.94 ms/tok  (25.0 tok/s)
+  Peak VRAM: 18151 MB
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 35  (chunk_size=8192, score all tokens)
+  chunk 5/35  PPL=6.545
+  chunk 10/35  PPL=6.206
+  chunk 15/35  PPL=6.363
+  chunk 20/35  PPL=6.330
+  chunk 25/35  PPL=6.581
+  chunk 30/35  PPL=6.508
+  chunk 35/35  PPL=6.497
+  Final PPL: 6.4974
+
+=== LongBench (TailorKV) ===
+  narrativeqa [5/20]  f1=0.1102
+  narrativeqa [10/20]  f1=0.2323
+  narrativeqa [15/20]  f1=0.1993
+  narrativeqa [20/20]  f1=0.2275
+  narrativeqa  FINAL f1=0.2275  (n=20)
+  qasper [5/20]  f1=0.2168
+  qasper [10/20]  f1=0.2853
+  qasper [15/20]  f1=0.2244
+  qasper [20/20]  f1=0.2144
+  qasper  FINAL f1=0.2144  (n=20)
+  multifieldqa_en [5/20]  f1=0.8278
+  multifieldqa_en [10/20]  f1=0.7177
+  multifieldqa_en [15/20]  f1=0.6133
+  multifieldqa_en [20/20]  f1=0.5150
+  multifieldqa_en  FINAL f1=0.5150  (n=20)
+  hotpotqa [5/20]  f1=0.3333
+  hotpotqa [10/20]  f1=0.3567
+  hotpotqa [15/20]  f1=0.3760
+  hotpotqa [20/20]  f1=0.3904
+  hotpotqa  FINAL f1=0.3904  (n=20)
+  2wikimqa [5/20]  f1=0.5333
+  2wikimqa [10/20]  f1=0.6467
+  2wikimqa [15/20]  f1=0.6178
+  2wikimqa [20/20]  f1=0.5050
+  2wikimqa  FINAL f1=0.5050  (n=20)
+  gov_report [5/20]  rouge1=0.2383
+  gov_report [10/20]  rouge1=0.2361
+  gov_report [15/20]  rouge1=0.2381
+  gov_report [20/20]  rouge1=0.2495
+  gov_report  FINAL rouge1=0.2495  (n=20)
+  multi_news [5/20]  rouge1=0.2853
+  multi_news [10/20]  rouge1=0.2684
+  multi_news [15/20]  rouge1=0.2721
+  multi_news [20/20]  rouge1=0.2669
+  multi_news  FINAL rouge1=0.2669  (n=20)
+  qmsum [5/20]  rouge1=0.3476
+  qmsum [10/20]  rouge1=0.3342
+  qmsum [15/20]  rouge1=0.3040
+  qmsum [20/20]  rouge1=0.2884
+  qmsum  FINAL rouge1=0.2884  (n=20)
+  passage_count [5/20]  count_em=0.0000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.1000
+  passage_count  FINAL count_em=0.1000  (n=20)
+  trec [5/20]  accuracy=0.4000
+  trec [10/20]  accuracy=0.7000
+  trec [15/20]  accuracy=0.7333
+  trec [20/20]  accuracy=0.8000
+  trec  FINAL accuracy=0.8000  (n=20)
+  triviaqa [5/20]  f1=1.0000
+  triviaqa [10/20]  f1=0.8148
+  triviaqa [15/20]  f1=0.8099
+  triviaqa [20/20]  f1=0.8574
+  triviaqa  FINAL f1=0.8574  (n=20)
+
+  LongBench compression: full 774.5 MB → compressed 23.3 MB (33.21×, avg seq 6196 → 192 avg kept/layer)
+
+Saved → runs/C1/llama31_8b/results.json
+{
+  "config": "C1",
+  "method": "TailorKV (hybrid: 1-bit quant on Q-layers + SnapKV 64+128 on S-layers)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "q_layers": [
+    0
+  ],
+  "bits": 1,
+  "group_size": 64,
+  "n_local": 64,
+  "n_topk": 128,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1895.36,
+  "tpot_ms": 39.937,
+  "tokens_per_sec": 25.04,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 23.32,
+  "kv_compression_ratio": 40.201,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4013,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 192.0,
+  "longbench_avg_kv_cache_mb_full": 774.49,
+  "longbench_avg_kv_cache_mb": 23.32,
+  "longbench_avg_compression_ratio": 33.211
+}
+
+========================================================================
+[03:03:30 | +10846s] DONE  C1/llama31_8b
+========================================================================
+
+========================================================================
+[03:03:30 | +10846s] RUN   C2/llama31_8b   (script: scripts/benchmark_c2_qaq.py)
+========================================================================
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:07,  2.28it/s]Loading weights:   3%|▎         | 8/291 [00:00<00:15, 18.66it/s]Loading weights:   8%|▊         | 24/291 [00:00<00:04, 54.29it/s]Loading weights:  14%|█▍        | 41/291 [00:00<00:02, 83.83it/s]Loading weights:  21%|██        | 60/291 [00:00<00:02, 112.04it/s]Loading weights:  26%|██▌       | 76/291 [00:00<00:01, 123.89it/s]Loading weights:  33%|███▎      | 96/291 [00:01<00:01, 143.72it/s]Loading weights:  42%|████▏     | 121/291 [00:01<00:01, 152.82it/s]Loading weights:  48%|████▊     | 139/291 [00:01<00:00, 157.41it/s]Loading weights:  54%|█████▍    | 157/291 [00:01<00:00, 162.31it/s]Loading weights:  61%|██████    | 177/291 [00:01<00:00, 171.82it/s]Loading weights:  67%|██████▋   | 195/291 [00:01<00:00, 168.80it/s]Loading weights:  76%|███████▌  | 220/291 [00:01<00:00, 169.03it/s]Loading weights:  82%|████████▏ | 238/291 [00:01<00:00, 171.73it/s]Loading weights:  88%|████████▊ | 257/291 [00:01<00:00, 173.62it/s]Loading weights:  95%|█████████▍| 275/291 [00:02<00:00, 174.46it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 135.44it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (289077 > 131072). Running this sequence through the model will result in indexing errors
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== Speed benchmark (Full QAQ, attention-aware variable-bit) ===
+  Prompt: 7500 tokens
+  QAQ: bits=[2,16], outliers=1%, window=5, target_error=1.0
+  Precomputing q_norm (upper-10th-pct of ||Q||^2)...
+  q_norm = 247.4
+  TTFT (incl. quantize): 2519.5 ms
+  KV cache after prefill: 937.5 MB actual (FP16 sim)
+  Theoretical: bits range [2,16], outliers at 16-bit
+  TPOT (incl. attn+quantize): 230.23 ms/tok  (4.3 tok/s)
+  Peak VRAM: 18165 MB
+  Measured avg bits: 3.02  Compression: 5.29×
+
+=== WikiText-2 perplexity ===
+  Total tokens: 289,077
+  Chunks: 35  (chunk_size=8192, score all tokens)
+  chunk 5/35  PPL=6.545
+  chunk 10/35  PPL=6.206
+  chunk 15/35  PPL=6.363
+  chunk 20/35  PPL=6.330
+  chunk 25/35  PPL=6.581
+  chunk 30/35  PPL=6.508
+  chunk 35/35  PPL=6.497
+  Final PPL: 6.4974
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  narrativeqa [5/20]  f1=0.2471
+  narrativeqa [10/20]  f1=0.3007
+  narrativeqa [15/20]  f1=0.2671
+  narrativeqa [20/20]  f1=0.2826
+  narrativeqa  FINAL f1=0.2826  (n=20)
+  qasper [5/20]  f1=0.2793
+  qasper [10/20]  f1=0.3256
+  qasper [15/20]  f1=0.3381
+  qasper [20/20]  f1=0.3703
+  qasper  FINAL f1=0.3703  (n=20)
+  multifieldqa_en [5/20]  f1=0.7403
+  multifieldqa_en [10/20]  f1=0.6916
+  multifieldqa_en [15/20]  f1=0.6438
+  multifieldqa_en [20/20]  f1=0.5323
+  multifieldqa_en  FINAL f1=0.5323  (n=20)
+  hotpotqa [5/20]  f1=0.3697
+  hotpotqa [10/20]  f1=0.3748
+  hotpotqa [15/20]  f1=0.3832
+  hotpotqa [20/20]  f1=0.3958
+  hotpotqa  FINAL f1=0.3958  (n=20)
+  2wikimqa [5/20]  f1=0.5333
+  2wikimqa [10/20]  f1=0.6667
+  2wikimqa [15/20]  f1=0.6311
+  2wikimqa [20/20]  f1=0.5733
+  2wikimqa  FINAL f1=0.5733  (n=20)
+  gov_report [5/20]  rouge1=0.4227
+  gov_report [10/20]  rouge1=0.4144
+  gov_report [15/20]  rouge1=0.3997
+  gov_report [20/20]  rouge1=0.4056
+  gov_report  FINAL rouge1=0.4056  (n=20)
+  multi_news [5/20]  rouge1=0.3182
+  multi_news [10/20]  rouge1=0.3321
+  multi_news [15/20]  rouge1=0.3356
+  multi_news [20/20]  rouge1=0.3414
+  multi_news  FINAL rouge1=0.3414  (n=20)
+  qmsum [5/20]  rouge1=0.3055
+  qmsum [10/20]  rouge1=0.2870
+  qmsum [15/20]  rouge1=0.2885
+  qmsum [20/20]  rouge1=0.2756
+  qmsum  FINAL rouge1=0.2756  (n=20)
+  passage_count [5/20]  count_em=0.0000
+  passage_count [10/20]  count_em=0.1000
+  passage_count [15/20]  count_em=0.0667
+  passage_count [20/20]  count_em=0.1000
+  passage_count  FINAL count_em=0.1000  (n=20)
+  trec [5/20]  accuracy=0.4000
+  trec [10/20]  accuracy=0.7000
+  trec [15/20]  accuracy=0.7333
+  trec [20/20]  accuracy=0.8000
+  trec  FINAL accuracy=0.8000  (n=20)
+  triviaqa [5/20]  f1=1.0000
+  triviaqa [10/20]  f1=0.9000
+  triviaqa [15/20]  f1=0.9333
+  triviaqa [20/20]  f1=0.9500
+  triviaqa  FINAL f1=0.9500  (n=20)
+
+  LongBench QAQ avg bits: 2.974  (5.38× compression, n=220 prompts)
+
+Saved → runs/C2/llama31_8b/results.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "ttft_ms": 2519.47,
+  "tpot_ms": 230.225,
+  "tokens_per_sec": 4.34,
+  "peak_vram_mb": 18164.6,
+  "kv_cache_mb": 178.34,
+  "kv_compression_ratio": 5.292,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 247.36,
+  "qaq_avg_bits": 3.023,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.457,
+  "longbench_avg_bits": 2.974,
+  "longbench_avg_compression_ratio": 5.379
+}
+
+========================================================================
+[04:28:53 | +15969s] DONE  C2/llama31_8b
+========================================================================
+
+========================================================================
+[04:28:53 | +15969s] BUILD dataset for llama31_8b
+========================================================================
+wrote 220 rows → /home/youssef/projects/research/AdaptiveServe/runs/dataset/llama31_8b.jsonl  (skipped 0 incomplete)
+
+features per prompt (7): ['gzip_ratio', 'newline_density', 'question_position', 'seq_len_chars', 'seq_len_tokens', 'token_entropy', 'unique_token_ratio']
+per-prompt compression (harmonic mean): C0=1.00x  C1=26.96x  C2=5.38x  C3=3.41x  C4=4.96x  C5=4.96x
+per-prompt compression (min .. max):   C0=1.00..1.00x  C1=4.52..40.20x  C2=5.21..5.43x  C3=3.41..3.41x  C4=1.00..7.32x  C5=1.00..7.32x
+
+per-config quality on training data (mean over all prompts):
+  always-C0: q=0.4592  cr_hmean=1.00x
+  always-C1: q=0.4013  cr_hmean=26.96x
+  always-C2: q=0.4570  cr_hmean=5.38x
+  always-C3: q=0.4592  cr_hmean=3.41x
+  always-C4: q=0.4529  cr_hmean=4.96x
+  always-C5: q=0.4532  cr_hmean=4.96x
+
+per-prompt oracle (upper bound the classifier targets):
+  oracle@tau=0.99: q=0.4759  cr=7.16x
+  oracle@tau=0.95: q=0.4733  cr=10.53x
+  oracle@tau=0.90: q=0.4716  cr=11.67x
+
+label distribution (which config wins):
+  best_quality            C0=157  C1=13  C2=13  C3=18  C4=12  C5=7
+  best_iso_quality_99     C0=14  C1=141  C2=20  C3=14  C4=28  C5=3
+  best_iso_quality_95     C0=2  C1=146  C2=27  C3=13  C4=31  C5=1
+  best_iso_quality_90     C0=1  C1=148  C2=33  C3=9  C4=27  C5=2
+
+========================================================================
+[04:28:53 | +15969s] Track C pipeline COMPLETE  total=15969s
+========================================================================
+
+========================================================================
+[04:28:53 | +19327s] Build dataset: llama3
+========================================================================
+wrote 220 rows → /home/youssef/projects/research/AdaptiveServe/runs/dataset/llama3.jsonl  (skipped 0 incomplete)
+
+features per prompt (7): ['gzip_ratio', 'newline_density', 'question_position', 'seq_len_chars', 'seq_len_tokens', 'token_entropy', 'unique_token_ratio']
+per-prompt compression (harmonic mean): C0=1.00x  C1=26.96x  C2=5.39x  C3=3.41x  C4=4.96x  C5=4.96x
+per-prompt compression (min .. max):   C0=1.00..1.00x  C1=4.52..40.20x  C2=5.20..5.45x  C3=3.41..3.41x  C4=1.00..7.32x  C5=1.00..7.32x
+
+per-config quality on training data (mean over all prompts):
+  always-C0: q=0.4454  cr_hmean=1.00x
+  always-C1: q=0.3974  cr_hmean=26.96x
+  always-C2: q=0.4294  cr_hmean=5.39x
+  always-C3: q=0.4486  cr_hmean=3.41x
+  always-C4: q=0.4417  cr_hmean=4.96x
+  always-C5: q=0.4422  cr_hmean=4.96x
+
+per-prompt oracle (upper bound the classifier targets):
+  oracle@tau=0.99: q=0.4598  cr=6.50x
+  oracle@tau=0.95: q=0.4575  cr=8.93x
+  oracle@tau=0.90: q=0.4554  cr=11.54x
+
+label distribution (which config wins):
+  best_quality            C0=157  C1=11  C2=19  C3=15  C4=11  C5=7
+  best_iso_quality_99     C0=19  C1=145  C2=21  C3=10  C4=24  C5=1
+  best_iso_quality_95     C0=8  C1=150  C2=24  C3=13  C4=24  C5=1
+  best_iso_quality_90     C0=2  C1=153  C2=27  C3=11  C4=26  C5=1
+
+========================================================================
+[04:28:53 | +19327s] Build dataset: phi3
+========================================================================
+wrote 220 rows → /home/youssef/projects/research/AdaptiveServe/runs/dataset/phi3.jsonl  (skipped 0 incomplete)
+
+features per prompt (7): ['gzip_ratio', 'newline_density', 'question_position', 'seq_len_chars', 'seq_len_tokens', 'token_entropy', 'unique_token_ratio']
+per-prompt compression (harmonic mean): C0=1.00x  C1=10.55x  C2=5.83x  C3=3.41x  C4=6.46x  C5=6.46x
+per-prompt compression (min .. max):   C0=1.00..1.00x  C1=3.23..11.17x  C2=5.76..5.87x  C3=3.41..3.41x  C4=1.98..6.84x  C5=1.98..6.84x
+
+per-config quality on training data (mean over all prompts):
+  always-C0: q=0.3167  cr_hmean=1.00x
+  always-C1: q=0.3069  cr_hmean=10.55x
+  always-C2: q=0.3286  cr_hmean=5.83x
+  always-C3: q=0.3180  cr_hmean=3.41x
+  always-C4: q=0.3114  cr_hmean=6.46x
+  always-C5: q=0.3107  cr_hmean=6.46x
+
+per-prompt oracle (upper bound the classifier targets):
+  oracle@tau=0.99: q=0.3427  cr=6.43x
+  oracle@tau=0.95: q=0.3399  cr=7.49x
+  oracle@tau=0.90: q=0.3375  cr=8.08x
+
+label distribution (which config wins):
+  best_quality            C0=145  C1=19  C2=22  C3=16  C4=11  C5=7
+  best_iso_quality_99     C0=11  C1=159  C2=25  C3=6  C4=15  C5=4
+  best_iso_quality_95     C0=6  C1=166  C2=26  C3=4  C4=14  C5=4
+  best_iso_quality_90     C0=4  C1=174  C2=21  C3=5  C4=12  C5=4
+
+========================================================================
+[04:28:53 | +19327s] C6 router: llama3 @tau=0.99
+========================================================================
+
+=== C6 router  model=llama3  tau=0.99  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4317  cr=6.39x  picks={'C1': 63, 'C3': 34, 'C4': 43, 'C5': 29, 'C2': 51}
+Split-tr : q=0.4484  cr=6.62x  (n_train=154)
+Split-te : q=0.4702  cr=6.54x  picks={'C5': 7, 'C2': 21, 'C4': 17, 'C1': 13, 'C3': 8}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.776 test=-0.144  MAE train=0.135 test=0.286
+  C0: R2 tr=+0.776 te=-0.213  MAE tr=0.133 te=0.299
+  C1: R2 tr=+0.761 te=+0.022  MAE tr=0.139 te=0.270
+  C2: R2 tr=+0.781 te=-0.077  MAE tr=0.133 te=0.274
+  C3: R2 tr=+0.775 te=-0.243  MAE tr=0.134 te=0.294
+  C4: R2 tr=+0.779 te=-0.159  MAE tr=0.135 te=0.289
+  C5: R2 tr=+0.784 te=-0.192  MAE tr=0.134 te=0.291
+Routing overhead: 63.84 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/per_prompt.jsonl
+
+========================================================================
+[04:29:02 | +19336s] C6 router: llama3 @tau=0.95
+========================================================================
+
+=== C6 router  model=llama3  tau=0.95  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4311  cr=6.93x  picks={'C1': 76, 'C4': 37, 'C5': 25, 'C3': 29, 'C2': 53}
+Split-tr : q=0.4480  cr=7.29x  (n_train=154)
+Split-te : q=0.4683  cr=7.20x  picks={'C1': 17, 'C2': 16, 'C4': 24, 'C3': 6, 'C5': 3}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.776 test=-0.144  MAE train=0.135 test=0.286
+  C0: R2 tr=+0.776 te=-0.213  MAE tr=0.133 te=0.299
+  C1: R2 tr=+0.761 te=+0.022  MAE tr=0.139 te=0.270
+  C2: R2 tr=+0.781 te=-0.077  MAE tr=0.133 te=0.274
+  C3: R2 tr=+0.775 te=-0.243  MAE tr=0.134 te=0.294
+  C4: R2 tr=+0.779 te=-0.159  MAE tr=0.135 te=0.289
+  C5: R2 tr=+0.784 te=-0.192  MAE tr=0.134 te=0.291
+Routing overhead: 57.26 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/per_prompt.jsonl
+
+========================================================================
+[04:29:11 | +19345s] C6 router: llama3 @tau=0.90
+========================================================================
+
+=== C6 router  model=llama3  tau=0.9  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4260  cr=7.68x  picks={'C1': 95, 'C4': 32, 'C5': 19, 'C3': 25, 'C2': 49}
+Split-tr : q=0.4467  cr=7.72x  (n_train=154)
+Split-te : q=0.4590  cr=7.70x  picks={'C1': 22, 'C2': 17, 'C4': 18, 'C3': 6, 'C5': 3}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.776 test=-0.144  MAE train=0.135 test=0.286
+  C0: R2 tr=+0.776 te=-0.213  MAE tr=0.133 te=0.299
+  C1: R2 tr=+0.761 te=+0.022  MAE tr=0.139 te=0.270
+  C2: R2 tr=+0.781 te=-0.077  MAE tr=0.133 te=0.274
+  C3: R2 tr=+0.775 te=-0.243  MAE tr=0.134 te=0.294
+  C4: R2 tr=+0.779 te=-0.159  MAE tr=0.135 te=0.289
+  C5: R2 tr=+0.784 te=-0.192  MAE tr=0.134 te=0.291
+Routing overhead: 64.12 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/per_prompt.jsonl
+
+========================================================================
+[04:29:21 | +19355s] C6 router: phi3 @tau=0.99
+========================================================================
+
+=== C6 router  model=phi3  tau=0.99  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3171  cr=6.89x  picks={'C1': 97, 'C5': 22, 'C2': 55, 'C4': 25, 'C3': 21}
+Split-tr : q=0.3377  cr=6.42x  (n_train=154)
+Split-te : q=0.3515  cr=6.20x  picks={'C3': 12, 'C1': 23, 'C2': 21, 'C4': 8, 'C5': 2}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.841 test=-0.116  MAE train=0.100 test=0.237
+  C0: R2 tr=+0.837 te=-0.187  MAE tr=0.103 te=0.245
+  C1: R2 tr=+0.849 te=-0.008  MAE tr=0.099 te=0.225
+  C2: R2 tr=+0.833 te=-0.223  MAE tr=0.104 te=0.253
+  C3: R2 tr=+0.839 te=-0.131  MAE tr=0.099 te=0.235
+  C4: R2 tr=+0.843 te=-0.065  MAE tr=0.100 te=0.233
+  C5: R2 tr=+0.845 te=-0.084  MAE tr=0.098 te=0.233
+Routing overhead: 61.81 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/per_prompt.jsonl
+
+========================================================================
+[04:29:30 | +19364s] C6 router: phi3 @tau=0.95
+========================================================================
+
+=== C6 router  model=phi3  tau=0.95  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3210  cr=7.14x  picks={'C1': 109, 'C5': 20, 'C2': 52, 'C3': 18, 'C4': 21}
+Split-tr : q=0.3366  cr=6.82x  (n_train=154)
+Split-te : q=0.3508  cr=6.42x  picks={'C3': 11, 'C1': 26, 'C2': 19, 'C4': 7, 'C5': 3}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.841 test=-0.116  MAE train=0.100 test=0.237
+  C0: R2 tr=+0.837 te=-0.187  MAE tr=0.103 te=0.245
+  C1: R2 tr=+0.849 te=-0.008  MAE tr=0.099 te=0.225
+  C2: R2 tr=+0.833 te=-0.223  MAE tr=0.104 te=0.253
+  C3: R2 tr=+0.839 te=-0.131  MAE tr=0.099 te=0.235
+  C4: R2 tr=+0.843 te=-0.065  MAE tr=0.100 te=0.233
+  C5: R2 tr=+0.845 te=-0.084  MAE tr=0.098 te=0.233
+Routing overhead: 63.58 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/per_prompt.jsonl
+
+========================================================================
+[04:29:39 | +19373s] C6 router: phi3 @tau=0.90
+========================================================================
+
+=== C6 router  model=phi3  tau=0.9  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3199  cr=7.35x  picks={'C1': 114, 'C5': 17, 'C2': 49, 'C3': 15, 'C4': 25}
+Split-tr : q=0.3330  cr=7.02x  (n_train=154)
+Split-te : q=0.3490  cr=6.42x  picks={'C3': 11, 'C1': 27, 'C2': 18, 'C4': 8, 'C5': 2}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.841 test=-0.116  MAE train=0.100 test=0.237
+  C0: R2 tr=+0.837 te=-0.187  MAE tr=0.103 te=0.245
+  C1: R2 tr=+0.849 te=-0.008  MAE tr=0.099 te=0.225
+  C2: R2 tr=+0.833 te=-0.223  MAE tr=0.104 te=0.253
+  C3: R2 tr=+0.839 te=-0.131  MAE tr=0.099 te=0.235
+  C4: R2 tr=+0.843 te=-0.065  MAE tr=0.100 te=0.233
+  C5: R2 tr=+0.845 te=-0.084  MAE tr=0.098 te=0.233
+Routing overhead: 65.96 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/per_prompt.jsonl
+
+========================================================================
+[04:29:49 | +19383s] C6 router: llama32_3b @tau=0.99
+========================================================================
+
+=== C6 router  model=llama32_3b  tau=0.99  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4102  cr=6.46x  picks={'C4': 55, 'C1': 50, 'C2': 50, 'C5': 27, 'C3': 38}
+Split-tr : q=0.4354  cr=6.04x  (n_train=154)
+Split-te : q=0.4107  cr=6.01x  picks={'C4': 14, 'C5': 4, 'C1': 13, 'C2': 22, 'C3': 13}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.757 test=0.110  MAE train=0.139 test=0.257
+  C0: R2 tr=+0.747 te=+0.026  MAE tr=0.143 te=0.268
+  C1: R2 tr=+0.766 te=+0.174  MAE tr=0.134 te=0.242
+  C2: R2 tr=+0.760 te=+0.154  MAE tr=0.136 te=0.256
+  C3: R2 tr=+0.750 te=+0.098  MAE tr=0.140 te=0.258
+  C4: R2 tr=+0.759 te=+0.071  MAE tr=0.139 te=0.263
+  C5: R2 tr=+0.758 te=+0.136  MAE tr=0.140 te=0.254
+Routing overhead: 61.34 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/per_prompt.jsonl
+
+========================================================================
+[04:29:58 | +19392s] C6 router: llama32_3b @tau=0.95
+========================================================================
+
+=== C6 router  model=llama32_3b  tau=0.95  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4033  cr=6.95x  picks={'C4': 57, 'C1': 63, 'C2': 51, 'C5': 19, 'C3': 30}
+Split-tr : q=0.4312  cr=6.39x  (n_train=154)
+Split-te : q=0.4108  cr=6.14x  picks={'C4': 16, 'C5': 5, 'C1': 13, 'C2': 20, 'C3': 12}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.757 test=0.110  MAE train=0.139 test=0.257
+  C0: R2 tr=+0.747 te=+0.026  MAE tr=0.143 te=0.268
+  C1: R2 tr=+0.766 te=+0.174  MAE tr=0.134 te=0.242
+  C2: R2 tr=+0.760 te=+0.154  MAE tr=0.136 te=0.256
+  C3: R2 tr=+0.750 te=+0.098  MAE tr=0.140 te=0.258
+  C4: R2 tr=+0.759 te=+0.071  MAE tr=0.139 te=0.263
+  C5: R2 tr=+0.758 te=+0.136  MAE tr=0.140 te=0.254
+Routing overhead: 60.54 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/per_prompt.jsonl
+
+========================================================================
+[04:30:08 | +19402s] C6 router: llama32_3b @tau=0.90
+========================================================================
+
+=== C6 router  model=llama32_3b  tau=0.9  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3945  cr=7.45x  picks={'C4': 52, 'C1': 73, 'C2': 55, 'C5': 16, 'C3': 24}
+Split-tr : q=0.4290  cr=6.81x  (n_train=154)
+Split-te : q=0.4075  cr=6.62x  picks={'C4': 18, 'C1': 16, 'C2': 21, 'C3': 8, 'C5': 3}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.757 test=0.110  MAE train=0.139 test=0.257
+  C0: R2 tr=+0.747 te=+0.026  MAE tr=0.143 te=0.268
+  C1: R2 tr=+0.766 te=+0.174  MAE tr=0.134 te=0.242
+  C2: R2 tr=+0.760 te=+0.154  MAE tr=0.136 te=0.256
+  C3: R2 tr=+0.750 te=+0.098  MAE tr=0.140 te=0.258
+  C4: R2 tr=+0.759 te=+0.071  MAE tr=0.139 te=0.263
+  C5: R2 tr=+0.758 te=+0.136  MAE tr=0.140 te=0.254
+Routing overhead: 61.73 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/per_prompt.jsonl
+
+========================================================================
+[04:30:17 | +19411s] C6 router: llama31_8b @tau=0.99
+========================================================================
+
+=== C6 router  model=llama31_8b  tau=0.99  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4424  cr=6.69x  picks={'C1': 72, 'C2': 49, 'C4': 36, 'C3': 42, 'C5': 21}
+Split-tr : q=0.4831  cr=6.58x  (n_train=154)
+Split-te : q=0.4325  cr=6.61x  picks={'C1': 20, 'C3': 16, 'C5': 3, 'C2': 12, 'C4': 15}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.798 test=0.160  MAE train=0.124 test=0.226
+  C0: R2 tr=+0.795 te=+0.158  MAE tr=0.125 te=0.226
+  C1: R2 tr=+0.820 te=+0.179  MAE tr=0.117 te=0.224
+  C2: R2 tr=+0.792 te=+0.218  MAE tr=0.128 te=0.223
+  C3: R2 tr=+0.796 te=+0.130  MAE tr=0.126 te=0.228
+  C4: R2 tr=+0.792 te=+0.129  MAE tr=0.125 te=0.228
+  C5: R2 tr=+0.792 te=+0.147  MAE tr=0.124 te=0.224
+Routing overhead: 62.10 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/per_prompt.jsonl
+
+========================================================================
+[04:30:27 | +19421s] C6 router: llama31_8b @tau=0.95
+========================================================================
+
+=== C6 router  model=llama31_8b  tau=0.95  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4432  cr=7.03x  picks={'C1': 75, 'C2': 39, 'C4': 45, 'C3': 38, 'C5': 23}
+Split-tr : q=0.4820  cr=7.32x  (n_train=154)
+Split-te : q=0.4308  cr=7.07x  picks={'C1': 22, 'C3': 13, 'C5': 3, 'C2': 13, 'C4': 15}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.798 test=0.160  MAE train=0.124 test=0.226
+  C0: R2 tr=+0.795 te=+0.158  MAE tr=0.125 te=0.226
+  C1: R2 tr=+0.820 te=+0.179  MAE tr=0.117 te=0.224
+  C2: R2 tr=+0.792 te=+0.218  MAE tr=0.128 te=0.223
+  C3: R2 tr=+0.796 te=+0.130  MAE tr=0.126 te=0.228
+  C4: R2 tr=+0.792 te=+0.129  MAE tr=0.125 te=0.228
+  C5: R2 tr=+0.792 te=+0.147  MAE tr=0.124 te=0.224
+Routing overhead: 59.32 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/per_prompt.jsonl
+
+========================================================================
+[04:30:36 | +19430s] C6 router: llama31_8b @tau=0.90
+========================================================================
+
+=== C6 router  model=llama31_8b  tau=0.9  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4386  cr=7.60x  picks={'C1': 85, 'C4': 53, 'C3': 29, 'C2': 41, 'C5': 12}
+Split-tr : q=0.4816  cr=7.79x  (n_train=154)
+Split-te : q=0.4288  cr=7.48x  picks={'C1': 24, 'C3': 11, 'C5': 3, 'C2': 13, 'C4': 15}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.798 test=0.160  MAE train=0.124 test=0.226
+  C0: R2 tr=+0.795 te=+0.158  MAE tr=0.125 te=0.226
+  C1: R2 tr=+0.820 te=+0.179  MAE tr=0.117 te=0.224
+  C2: R2 tr=+0.792 te=+0.218  MAE tr=0.128 te=0.223
+  C3: R2 tr=+0.796 te=+0.130  MAE tr=0.126 te=0.228
+  C4: R2 tr=+0.792 te=+0.129  MAE tr=0.125 te=0.228
+  C5: R2 tr=+0.792 te=+0.147  MAE tr=0.124 te=0.224
+Routing overhead: 66.56 us / prompt (features-already-extracted; sklearn predict only)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/results.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/per_prompt.jsonl
+
+========================================================================
+[04:30:46 | +19440s] Pareto plot: llama3
+========================================================================
+wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_llama3.png
+
+========================================================================
+[04:30:46 | +19440s] Pareto plot: phi3
+========================================================================
+wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_phi3.png
+
+========================================================================
+[04:30:47 | +19441s] Pareto plot: llama32_3b
+========================================================================
+wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_llama32_3b.png
+
+========================================================================
+[04:30:47 | +19441s] Pareto plot: llama31_8b
+========================================================================
+wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_llama31_8b.png
+
+========================================================================
+[04:30:48 | +19442s] finish_all COMPLETE  total=19442s
+========================================================================

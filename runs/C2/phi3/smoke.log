@@ -1,0 +1,36 @@
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=prefill-only (SDPA, K-formula))
+Model  : microsoft/Phi-3-mini-4k-instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/phi3/results.json
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   1%|          | 1/195 [00:00<00:32,  6.01it/s]Loading weights:   9%|▊         | 17/195 [00:00<00:02, 74.23it/s]Loading weights:  16%|█▋        | 32/195 [00:00<00:01, 98.77it/s]Loading weights:  24%|██▍       | 47/195 [00:00<00:01, 103.66it/s]Loading weights:  33%|███▎      | 65/195 [00:00<00:01, 124.03it/s]Loading weights:  41%|████      | 80/195 [00:00<00:00, 131.36it/s]Loading weights:  49%|████▊     | 95/195 [00:00<00:00, 127.98it/s]Loading weights:  58%|█████▊    | 113/195 [00:00<00:00, 140.49it/s]Loading weights:  66%|██████▌   | 128/195 [00:01<00:00, 141.24it/s]Loading weights:  73%|███████▎  | 143/195 [00:01<00:00, 129.73it/s]Loading weights:  84%|████████▎ | 163/195 [00:01<00:00, 148.13it/s]Loading weights:  92%|█████████▏| 179/195 [00:01<00:00, 134.38it/s]Loading weights: 100%|██████████| 195/195 [00:01<00:00, 127.42it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35536 > 4096). Running this sequence through the model will result in indexing errors
+
+[smoke] writing to runs/C2/phi3/per_prompt_smoke.jsonl and runs/C2/phi3/results_smoke.json (production files untouched)
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  (smoke-test mode: --limit 1 samples per task)
+  narrativeqa  FINAL f1=0.2500  (n=1)
+  qasper  FINAL f1=0.0000  (n=1)
+  multifieldqa_en  FINAL f1=0.7500  (n=1)
+  hotpotqa  FINAL f1=0.3333  (n=1)
+  2wikimqa  FINAL f1=0.0000  (n=1)
+  gov_report  FINAL rouge1=0.3432  (n=1)
+  multi_news  FINAL rouge1=0.2903  (n=1)
+  qmsum  FINAL rouge1=0.2128  (n=1)
+  passage_count  FINAL count_em=0.0000  (n=1)
+  trec  FINAL accuracy=1.0000  (n=1)
+  triviaqa  FINAL f1=1.0000  (n=1)
+
+  LongBench QAQ avg bits: 2.744  (5.83× compression, n=11 prompts)
+
+Saved → runs/C2/phi3/results_smoke.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=prefill-only (SDPA, K-formula))",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "longbench_avg": 0.38,
+  "longbench_avg_bits": 2.744,
+  "longbench_avg_compression_ratio": 5.831
+}

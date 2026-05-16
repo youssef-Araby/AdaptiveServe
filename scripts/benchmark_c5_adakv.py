@@ -85,8 +85,10 @@ from _common import (
 # adaptively allocated across heads, then unioned. Matched to C4's per-layer
 # budget so the two methods are directly comparable.
 ADA_BUDGET_PER_HEAD = {
-    "phi3":   512,
-    "llama3": 1024,
+    "phi3":       512,
+    "llama3":     1024,
+    "llama31_8b": 1024,
+    "llama32_3b": 1024,
 }
 
 # Recent window always retained (per layer, after union).

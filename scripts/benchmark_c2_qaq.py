@@ -362,6 +362,53 @@ def _precompute_q_norm(model, input_ids: torch.Tensor, device: str) -> float:
     return max(q_norm, 1.0)   # guard against zero
 
 
+def _prefill_with_window_attn(
+    model, ids_t: torch.Tensor, window: int, device: str,
+) -> tuple:
+    """
+    Two-pass prefill that yields attention rows for the last `window` queries.
+
+    Pass 1 (SDPA): build the prefix KV cache for ids_t[:, :-w] cheaply — no
+    O(N^2) attention tensor allocated.
+    Pass 2 (eager, output_attentions=True): forward only the last w tokens with
+    the prefix as past_key_values. Each layer's attention then has shape
+    [B, n_q_heads, w, seq_len] — small enough that storing all of them across
+    layers fits even at seq_len ≈ 7500 (≈5 MB / layer for LLaMA-3-8B at w=5).
+
+    Mathematically equivalent to a single-pass eager prefill for the purpose
+    of QAQ V-bit allocation, which only consumes the last w query rows.
+
+    Returns (past_key_values, last_logits, prefill_attns).
+    """
+    seq_len = ids_t.shape[1]
+    w = min(window, seq_len)
+
+    orig_impl = model.config._attn_implementation
+    try:
+        if seq_len <= w:
+            # Tiny prompt: a single eager forward fits trivially.
+            model.set_attn_implementation("eager")
+            out = model(ids_t, use_cache=True, output_attentions=True)
+            return out.past_key_values, out.logits[:, -1, :], list(out.attentions)
+
+        # Build the prefix cache with SDPA (no attention stored).
+        model.set_attn_implementation("sdpa")
+        prefix = model(ids_t[:, :-w], use_cache=True)
+        prefix_past = prefix.past_key_values
+        del prefix
+
+        # Eager forward of just the last w tokens against that prefix → attention
+        # of shape [B, H, w, seq_len]. Explicit position_ids so RoPE uses the
+        # uncompressed indices.
+        model.set_attn_implementation("eager")
+        pos = torch.arange(seq_len - w, seq_len, device=device).unsqueeze(0)
+        out = model(ids_t[:, -w:], past_key_values=prefix_past, use_cache=True,
+                    output_attentions=True, position_ids=pos)
+        return out.past_key_values, out.logits[:, -1, :], list(out.attentions)
+    finally:
+        model.set_attn_implementation(orig_impl)
+
+
 def _aggregate_attn_to_kv_heads(attn: torch.Tensor, n_kv_heads: int) -> torch.Tensor:
     """
     Aggregate attention from n_query_heads → n_kv_heads by averaging over groups.
@@ -383,15 +430,22 @@ def _aggregate_attn_to_kv_heads(attn: torch.Tensor, n_kv_heads: int) -> torch.Te
 def _qaq_quantize_full_cache_aware(
     cache,
     q_norm: float,
-    prefill_attns: list[torch.Tensor] | None = None,  # optional: (batch, n_q_heads, seq, seq) per layer
+    prefill_attns: list[torch.Tensor] | None = None,  # optional: (batch, n_q_heads, w, seq) per layer
 ) -> tuple:
     """
     Quantize the full prefill KV cache with attention-aware variable-bit allocation.
 
-    - Keys: uniform bit allocation per token-head derived from q_norm and seq_len
-    - Values: if prefill_attns provided, bits inversely proportional to last-row attention;
-              otherwise K formula is reused for V (avoids O(seq²) memory for long inputs).
-    - Last (window-1) tokens kept at max bits (not enough attention history yet)
+    Faithful to QAQ (Dong et al., 2024, Section 3.2): V-bits are derived from the
+    MAX attention over the last `n` query rows (paper sets n=5). Our two-pass
+    prefill (SDPA prefix + eager last-w) produces exactly this slice without the
+    O(N^2) memory cost of a full eager prefill.
+
+    - Keys: uniform bit allocation per token-head from q_norm and seq_len
+            (K formula doesn't depend on attention; same as in the paper).
+    - Values: if prefill_attns provided, bits inversely proportional to
+              max-window attention per token (paper formula). Otherwise K formula
+              is reused as a degraded fallback.
+    - Last (n-1) tokens kept at max bits (not enough attention history yet).
 
     Returns: (quantized cache, qaq_state)
     """
@@ -416,9 +470,17 @@ def _qaq_quantize_full_cache_aware(
 
         # ----- VALUE bits -----
         if prefill_attns is not None:
-            # Attention-aware: use last row of prefill attention
-            attn = prefill_attns[i]   # (batch, n_q_heads, seq_len, seq_len)
-            last_attn = attn[:, :, -1, :]   # (batch, n_q_heads, seq_len)
+            # Attention-aware (paper Section 3.2): take MAX attention over the
+            # last `n` query rows for each key position. The two-pass prefill
+            # produces attn shape (batch, n_q_heads, w, k_len_attn) where
+            # w = window. For sliding-window models (e.g. Phi-3) k_len_attn may
+            # exceed the cache's actual seq_len; align by truncating to the
+            # last `seq_len` columns so indices match the K/V layout.
+            attn = prefill_attns[i]
+            kv_len = v.shape[2]
+            if attn.shape[-1] > kv_len:
+                attn = attn[..., -kv_len:]
+            last_attn = attn.amax(dim=-2)   # (batch, n_q_heads, kv_len)
             # For GQA: aggregate query heads → KV heads
             n_kv_heads = v.shape[1]
             last_attn_kv = _aggregate_attn_to_kv_heads(last_attn, n_kv_heads)
@@ -427,8 +489,8 @@ def _qaq_quantize_full_cache_aware(
                 QAQ_N_BITS_MIN, QAQ_N_BITS_MAX,
             )
         else:
-            # K-formula approximation for V (used when prefill attention unavailable,
-            # e.g. for long inputs where O(seq²) attention would OOM).
+            # K-formula approximation for V (degraded fallback, kept for parity
+            # with old behaviour). Not used when prefill_attns is provided.
             v_bits = k_bits.clone()
             last_attn = None
 
@@ -584,48 +646,31 @@ def run_speed(model, tokenizer, model_key: str, device: str,
     torch.cuda.reset_peak_memory_stats()
 
     # --- TTFT: prefill + variable-bit quantize ---
-    # For attention-aware models: use eager + output_attentions to get per-layer attn
-    # For K-formula-only models: use SDPA prefill (already in effect), K formula for V
+    # Both models now use the two-pass attention-aware prefill (paper-faithful
+    # V-bit allocation). The previous K-formula-only fallback for phi3 is gone:
+    # one eager forward over `last n` tokens against an SDPA-built prefix is
+    # cheap on phi3 too — the 43× SDPA-vs-eager gap is for full-prompt eager,
+    # not for `last 5` tokens.
     torch.cuda.synchronize()
     t0 = time.perf_counter()
     with torch.no_grad():
-        if attn_aware_decode:
-            # QAQ only consumes attn[:, :, -1, :] (the last query row). Materializing
-            # the full [B, H, N, N] eager attention OOMs at N≈7500 on llama3-8B.
-            # Two-pass: SDPA for the prefix (no attentions), then eager for just
-            # the last token against that prefix → attention is [B, H, 1, N].
-            seq_len = input_ids.shape[1]
-            if seq_len > 1:
-                model.set_attn_implementation("sdpa")
-                prefix = model(input_ids[:, :-1], use_cache=True)
-                prefix_past = prefix.past_key_values
-                del prefix
-                model.set_attn_implementation("eager")
-                pos = torch.tensor([[seq_len - 1]], device=device)
-                prefill_out = model(input_ids[:, -1:], past_key_values=prefix_past,
-                                    use_cache=True, output_attentions=True,
-                                    position_ids=pos)
-            else:
-                prefill_out = model(input_ids, use_cache=True, output_attentions=True)
-            prefill_attns = list(prefill_out.attentions)
-        else:
-            # SDPA (phi3 etc.): no attention weights needed
-            prefill_out   = model(input_ids, use_cache=True)
-            prefill_attns = None
-        past, state = _qaq_quantize_full_cache_aware(
-            prefill_out.past_key_values, q_norm, prefill_attns
+        prefill_past, last_logits, prefill_attns = _prefill_with_window_attn(
+            model, input_ids, QAQ_LAST_N_ATTENTIONS, device,
         )
+        past, state = _qaq_quantize_full_cache_aware(
+            prefill_past, q_norm, prefill_attns=prefill_attns,
+        )
+        del prefill_attns
     torch.cuda.synchronize()
     ttft_ms = (time.perf_counter() - t0) * 1000
     print(f"  TTFT (incl. quantize): {ttft_ms:.1f} ms")
 
     actual_mb = _actual_kv_mb(past)
-    # Estimate average bits from variable-bit allocation
-    # (we can't recover exact bits after dequantization, so report range)
     print(f"  KV cache after prefill: {actual_mb:.1f} MB actual (FP16 sim)")
     print(f"  Theoretical: bits range [{QAQ_N_BITS_MIN},{QAQ_N_BITS_MAX}], outliers at 16-bit")
 
-    next_tok = prefill_out.logits[:, -1, :].argmax(dim=-1, keepdim=True)
+    next_tok = last_logits.argmax(dim=-1, keepdim=True)
+    del last_logits
 
     # --- TPOT: each decode step with attention-aware quantize of new token ---
     decode_times = []
@@ -688,13 +733,18 @@ def run_speed(model, tokenizer, model_key: str, device: str,
 def _generate_qaq(
     model, tokenizer, prompt: str, max_new: int, max_input: int,
     device: str, use_chat: bool, q_norm: float, attn_aware_decode: bool = True,
-) -> str:
+) -> tuple[str, float]:
     """
     Generate with full QAQ attention-aware variable-bit KV cache quantization.
 
-    Prefill (all modes): SDPA, K formula for both K and V bits (avoids O(seq²) OOM).
+    Prefill (both models): two-pass SDPA prefix + eager last-`n` attention.
+    V-bits are derived from the max attention over those last n=5 query rows
+    (paper Section 3.2 + 5.1).
     Decode (attn_aware_decode=True):  eager + output_attentions, attention-aware V bits.
     Decode (attn_aware_decode=False): SDPA, K formula for V bits (fast, for phi3, etc.)
+
+    Returns (decoded_text, avg_bits) where avg_bits is the measured per-prompt
+    average bit allocation (used by build_dataset to log per-prompt compression).
     """
     if use_chat:
         prompt = apply_chat_template(tokenizer, prompt)
@@ -707,20 +757,18 @@ def _generate_qaq(
     generated_ids = []
 
     with torch.no_grad():
-        # Prefill: use SDPA (O(N) memory) to avoid OOM on long inputs.
-        # QAQ K bits use the K formula (no attention needed).
-        # QAQ V bits also use K formula approximation for prefill;
-        # attention-aware V bits kick in from the first decode step onward.
-        orig_impl = model.config._attn_implementation
-        model.config._attn_implementation = "sdpa"
-        try:
-            out = model(ids_t, past_key_values=None, use_cache=True)
-        finally:
-            model.config._attn_implementation = orig_impl
-        past, state = _qaq_quantize_full_cache_aware(
-            out.past_key_values, q_norm, prefill_attns=None
+        # Prefill with paper-faithful attention-aware V-bits. The two-pass helper
+        # avoids OOM on long inputs while still producing the last-n query rows
+        # that the QAQ V-bit formula needs.
+        prefill_past, last_logits, prefill_attns = _prefill_with_window_attn(
+            model, ids_t, QAQ_LAST_N_ATTENTIONS, device,
         )
-        next_tok = out.logits[:, -1, :].argmax(dim=-1, keepdim=True)
+        past, state = _qaq_quantize_full_cache_aware(
+            prefill_past, q_norm, prefill_attns=prefill_attns,
+        )
+        del prefill_attns
+        next_tok = last_logits.argmax(dim=-1, keepdim=True)
+        del last_logits
         if next_tok.item() != tokenizer.eos_token_id:
             generated_ids.append(next_tok.item())
 
@@ -745,16 +793,20 @@ def _generate_qaq(
             if next_tok.item() != tokenizer.eos_token_id:
                 generated_ids.append(next_tok.item())
 
-    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+    avg_bits = float(getattr(state, "measured_avg_bits", float("nan")))
+    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip(), avg_bits
 
 
 def run_longbench(
     model, tokenizer, model_key: str, device: str, q_norm: float,
-    attn_aware_decode: bool = True, pp_logger=None,
+    attn_aware_decode: bool = True, pp_logger=None, limit_per_task: int | None = None,
 ) -> dict:
     print("\n=== LongBench (Full QAQ, attention-aware variable-bit generation) ===")
     max_input = LB_MAX_INPUT[model_key]
     results   = {}
+    bits_all  = []   # per-prompt avg bits (for run-level compression summary)
+    if limit_per_task is not None:
+        print(f"  (smoke-test mode: --limit {limit_per_task} samples per task)")
 
     for task, cfg in LB_TASKS.items():
         try:
@@ -762,6 +814,9 @@ def run_longbench(
         except FileNotFoundError:
             print(f"  SKIP {task}: file not found")
             continue
+
+        if limit_per_task is not None:
+            samples = samples[:limit_per_task]
 
         metric  = cfg["metric"]
         max_new = cfg["max_new_tokens"]
@@ -771,7 +826,7 @@ def run_longbench(
             golds  = sample["answers"] if isinstance(sample["answers"], list) else [sample["answers"]]
             tmpl   = LB_TEMPLATES[task]
             prompt = tmpl.format(context=sample.get("context", ""), input=sample["input"])
-            pred   = _generate_qaq(
+            pred, avg_bits = _generate_qaq(
                 model, tokenizer, prompt, max_new, max_input, device,
                 use_chat=cfg["chat"], q_norm=q_norm,
                 attn_aware_decode=attn_aware_decode,
@@ -780,9 +835,13 @@ def run_longbench(
                 pred = pred.split("\n")[0].strip()
             s = compute_score(metric, pred, golds)
             scores.append(s)
+            # Per-prompt compression = 16 / measured avg bits per element.
+            per_prompt_cr = (16.0 / avg_bits) if avg_bits and avg_bits == avg_bits else None
+            bits_all.append(avg_bits)
             if pp_logger is not None:
                 pp_logger.log(task=task, sample_idx=j, metric=metric, score=s,
-                              features=extract_prompt_features(prompt, tokenizer))
+                              features=extract_prompt_features(prompt, tokenizer),
+                              compression=per_prompt_cr)
             if (j + 1) % 5 == 0:
                 print(f"  {task} [{j+1}/{len(samples)}]  {metric}={sum(scores)/len(scores):.4f}")
 
@@ -790,6 +849,17 @@ def run_longbench(
         print(f"  {task}  FINAL {metric}={avg:.4f}  (n={len(scores)})")
         results[task] = {"metric": metric, "score": round(avg, 4), "n": len(scores)}
 
+    if bits_all:
+        valid = [b for b in bits_all if b == b]   # filter NaN
+        if valid:
+            mean_bits  = sum(valid) / len(valid)
+            mean_cr    = 16.0 / mean_bits
+            print(f"\n  LongBench QAQ avg bits: {mean_bits:.3f}  ({mean_cr:.2f}× compression, "
+                  f"n={len(valid)} prompts)")
+            results["_compression"] = {
+                "avg_bits":              round(mean_bits, 3),
+                "avg_compression_ratio": round(mean_cr, 3),
+            }
     return results
 
 
@@ -803,6 +873,9 @@ def parse_args():
     p.add_argument("--output", default="runs/C2")
     p.add_argument("--skip-speed-ppl", action="store_true",
                    help="skip speed + perplexity phases; reuse qaq_q_norm from existing results.json")
+    p.add_argument("--limit",  type=int, default=None,
+                   help="LongBench samples per task to run (default: all 20). Use a small "
+                        "value (e.g. 1) for a quick smoke test before kicking off the full run.")
     return p.parse_args()
 
 
@@ -816,8 +889,10 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    decode_mode = "attention-aware" if attn_aware_decode else "prefill-only (SDPA, K-formula)"
-    print(f"\nConfig : C1 (Full QAQ — variable-bit [{QAQ_N_BITS_MIN},{QAQ_N_BITS_MAX}], "
+    # Prefill V-bits are always attention-aware (paper-faithful, both models).
+    # The flag now controls only decode-time V-bit allocation.
+    decode_mode = "attention-aware" if attn_aware_decode else "K-formula (SDPA)"
+    print(f"\nConfig : C2 (Full QAQ — variable-bit [{QAQ_N_BITS_MIN},{QAQ_N_BITS_MAX}], "
           f"{QAQ_OUTLIER_RATIO*100:.0f}% outliers, window={QAQ_LAST_N_ATTENTIONS}, "
           f"decode={decode_mode})")
     print(f"Model  : {model_id}")
@@ -872,18 +947,30 @@ def main():
         if prev_impl != "sdpa":
             model.set_attn_implementation(prev_impl)
 
+    # Smoke-test mode writes to a separate path so we never clobber the
+    # canonical per_prompt.jsonl / results.json with a partial run.
+    smoke = args.limit is not None
+    if smoke:
+        pp_path  = out_dir / "per_prompt_smoke.jsonl"
+        out_path = out_dir / "results_smoke.json"
+        print(f"\n[smoke] writing to {pp_path} and {out_path} (production files untouched)")
+    else:
+        pp_path  = out_dir / "per_prompt.jsonl"
+        out_path = out_dir / "results.json"
+
     lb = run_longbench(model, tokenizer, args.model, device, q_norm,
                        attn_aware_decode=attn_aware_decode,
-                       pp_logger=PerPromptLogger(out_dir / "per_prompt.jsonl",
-                                                 config="C2", model=args.model))
+                       pp_logger=PerPromptLogger(pp_path, config="C2", model=args.model),
+                       limit_per_task=args.limit)
     results["longbench"] = lb
-    if lb:
-        results["longbench_avg"] = round(
-            sum(v["score"] for v in lb.values()) / len(lb), 4
-        )
+    task_scores = [v["score"] for k, v in lb.items() if not k.startswith("_")]
+    if task_scores:
+        results["longbench_avg"] = round(sum(task_scores) / len(task_scores), 4)
+    if "_compression" in lb:
+        results["longbench_avg_bits"]              = lb["_compression"]["avg_bits"]
+        results["longbench_avg_compression_ratio"] = lb["_compression"]["avg_compression_ratio"]
 
-    out_path = out_dir / "results.json"
-    if out_path.exists():
+    if not smoke and out_path.exists():
         old = json.loads(out_path.read_text())
         results = {**old, **results}
     out_path.write_text(json.dumps(results, indent=2))

@@ -75,8 +75,10 @@ from _common import (
 #   phi3   max input ~3500 → 512  ≈ 6.8× compression
 #   llama3 max input ~7500 → 1024 ≈ 7.3× compression
 DKV_MAX_CAPACITY = {
-    "phi3":   512,
-    "llama3": 1024,
+    "phi3":       512,
+    "llama3":     1024,
+    "llama31_8b": 1024,
+    "llama32_3b": 1024,
 }
 
 # Number of recent tokens always retained (paper default 32)
