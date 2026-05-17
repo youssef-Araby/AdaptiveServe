@@ -31,3 +31,9 @@ Thumbs.db
 runs/mtbench/judge_cache/
 runs/mtbench/budget.log
 *.pdf
+
+# Paper source (local-only; not part of the code repo)
+overleaf/
+
+# Claude Code agent state (local-only)
+.claude/
