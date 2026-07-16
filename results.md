@@ -172,6 +172,40 @@ C0 is absent because it is only a quality reference.
 | LLaMA-3.2-3B | 42 | 69 | 38 | 34 | 37 |
 | LLaMA-3.1-8B | 47 | 59 | 53 | 23 | 38 |
 
+## Corrected Candidate-Pool Sweep
+
+The all-five C6 result is one operating point, not the only eligible router
+configuration. The corrected P0 sweep evaluates every C1-C5 subset of size 2-5
+(26 pools) at $\tau \in \{0.99, 0.95, 0.90, 0.85, 0.80\}$ using the same
+10-fold task-stratified CV protocol as the primary router evaluation. It caches
+each fold's regressors, predictions, C0 floor, and compression ranking once,
+then evaluates every pool/tau combination without retraining.
+
+The full machine-readable evidence, source JSONL hashes, all-five consistency
+checks, and regenerated figures are in
+[runs/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/candidate_pool_sweeps/p0_corrected_2026-07-16).
+The all-five entries at $\tau \in \{0.99, 0.95, 0.90\}$ exactly match the
+primary `cv_router_220` outputs.
+
+| Model | Highest-quality evaluated pool | $\tau$ | Quality / compression | Relation to C0 |
+| --- | --- | ---: | ---: | --- |
+| Phi-3-mini | `{C2,C3}` | 0.99 | 0.3184 / 3.659x | Strictly dominates C0 |
+| LLaMA-3-8B | `{C2,C5}` | 0.85 | 0.4337 / 4.936x | Strictly dominates C0 |
+| LLaMA-3.2-3B | `{C2,C4,C5}` | 0.99 | 0.4069 / 4.607x | Strictly dominates C0 |
+| LLaMA-3.1-8B | `{C2,C3}` | 0.99 | 0.4374 / 3.842x | Strictly dominates C0 |
+
+These rows select the highest-quality point among the 130 evaluated pool/tau
+combinations, with compression and smaller pool size as tie-breakers. They are
+appropriate calibration candidates, but not an unbiased post-selection
+generalization estimate: the pool/tau selection occurs on the same CV aggregate
+reported here. A deployment study that requires an unbiased estimate should use
+a separate calibration workload or nested CV.
+
+The May candidate-pool figures and paper table are pre-P0 artifacts with a
+different scoring, compressor, byte-accounting, and router-selection contract.
+They are retained under `runs/legacy/` after cleanup and must not be compared
+numerically with the table above.
+
 ## Supplementary Router Evaluations
 
 These outputs are useful diagnostics but are not the primary comparison.
@@ -320,3 +354,5 @@ evaluation. Each cell is `quality / compression`.
 | [runs/fair_comparison_66.json](runs/fair_comparison_66.json) | Fixed-method results on the exact split-test prompts |
 | [runs/C6](runs/C6) | Per-model C6 LOTO, split, overhead, and per-prompt outputs |
 | [runs/figs](runs/figs) | Updated quality/compression Pareto figures |
+| [runs/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/candidate_pool_sweeps/p0_corrected_2026-07-16) | Corrected P0 pool/tau sweep, manifests, and figures |
+| [docs/provenance.md](docs/provenance.md) | Current, historical, and independent-track artifact map |

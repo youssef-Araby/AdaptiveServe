@@ -1,0 +1,4000 @@
+{
+  "all_five_consistency": [
+    {
+      "actual": {
+        "cr": 5.017,
+        "picks": {
+          "C1": 47,
+          "C2": 59,
+          "C3": 53,
+          "C4": 23,
+          "C5": 38
+        },
+        "q": 0.4239
+      },
+      "expected": {
+        "cr": 5.017,
+        "picks": {
+          "C1": 47,
+          "C2": 59,
+          "C3": 53,
+          "C4": 23,
+          "C5": 38
+        },
+        "q": 0.4239
+      },
+      "path": "runs/cv_router_220_tau0.99.json",
+      "status": "matched",
+      "tau": 0.99
+    },
+    {
+      "actual": {
+        "cr": 5.238,
+        "picks": {
+          "C1": 52,
+          "C2": 58,
+          "C3": 46,
+          "C4": 24,
+          "C5": 40
+        },
+        "q": 0.4229
+      },
+      "expected": {
+        "cr": 5.238,
+        "picks": {
+          "C1": 52,
+          "C2": 58,
+          "C3": 46,
+          "C4": 24,
+          "C5": 40
+        },
+        "q": 0.4229
+      },
+      "path": "runs/cv_router_220_tau0.95.json",
+      "status": "matched",
+      "tau": 0.95
+    },
+    {
+      "actual": {
+        "cr": 5.415,
+        "picks": {
+          "C1": 63,
+          "C2": 50,
+          "C3": 42,
+          "C4": 24,
+          "C5": 41
+        },
+        "q": 0.4227
+      },
+      "expected": {
+        "cr": 5.415,
+        "picks": {
+          "C1": 63,
+          "C2": 50,
+          "C3": 42,
+          "C4": 24,
+          "C5": 41
+        },
+        "q": 0.4227
+      },
+      "path": "runs/cv_router_220_tau0.9.json",
+      "status": "matched",
+      "tau": 0.9
+    },
+    {
+      "path": "runs/cv_router_220_tau0.85.json",
+      "status": "not_available",
+      "tau": 0.85
+    },
+    {
+      "path": "runs/cv_router_220_tau0.8.json",
+      "status": "not_available",
+      "tau": 0.8
+    }
+  ],
+  "best_by_quality": {
+    "pareto_vs_fixed": {
+      "C0": "router_dominates",
+      "C1": "non_dominated",
+      "C2": "non_dominated",
+      "C3": "router_dominates",
+      "C4": "non_dominated",
+      "C5": "non_dominated"
+    },
+    "pool": [
+      "C2",
+      "C3"
+    ],
+    "pool_key": "C2+C3",
+    "pool_size": 2,
+    "router_cv": {
+      "cr": 3.842,
+      "picks": {
+        "C2": 127,
+        "C3": 93
+      },
+      "q": 0.4374
+    },
+    "tau": 0.99
+  },
+  "best_fp16_dominating": {
+    "pareto_vs_fixed": {
+      "C0": "router_dominates",
+      "C1": "non_dominated",
+      "C2": "non_dominated",
+      "C3": "router_dominates",
+      "C4": "non_dominated",
+      "C5": "non_dominated"
+    },
+    "pool": [
+      "C2",
+      "C3"
+    ],
+    "pool_key": "C2+C3",
+    "pool_size": 2,
+    "router_cv": {
+      "cr": 3.842,
+      "picks": {
+        "C2": 127,
+        "C3": 93
+      },
+      "q": 0.4374
+    },
+    "tau": 0.99
+  },
+  "dataset": {
+    "n_rows": 220,
+    "path": "runs/dataset/llama31_8b.jsonl",
+    "sha256": "053f4bc398fb71b76e01dfa2006fdfe130a5907841c52b653775893dc197611f"
+  },
+  "fixed_full": {
+    "C0": {
+      "cr": 1.0,
+      "q": 0.4358
+    },
+    "C1": {
+      "cr": 16.144,
+      "q": 0.3662
+    },
+    "C2": {
+      "cr": 4.602,
+      "q": 0.4348
+    },
+    "C3": {
+      "cr": 3.196,
+      "q": 0.4352
+    },
+    "C4": {
+      "cr": 4.632,
+      "q": 0.4297
+    },
+    "C5": {
+      "cr": 4.633,
+      "q": 0.4315
+    }
+  },
+  "model": "llama31_8b",
+  "operating_points": [
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2"
+      ],
+      "pool_key": "C1+C2",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 5.986,
+        "picks": {
+          "C1": 66,
+          "C2": 154
+        },
+        "q": 0.4237
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2"
+      ],
+      "pool_key": "C1+C2",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.123,
+        "picks": {
+          "C1": 71,
+          "C2": 149
+        },
+        "q": 0.4228
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2"
+      ],
+      "pool_key": "C1+C2",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.445,
+        "picks": {
+          "C1": 81,
+          "C2": 139
+        },
+        "q": 0.4228
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2"
+      ],
+      "pool_key": "C1+C2",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.771,
+        "picks": {
+          "C1": 90,
+          "C2": 130
+        },
+        "q": 0.4232
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2"
+      ],
+      "pool_key": "C1+C2",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 7.32,
+        "picks": {
+          "C1": 103,
+          "C2": 117
+        },
+        "q": 0.4233
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominated",
+        "C5": "router_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3"
+      ],
+      "pool_key": "C1+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.259,
+        "picks": {
+          "C1": 67,
+          "C3": 153
+        },
+        "q": 0.42
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominated",
+        "C5": "router_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3"
+      ],
+      "pool_key": "C1+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.366,
+        "picks": {
+          "C1": 72,
+          "C3": 148
+        },
+        "q": 0.4189
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominated",
+        "C5": "router_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3"
+      ],
+      "pool_key": "C1+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.603,
+        "picks": {
+          "C1": 82,
+          "C3": 138
+        },
+        "q": 0.4189
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3"
+      ],
+      "pool_key": "C1+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.844,
+        "picks": {
+          "C1": 91,
+          "C3": 129
+        },
+        "q": 0.4193
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3"
+      ],
+      "pool_key": "C1+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 5.243,
+        "picks": {
+          "C1": 104,
+          "C3": 116
+        },
+        "q": 0.4193
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4"
+      ],
+      "pool_key": "C1+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.024,
+        "picks": {
+          "C1": 75,
+          "C4": 145
+        },
+        "q": 0.4115
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4"
+      ],
+      "pool_key": "C1+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.146,
+        "picks": {
+          "C1": 79,
+          "C4": 141
+        },
+        "q": 0.4115
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4"
+      ],
+      "pool_key": "C1+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.334,
+        "picks": {
+          "C1": 87,
+          "C4": 133
+        },
+        "q": 0.4115
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4"
+      ],
+      "pool_key": "C1+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.508,
+        "picks": {
+          "C1": 94,
+          "C4": 126
+        },
+        "q": 0.4119
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4"
+      ],
+      "pool_key": "C1+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.812,
+        "picks": {
+          "C1": 107,
+          "C4": 113
+        },
+        "q": 0.412
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C5"
+      ],
+      "pool_key": "C1+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 5.918,
+        "picks": {
+          "C1": 68,
+          "C5": 152
+        },
+        "q": 0.4134
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C5"
+      ],
+      "pool_key": "C1+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.036,
+        "picks": {
+          "C1": 72,
+          "C5": 148
+        },
+        "q": 0.4134
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C5"
+      ],
+      "pool_key": "C1+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.198,
+        "picks": {
+          "C1": 79,
+          "C5": 141
+        },
+        "q": 0.4134
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C5"
+      ],
+      "pool_key": "C1+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.385,
+        "picks": {
+          "C1": 87,
+          "C5": 133
+        },
+        "q": 0.4136
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C5"
+      ],
+      "pool_key": "C1+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 6.678,
+        "picks": {
+          "C1": 100,
+          "C5": 120
+        },
+        "q": 0.4137
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C2+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 3.842,
+        "picks": {
+          "C2": 127,
+          "C3": 93
+        },
+        "q": 0.4374
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C2+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 3.891,
+        "picks": {
+          "C2": 136,
+          "C3": 84
+        },
+        "q": 0.4368
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C2+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 3.95,
+        "picks": {
+          "C2": 145,
+          "C3": 75
+        },
+        "q": 0.437
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C2+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 3.99,
+        "picks": {
+          "C2": 152,
+          "C3": 68
+        },
+        "q": 0.4369
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C2+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.04,
+        "picks": {
+          "C2": 158,
+          "C3": 62
+        },
+        "q": 0.4369
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C2+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.889,
+        "picks": {
+          "C2": 115,
+          "C4": 105
+        },
+        "q": 0.4335
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C2+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.945,
+        "picks": {
+          "C2": 109,
+          "C4": 111
+        },
+        "q": 0.4335
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C2+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.81,
+        "picks": {
+          "C2": 102,
+          "C4": 118
+        },
+        "q": 0.4328
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C2+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.806,
+        "picks": {
+          "C2": 100,
+          "C4": 120
+        },
+        "q": 0.4337
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C2+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.808,
+        "picks": {
+          "C2": 98,
+          "C4": 122
+        },
+        "q": 0.4334
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C2+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.87,
+        "picks": {
+          "C2": 111,
+          "C5": 109
+        },
+        "q": 0.4348
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C2+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.824,
+        "picks": {
+          "C2": 111,
+          "C5": 109
+        },
+        "q": 0.4348
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C2+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.747,
+        "picks": {
+          "C2": 104,
+          "C5": 116
+        },
+        "q": 0.4347
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C2+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.733,
+        "picks": {
+          "C2": 99,
+          "C5": 121
+        },
+        "q": 0.4337
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C2+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.698,
+        "picks": {
+          "C2": 98,
+          "C5": 122
+        },
+        "q": 0.4337
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C3+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 3.884,
+        "picks": {
+          "C3": 114,
+          "C4": 106
+        },
+        "q": 0.4366
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C3+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.029,
+        "picks": {
+          "C3": 100,
+          "C4": 120
+        },
+        "q": 0.4365
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C3+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.082,
+        "picks": {
+          "C3": 84,
+          "C4": 136
+        },
+        "q": 0.4363
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C3+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.126,
+        "picks": {
+          "C3": 77,
+          "C4": 143
+        },
+        "q": 0.4353
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C3+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.197,
+        "picks": {
+          "C3": 69,
+          "C4": 151
+        },
+        "q": 0.4351
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C3+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 3.936,
+        "picks": {
+          "C3": 107,
+          "C5": 113
+        },
+        "q": 0.4337
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C3+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.01,
+        "picks": {
+          "C3": 96,
+          "C5": 124
+        },
+        "q": 0.4337
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C3+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.122,
+        "picks": {
+          "C3": 82,
+          "C5": 138
+        },
+        "q": 0.4343
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C3+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.198,
+        "picks": {
+          "C3": 73,
+          "C5": 147
+        },
+        "q": 0.434
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C3+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.243,
+        "picks": {
+          "C3": 62,
+          "C5": 158
+        },
+        "q": 0.4327
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "router_dominated"
+      },
+      "pool": [
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C4+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.631,
+        "picks": {
+          "C4": 90,
+          "C5": 130
+        },
+        "q": 0.4313
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "router_dominated"
+      },
+      "pool": [
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C4+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.631,
+        "picks": {
+          "C4": 86,
+          "C5": 134
+        },
+        "q": 0.4313
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "router_dominated"
+      },
+      "pool": [
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C4+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.631,
+        "picks": {
+          "C4": 78,
+          "C5": 142
+        },
+        "q": 0.4313
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "router_dominated"
+      },
+      "pool": [
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C4+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.629,
+        "picks": {
+          "C4": 72,
+          "C5": 148
+        },
+        "q": 0.4312
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C4+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.63,
+        "picks": {
+          "C4": 65,
+          "C5": 155
+        },
+        "q": 0.4316
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C1+C2+C3",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.71,
+        "picks": {
+          "C1": 53,
+          "C2": 91,
+          "C3": 76
+        },
+        "q": 0.4267
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C1+C2+C3",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.854,
+        "picks": {
+          "C1": 58,
+          "C2": 93,
+          "C3": 69
+        },
+        "q": 0.4258
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C1+C2+C3",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.166,
+        "picks": {
+          "C1": 69,
+          "C2": 90,
+          "C3": 61
+        },
+        "q": 0.4261
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C1+C2+C3",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.45,
+        "picks": {
+          "C1": 79,
+          "C2": 85,
+          "C3": 56
+        },
+        "q": 0.4264
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C1+C2+C3",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.907,
+        "picks": {
+          "C1": 92,
+          "C2": 78,
+          "C3": 50
+        },
+        "q": 0.4265
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.962,
+        "picks": {
+          "C1": 55,
+          "C2": 94,
+          "C4": 71
+        },
+        "q": 0.4202
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.177,
+        "picks": {
+          "C1": 60,
+          "C2": 86,
+          "C4": 74
+        },
+        "q": 0.4193
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.343,
+        "picks": {
+          "C1": 71,
+          "C2": 74,
+          "C4": 75
+        },
+        "q": 0.4188
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.629,
+        "picks": {
+          "C1": 80,
+          "C2": 71,
+          "C4": 69
+        },
+        "q": 0.4201
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 7.044,
+        "picks": {
+          "C1": 93,
+          "C2": 67,
+          "C4": 60
+        },
+        "q": 0.42
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.834,
+        "picks": {
+          "C1": 51,
+          "C2": 91,
+          "C5": 78
+        },
+        "q": 0.4231
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.967,
+        "picks": {
+          "C1": 56,
+          "C2": 89,
+          "C5": 75
+        },
+        "q": 0.4222
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.17,
+        "picks": {
+          "C1": 67,
+          "C2": 77,
+          "C5": 76
+        },
+        "q": 0.4221
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.43,
+        "picks": {
+          "C1": 77,
+          "C2": 71,
+          "C5": 72
+        },
+        "q": 0.4212
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.712,
+        "picks": {
+          "C1": 90,
+          "C2": 67,
+          "C5": 63
+        },
+        "q": 0.4211
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.791,
+        "picks": {
+          "C1": 59,
+          "C3": 94,
+          "C4": 67
+        },
+        "q": 0.4218
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.092,
+        "picks": {
+          "C1": 64,
+          "C3": 81,
+          "C4": 75
+        },
+        "q": 0.4205
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.383,
+        "picks": {
+          "C1": 74,
+          "C3": 68,
+          "C4": 78
+        },
+        "q": 0.4208
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.647,
+        "picks": {
+          "C1": 83,
+          "C3": 62,
+          "C4": 75
+        },
+        "q": 0.4202
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.974,
+        "picks": {
+          "C1": 96,
+          "C3": 56,
+          "C4": 68
+        },
+        "q": 0.4202
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.79,
+        "picks": {
+          "C1": 55,
+          "C3": 89,
+          "C5": 76
+        },
+        "q": 0.422
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.034,
+        "picks": {
+          "C1": 60,
+          "C3": 79,
+          "C5": 81
+        },
+        "q": 0.4208
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.417,
+        "picks": {
+          "C1": 70,
+          "C3": 66,
+          "C5": 84
+        },
+        "q": 0.4215
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.719,
+        "picks": {
+          "C1": 80,
+          "C3": 58,
+          "C5": 82
+        },
+        "q": 0.4213
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.996,
+        "picks": {
+          "C1": 93,
+          "C3": 49,
+          "C5": 78
+        },
+        "q": 0.4202
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.844,
+        "picks": {
+          "C1": 65,
+          "C4": 66,
+          "C5": 89
+        },
+        "q": 0.4141
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.959,
+        "picks": {
+          "C1": 69,
+          "C4": 61,
+          "C5": 90
+        },
+        "q": 0.4141
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.134,
+        "picks": {
+          "C1": 77,
+          "C4": 53,
+          "C5": 90
+        },
+        "q": 0.4142
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.315,
+        "picks": {
+          "C1": 85,
+          "C4": 46,
+          "C5": 89
+        },
+        "q": 0.4142
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 6.601,
+        "picks": {
+          "C1": 98,
+          "C4": 39,
+          "C5": 83
+        },
+        "q": 0.4147
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C2+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.162,
+        "picks": {
+          "C2": 81,
+          "C3": 64,
+          "C4": 75
+        },
+        "q": 0.436
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C2+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.279,
+        "picks": {
+          "C2": 79,
+          "C3": 56,
+          "C4": 85
+        },
+        "q": 0.4353
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C2+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.241,
+        "picks": {
+          "C2": 76,
+          "C3": 49,
+          "C4": 95
+        },
+        "q": 0.4349
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C2+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.266,
+        "picks": {
+          "C2": 75,
+          "C3": 46,
+          "C4": 99
+        },
+        "q": 0.4357
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C2+C3+C4",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.32,
+        "picks": {
+          "C2": 76,
+          "C3": 41,
+          "C4": 103
+        },
+        "q": 0.4353
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.268,
+        "picks": {
+          "C2": 77,
+          "C3": 62,
+          "C5": 81
+        },
+        "q": 0.4354
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.315,
+        "picks": {
+          "C2": 80,
+          "C3": 54,
+          "C5": 86
+        },
+        "q": 0.4354
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.29,
+        "picks": {
+          "C2": 75,
+          "C3": 51,
+          "C5": 94
+        },
+        "q": 0.4353
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.331,
+        "picks": {
+          "C2": 72,
+          "C3": 46,
+          "C5": 102
+        },
+        "q": 0.4343
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.318,
+        "picks": {
+          "C2": 74,
+          "C3": 38,
+          "C5": 108
+        },
+        "q": 0.4333
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.834,
+        "picks": {
+          "C2": 101,
+          "C4": 48,
+          "C5": 71
+        },
+        "q": 0.4351
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.804,
+        "picks": {
+          "C2": 99,
+          "C4": 50,
+          "C5": 71
+        },
+        "q": 0.4351
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.685,
+        "picks": {
+          "C2": 93,
+          "C4": 49,
+          "C5": 78
+        },
+        "q": 0.4345
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "router_dominates",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.684,
+        "picks": {
+          "C2": 91,
+          "C4": 44,
+          "C5": 85
+        },
+        "q": 0.4353
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "router_dominates",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.703,
+        "picks": {
+          "C2": 91,
+          "C4": 38,
+          "C5": 91
+        },
+        "q": 0.4353
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C3+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.048,
+        "picks": {
+          "C3": 93,
+          "C4": 45,
+          "C5": 82
+        },
+        "q": 0.4354
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C3+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.164,
+        "picks": {
+          "C3": 79,
+          "C4": 48,
+          "C5": 93
+        },
+        "q": 0.4353
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C3+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.237,
+        "picks": {
+          "C3": 68,
+          "C4": 46,
+          "C5": 106
+        },
+        "q": 0.4352
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C3+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.31,
+        "picks": {
+          "C3": 60,
+          "C4": 43,
+          "C5": 117
+        },
+        "q": 0.4348
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C3+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.326,
+        "picks": {
+          "C3": 54,
+          "C4": 39,
+          "C5": 127
+        },
+        "q": 0.4345
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C3+C4",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.912,
+        "picks": {
+          "C1": 49,
+          "C2": 65,
+          "C3": 58,
+          "C4": 48
+        },
+        "q": 0.4234
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C3+C4",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.141,
+        "picks": {
+          "C1": 54,
+          "C2": 60,
+          "C3": 52,
+          "C4": 54
+        },
+        "q": 0.4224
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C3+C4",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.353,
+        "picks": {
+          "C1": 65,
+          "C2": 52,
+          "C3": 46,
+          "C4": 57
+        },
+        "q": 0.4222
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C3+C4",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.642,
+        "picks": {
+          "C1": 75,
+          "C2": 50,
+          "C3": 42,
+          "C4": 53
+        },
+        "q": 0.4234
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C1+C2+C3+C4",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 6.018,
+        "picks": {
+          "C1": 88,
+          "C2": 49,
+          "C3": 38,
+          "C4": 45
+        },
+        "q": 0.4231
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.027,
+        "picks": {
+          "C1": 47,
+          "C2": 62,
+          "C3": 57,
+          "C5": 54
+        },
+        "q": 0.4259
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.227,
+        "picks": {
+          "C1": 52,
+          "C2": 63,
+          "C3": 50,
+          "C5": 55
+        },
+        "q": 0.425
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.441,
+        "picks": {
+          "C1": 63,
+          "C2": 53,
+          "C3": 47,
+          "C5": 57
+        },
+        "q": 0.425
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.773,
+        "picks": {
+          "C1": 74,
+          "C2": 49,
+          "C3": 41,
+          "C5": 56
+        },
+        "q": 0.4241
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 6.01,
+        "picks": {
+          "C1": 87,
+          "C2": 48,
+          "C3": 34,
+          "C5": 51
+        },
+        "q": 0.423
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.762,
+        "picks": {
+          "C1": 50,
+          "C2": 83,
+          "C4": 37,
+          "C5": 50
+        },
+        "q": 0.4213
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.916,
+        "picks": {
+          "C1": 55,
+          "C2": 79,
+          "C4": 37,
+          "C5": 49
+        },
+        "q": 0.4205
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 6.041,
+        "picks": {
+          "C1": 66,
+          "C2": 69,
+          "C4": 35,
+          "C5": 50
+        },
+        "q": 0.42
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 6.311,
+        "picks": {
+          "C1": 76,
+          "C2": 66,
+          "C4": 28,
+          "C5": 50
+        },
+        "q": 0.421
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 6.696,
+        "picks": {
+          "C1": 89,
+          "C2": 62,
+          "C4": 24,
+          "C5": 45
+        },
+        "q": 0.4212
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.887,
+        "picks": {
+          "C1": 55,
+          "C3": 80,
+          "C4": 30,
+          "C5": 55
+        },
+        "q": 0.4216
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.182,
+        "picks": {
+          "C1": 60,
+          "C3": 68,
+          "C4": 31,
+          "C5": 61
+        },
+        "q": 0.4203
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.508,
+        "picks": {
+          "C1": 70,
+          "C3": 58,
+          "C4": 28,
+          "C5": 64
+        },
+        "q": 0.4207
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 5.828,
+        "picks": {
+          "C1": 80,
+          "C3": 50,
+          "C4": 24,
+          "C5": 66
+        },
+        "q": 0.4205
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 6.078,
+        "picks": {
+          "C1": 93,
+          "C3": 45,
+          "C4": 19,
+          "C5": 63
+        },
+        "q": 0.4203
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.288,
+        "picks": {
+          "C2": 74,
+          "C3": 56,
+          "C4": 32,
+          "C5": 58
+        },
+        "q": 0.4358
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.35,
+        "picks": {
+          "C2": 75,
+          "C3": 48,
+          "C4": 35,
+          "C5": 62
+        },
+        "q": 0.4357
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.302,
+        "picks": {
+          "C2": 71,
+          "C3": 44,
+          "C4": 36,
+          "C5": 69
+        },
+        "q": 0.4353
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.344,
+        "picks": {
+          "C2": 70,
+          "C3": 40,
+          "C4": 33,
+          "C5": 77
+        },
+        "q": 0.4361
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.378,
+        "picks": {
+          "C2": 73,
+          "C3": 34,
+          "C4": 28,
+          "C5": 85
+        },
+        "q": 0.4353
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C4+C5",
+      "pool_size": 5,
+      "router_cv": {
+        "cr": 5.017,
+        "picks": {
+          "C1": 47,
+          "C2": 59,
+          "C3": 53,
+          "C4": 23,
+          "C5": 38
+        },
+        "q": 0.4239
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C4+C5",
+      "pool_size": 5,
+      "router_cv": {
+        "cr": 5.238,
+        "picks": {
+          "C1": 52,
+          "C2": 58,
+          "C3": 46,
+          "C4": 24,
+          "C5": 40
+        },
+        "q": 0.4229
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C4+C5",
+      "pool_size": 5,
+      "router_cv": {
+        "cr": 5.415,
+        "picks": {
+          "C1": 63,
+          "C2": 50,
+          "C3": 42,
+          "C4": 24,
+          "C5": 41
+        },
+        "q": 0.4227
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C4+C5",
+      "pool_size": 5,
+      "router_cv": {
+        "cr": 5.744,
+        "picks": {
+          "C1": 74,
+          "C2": 48,
+          "C3": 37,
+          "C4": 19,
+          "C5": 42
+        },
+        "q": 0.4237
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C1+C2+C3+C4+C5",
+      "pool_size": 5,
+      "router_cv": {
+        "cr": 6.072,
+        "picks": {
+          "C1": 87,
+          "C2": 47,
+          "C3": 32,
+          "C4": 15,
+          "C5": 39
+        },
+        "q": 0.4231
+      },
+      "tau": 0.8
+    }
+  ],
+  "pareto_frontier": [
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C2+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 3.842,
+        "picks": {
+          "C2": 127,
+          "C3": 93
+        },
+        "q": 0.4374
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C2+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 3.95,
+        "picks": {
+          "C2": 145,
+          "C3": 75
+        },
+        "q": 0.437
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C2+C3",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.04,
+        "picks": {
+          "C2": 158,
+          "C3": 62
+        },
+        "q": 0.4369
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C3",
+        "C4"
+      ],
+      "pool_key": "C3+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.082,
+        "picks": {
+          "C3": 84,
+          "C4": 136
+        },
+        "q": 0.4363
+      },
+      "tau": 0.9
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "router_dominates",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.344,
+        "picks": {
+          "C2": 70,
+          "C3": 40,
+          "C4": 33,
+          "C5": 77
+        },
+        "q": 0.4361
+      },
+      "tau": 0.85
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "router_dominates",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C3+C4+C5",
+      "pool_size": 4,
+      "router_cv": {
+        "cr": 4.35,
+        "picks": {
+          "C2": 75,
+          "C3": 48,
+          "C4": 35,
+          "C5": 62
+        },
+        "q": 0.4357
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "router_dominates",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.703,
+        "picks": {
+          "C2": 91,
+          "C4": 38,
+          "C5": 91
+        },
+        "q": 0.4353
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4",
+        "C5"
+      ],
+      "pool_key": "C2+C4+C5",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 4.834,
+        "picks": {
+          "C2": 101,
+          "C4": 48,
+          "C5": 71
+        },
+        "q": 0.4351
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "router_dominates",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C5"
+      ],
+      "pool_key": "C2+C5",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.87,
+        "picks": {
+          "C2": 111,
+          "C5": 109
+        },
+        "q": 0.4348
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "router_dominates",
+        "C5": "router_dominates"
+      },
+      "pool": [
+        "C2",
+        "C4"
+      ],
+      "pool_key": "C2+C4",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 4.945,
+        "picks": {
+          "C2": 109,
+          "C4": 111
+        },
+        "q": 0.4335
+      },
+      "tau": 0.95
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "pool_key": "C1+C2+C3",
+      "pool_size": 3,
+      "router_cv": {
+        "cr": 5.907,
+        "picks": {
+          "C1": 92,
+          "C2": 78,
+          "C3": 50
+        },
+        "q": 0.4265
+      },
+      "tau": 0.8
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2"
+      ],
+      "pool_key": "C1+C2",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 5.986,
+        "picks": {
+          "C1": 66,
+          "C2": 154
+        },
+        "q": 0.4237
+      },
+      "tau": 0.99
+    },
+    {
+      "pareto_vs_fixed": {
+        "C0": "non_dominated",
+        "C1": "non_dominated",
+        "C2": "non_dominated",
+        "C3": "non_dominated",
+        "C4": "non_dominated",
+        "C5": "non_dominated"
+      },
+      "pool": [
+        "C1",
+        "C2"
+      ],
+      "pool_key": "C1+C2",
+      "pool_size": 2,
+      "router_cv": {
+        "cr": 7.32,
+        "picks": {
+          "C1": 103,
+          "C2": 117
+        },
+        "q": 0.4233
+      },
+      "tau": 0.8
+    }
+  ]
+}

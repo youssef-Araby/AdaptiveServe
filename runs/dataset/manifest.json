@@ -1,0 +1,33 @@
+{
+  "generated_at_utc": "2026-07-16T08:14:07+00:00",
+  "rows": 880,
+  "schema_version": "adaptive-serve-p0-csv-export/v1",
+  "source_commit": "5d1e887db340cf7a0e23559d14cfdb139979df7e",
+  "source_jsonl": [
+    {
+      "model": "phi3",
+      "path": "runs/dataset/phi3.jsonl",
+      "rows": 220,
+      "sha256": "5e5c7d1cfd72084fd785d694f488e838daa56c55ee1f5c1ed14cc63cc56f4aa4"
+    },
+    {
+      "model": "llama3",
+      "path": "runs/dataset/llama3.jsonl",
+      "rows": 220,
+      "sha256": "d212873e83fb19958de8db5bfb9e88ef9b33971f6cd19903ea21e82f36b72b13"
+    },
+    {
+      "model": "llama32_3b",
+      "path": "runs/dataset/llama32_3b.jsonl",
+      "rows": 220,
+      "sha256": "2b254f699a9a36c700b2a147a6394c18dec857f83fb69641119c89146e5ee070"
+    },
+    {
+      "model": "llama31_8b",
+      "path": "runs/dataset/llama31_8b.jsonl",
+      "rows": 220,
+      "sha256": "053f4bc398fb71b76e01dfa2006fdfe130a5907841c52b653775893dc197611f"
+    }
+  ],
+  "source_run": "corrected P0 rerun; see runs/rerun_p0.log"
+}

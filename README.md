@@ -1,20 +1,73 @@
 # AdaptiveServe-KV
 
-**A per-prompt router that selects among five published KV-cache compression methods for cloud-native LLM serving.**
+## Current P0 Evidence
 
-AdaptiveServe-KV stacks an outer per-prompt router on top of five existing KV-cache compressors (TailorKV, QAQ, KVQuant, DynamicKV, Ada-KV). The router uses cheap surface features extracted from the prompt string (microseconds, no model forward pass) to dispatch each request to the compression method best suited to it. On models where compression methods exhibit per-prompt quality variance, the router strictly Pareto-dominates every fixed compressor. On models where they don't, the router still produces a Pareto-frontier point — and we provide a calibration-time test (Δ) for which regime your workload is in.
+The authoritative KV-cache experiment is the **corrected P0 rerun**, completed
+on 2026-07-16. It evaluates C0-C5 on 220 LongBench prompts per model, then
+evaluates C6 with 10-fold task-stratified cross-validation. Start with
+[results.md](results.md) and [docs/provenance.md](docs/provenance.md); the
+historical material below is retained only for context.
 
-| Headline (in-distribution, τ=0.99) | LLaMA-3-8B | Phi-3-mini |
-|---|---:|---:|
-| Router quality | **0.470** | **0.352** |
-| Router compression | **6.54×** | **6.20×** |
-| FP16 baseline quality | 0.445 | 0.317 |
-| Quality gain over FP16 | **+5.6%** | **+11.0%** |
-| Routing overhead | 64 µs / prompt | 64 µs / prompt |
+| Current artifact | Purpose |
+| --- | --- |
+| [runs/rerun_p0.log](runs/rerun_p0.log) | Complete corrected P0 execution record |
+| [runs/cv_router_220_tau0.99.json](runs/cv_router_220_tau0.99.json) | Primary all-five router CV at $\tau=0.99$ |
+| [runs/figs](runs/figs) | Primary `pareto_cv_*` figures and supplementary split figures |
+| [runs/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/candidate_pool_sweeps/p0_corrected_2026-07-16) | Corrected pool/tau sweep, figures, hashes, and consistency checks |
 
-This README is a quick-start for **integrators and reproducers**. The accompanying paper has the full method, ablation, and characterization.
+### Corrected Candidate-Pool Sweep
+
+C6 can route over any subset of C1-C5. The P0 sweep evaluates all 26 pools of
+size 2-5 at $\tau \in \{0.99, 0.95, 0.90, 0.85, 0.80\}$ using the same 10-fold
+task-stratified protocol as the primary router results. Regressors and
+fold predictions are cached once per fold and reused across pool/tau points.
+
+| Model | Highest-quality evaluated pool | $\tau$ | Quality / compression |
+| --- | --- | ---: | ---: |
+| Phi-3-mini | `{C2,C3}` | 0.99 | 0.3184 / 3.659x |
+| LLaMA-3-8B | `{C2,C5}` | 0.85 | 0.4337 / 4.936x |
+| LLaMA-3.2-3B | `{C2,C4,C5}` | 0.99 | 0.4069 / 4.607x |
+| LLaMA-3.1-8B | `{C2,C3}` | 0.99 | 0.4374 / 3.842x |
+
+Each point above strictly dominates its P0 C0 baseline on this CV aggregate.
+The table is a **calibration result**, not a nested-CV estimate for a
+hyperparameter selected after evaluating all 130 operating points. The complete
+Pareto sets and selection mixes are stored in the versioned sweep manifest.
+
+### Reproduce the Current Pipeline
+
+```bash
+# Full GPU and CPU P0 workflow, including the candidate-pool sweep.
+bash scripts/run_full_pipeline.sh
+
+# Re-evaluate the CPU-only candidate-pool stage from existing P0 datasets.
+python scripts/candidate_pool_sweep.py \
+  --run-id p0_corrected_2026-07-16 \
+  --verify-existing-cv
+
+# Regenerate P0 CSV/ZIP exports from the JSONL sources.
+python scripts/export_dataset_csv.py
+```
+
+The P0 GPU phase uses `--skip-speed-ppl`. Do not treat latency, throughput,
+VRAM, or perplexity fields preserved in fixed-method `results.json` files as
+fresh P0 measurements. C6's full single-request routing overhead is measured in
+milliseconds because it includes feature extraction and tokenization.
+
+### Separate Work
+
+- `runs/mtbench/` and its scripts are an independent MT-Bench model-routing
+  study, not C0-C6 KV-cache evidence.
+- `notebooks/` and [docs/wanda_vllm_findings.md](docs/wanda_vllm_findings.md)
+  are an independent R-Sparse/Wanda pruning study.
+- The ignored `overleaf/` draft and its pool figures predate P0; see
+  [docs/paper_draft_status.md](docs/paper_draft_status.md) and do not cite them
+  as corrected results.
 
 ---
+
+<details>
+<summary>Archived pre-P0 README material (historical and non-authoritative)</summary>
 
 ## When does AdaptiveServe-KV help? (the deployment recipe)
 
@@ -277,3 +330,5 @@ A CUDA GPU with ≥ 24 GB VRAM is recommended for LLaMA-3-8B; Phi-3-mini and LLa
 > Yao et al. (2025). *TailorKV: A Hybrid Framework for Long-Context Inference via Tailored KV Cache Optimization*. arXiv:2505.19586. [link](https://arxiv.org/abs/2505.19586)
 
 > Bai et al. (2023). *LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding*. arXiv:2308.14508. [link](https://arxiv.org/abs/2308.14508)
+
+</details>

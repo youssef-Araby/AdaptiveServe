@@ -1,12 +1,16 @@
-# AdaptiveServe-KV Routing Dataset
+# AdaptiveServe-KV Routing Dataset (Corrected P0)
 
 A dataset of 880 (model, prompt, configuration) labelled rows from 220 LongBench
 prompts evaluated under six KV-cache configurations on four open-weight LLMs.
+It was regenerated from the corrected P0 JSONL inputs. See `manifest.json` for
+the source hashes and source revision.
 
 ## Files
 
 - `adaptiveserve_kv_dataset.csv` — master file, 880 rows (4 models × 220 prompts)
 - `per_model/{phi3,llama3,llama31_8b,llama32_3b}.csv` — split by model, 220 rows each
+- `manifest.json` — P0 source JSONL hashes and export provenance
+- `AdaptiveServe-KV-Dataset.zip` — portable bundle of this README, manifest, CSV, and JSONL files
 - Source JSONL files are kept under the same directory for code reproducibility
 
 ## Columns
@@ -19,7 +23,7 @@ prompts evaluated under six KV-cache configurations on four open-weight LLMs.
 | `sample_idx` | 0..19 — index within the task's 20-prompt sample |
 | `metric` | LongBench scoring metric for this task (`f1`, `rouge1`, `accuracy`, `em`) |
 
-### Surface features (7, prompt-only, microsecond cost)
+### Surface features (7, prompt-only)
 | column | meaning |
 | --- | --- |
 | `seq_len_tokens` | tokenizer length of the prompt |
@@ -30,13 +34,16 @@ prompts evaluated under six KV-cache configurations on four open-weight LLMs.
 | `question_position` | offset of last `?` divided by prompt length |
 | `newline_density` | newline count divided by prompt length |
 
-### Per-configuration labels (12 columns total: 6 scores + 6 compression ratios)
-For each configuration `c0..c5` (FP16, TailorKV, QAQ, KVQuant, DynamicKV, Ada-KV):
+### Per-configuration labels
+For each configuration `c0..c5` (FP16, TailorKV-inspired hybrid, QAQ, KVQuant,
+DynamicKV, Ada-KV-inspired shared-index eviction):
 
 | column | meaning |
 | --- | --- |
 | `score_{c0..c5}` | LongBench task score under this configuration, in [0, 1] |
-| `cr_{c0..c5}`    | KV-cache compression ratio relative to FP16, computed per prompt |
+| `cr_{c0..c5}` | Measured KV-cache compression ratio `kv_bytes_fp16 / kv_bytes` for this prompt |
+| `kv_bytes_{c0..c5}` | Effective measured KV-cache bytes, including method-specific metadata/decode accounting |
+| `kv_bytes_fp16_{c0..c5}` | Sliding-window-aware FP16 reference bytes for the same prompt/configuration |
 
 ### Oracle / utility columns (computed from the labels)
 | column | meaning |

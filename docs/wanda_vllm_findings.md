@@ -1,8 +1,12 @@
 # Wanda 2:4 + vLLM — Reproduction Results and Findings
 
-**Subject:** evaluation of Wanda 2:4 structured weight sparsity on Llama-3.1-8B served by vLLM, intended as a kernel-complete alternative to R-Sparse following the recommendation in [`r_sparse_latency_analysis.md`](r_sparse_latency_analysis.md). Documents the results actually obtained, the integration issues discovered, and the gap between the speedup claim in the planning doc and what the current vLLM release can deliver.
+**Status (2026-07-16):** this is a separate historical pruning/vLLM study. It is
+not an AdaptiveServe-KV C0-C6 artifact and must not be combined with the P0
+KV-cache results.
 
-**Hardware:** Colab Pro+, A100-SXM4-40GB. Notebook: [`project/wanda_vllm_colab.ipynb`](../project/wanda_vllm_colab.ipynb).
+**Subject:** evaluation of Wanda 2:4 structured weight sparsity on Llama-3.1-8B served by vLLM, intended as a kernel-complete alternative to R-Sparse following an earlier planning document that is not retained in this repository. Documents the results actually obtained, the integration issues discovered, and the gap between the speedup claim in that planning document and what the current vLLM release can deliver.
+
+**Hardware:** Colab Pro+, A100-SXM4-40GB. Notebook: [wanda_vllm_colab.ipynb](../notebooks/wanda_vllm_colab.ipynb).
 
 ---
 
@@ -37,7 +41,7 @@ The dense-vs-sparse pair both use Llama-3.1-8B BASE so the only varying axis is 
 
 ## 3. Results
 
-Full `cross_method_summary.json` rows. R-Sparse rows are reproduced from [`r_sparse_latency_analysis.md`](r_sparse_latency_analysis.md) for context.
+Full `cross_method_summary.json` rows. R-Sparse rows are reproduced from the earlier, untracked planning analysis for context.
 
 | family | method | engine | piqa acc_norm | tok/s | within-engine speedup |
 |---|---|---|---:|---:|---:|
@@ -61,7 +65,7 @@ The bolded rows are this report's contribution. Everything else is prior context
 
 ## 4. The new pipeline (after fixes)
 
-[`project/wanda_vllm_colab.ipynb`](../project/wanda_vllm_colab.ipynb) §8 was modified to write a vLLM-loadable checkpoint. The fixes, in order applied:
+[`wanda_vllm_colab.ipynb`](../notebooks/wanda_vllm_colab.ipynb) §8 was modified to write a vLLM-loadable checkpoint. The fixes, in order applied:
 
 1. **`save_compressed=False`** on `oneshot()`. Default `True` writes sparse-bitmask shards (`*.bitmask`, `*.compressed`, `*.shape`) which vLLM 0.20 cannot decompress (see §5.1).
 2. **`save_pretrained(..., save_compressed=False)`** as belt-and-suspenders if the running `llmcompressor` version ignores the kwarg in `oneshot`.
@@ -84,7 +88,7 @@ NotImplementedError: Sparse24 models are no longer supported by vLLM
 
 Any checkpoint declaring 2:4 sparsity via `quantization_config.sparsity_config` — including RedHatAI's `Sparse-Llama-3.1-8B-2of4`, Neural Magic's variants, or any `llmcompressor`-saved Wanda checkpoint — fails to load on vLLM 0.20.
 
-**Implication for the planning doc.** [`r_sparse_latency_analysis.md`](r_sparse_latency_analysis.md) §7 recommended Wanda 2:4 + vLLM specifically because "vLLM dispatches to native NVIDIA Sparse Tensor Cores automatically." That is no longer true on 0.20. The kernel-complete claim now requires either a pinned older vLLM (≤ 0.9 had `Sparse24`) or a different inference stack.
+**Implication for the earlier planning document.** It recommended Wanda 2:4 + vLLM specifically because "vLLM dispatches to native NVIDIA Sparse Tensor Cores automatically." That is no longer true on 0.20. The kernel-complete claim now requires either a pinned older vLLM (≤ 0.9 had `Sparse24`) or a different inference stack.
 
 ### 5.2 `llmcompressor` writes sparsity metadata even when saving dense weights
 
@@ -152,7 +156,7 @@ Three options, ordered by effort:
 2. **Pin `vllm<=0.9`.** Sparse24 was supported. Will likely require resolving torch/transformers compatibility constraints in §4 of the notebook.
 3. **Switch inference engines.** TensorRT-LLM, sparseml-server, and recent SGLang releases retain 2:4 dispatch paths. None integrate with the current notebook scaffolding without ~half-day of rewiring.
 
-### For [`r_sparse_latency_analysis.md`](r_sparse_latency_analysis.md)
+### For the earlier R-Sparse planning document
 Update the §7 recommendation to reflect that vLLM's sparsity story has regressed since the doc was written. Wanda 2:4 + vLLM is no longer the safe-default kernel-complete path it was in vLLM 0.6-0.9.
 
 ---
