@@ -5,8 +5,8 @@
 # (metadata-inclusive bytes, sliding-window-aware FP16 reference).
 #
 # GPU phase : 6 configs x 4 models, LongBench only (--skip-speed-ppl).
-# CPU phase : dataset build -> CV router (3 taus) -> C6 LOTO/split (3 taus)
-#             -> fair comparison -> Pareto figures.
+# CPU phase : dataset build -> CV router (3 taus) -> candidate-pool sweep
+#             -> C6 LOTO/split (3 taus) -> fair comparison -> Pareto figures.
 #
 # Resume-safe: each completed unit drops a .p0_done marker and is skipped on
 # re-invocation. Logs to runs/rerun_p0.log (tee'd by the caller).
@@ -51,6 +51,11 @@ for t in $TAUS; do
   echo "--- cv_router_220 tau=$t $(date +%T)"
   python scripts/cv_router_220.py --tau "$t" || exit 1
 done
+
+echo "--- candidate_pool_sweep corrected P0 $(date +%T)"
+python scripts/candidate_pool_sweep.py \
+  --run-id p0_corrected_2026-07-16 \
+  --verify-existing-cv || exit 1
 
 for m in $MODELS; do
   for t in $TAUS; do
