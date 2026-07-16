@@ -1,6 +1,6 @@
 {
   "config": "C5",
-  "method": "Ada-KV (head-wise adaptive budget allocation, vote-aggregated to uniform layer length)",
+  "method": "Head-vote top-k eviction (Ada-KV-inspired budget weighting, shared index set)",
   "model": "llama32_3b",
   "model_id": "meta-llama/Llama-3.2-3B-Instruct",
   "budget_per_head": 1024,
@@ -21,58 +21,58 @@
   "ppl_n_chunks": 35,
   "longbench": {
     "narrativeqa": {
-      "metric": "f1",
-      "score": 0.3041,
+      "metric": "qa_f1",
+      "score": 0.2578,
       "n": 20
     },
     "qasper": {
-      "metric": "f1",
-      "score": 0.3304,
+      "metric": "qa_f1",
+      "score": 0.3262,
       "n": 20
     },
     "multifieldqa_en": {
-      "metric": "f1",
-      "score": 0.4806,
+      "metric": "qa_f1",
+      "score": 0.4786,
       "n": 20
     },
     "hotpotqa": {
-      "metric": "f1",
-      "score": 0.3652,
+      "metric": "qa_f1",
+      "score": 0.377,
       "n": 20
     },
     "2wikimqa": {
-      "metric": "f1",
+      "metric": "qa_f1",
       "score": 0.4741,
       "n": 20
     },
     "gov_report": {
-      "metric": "rouge1",
-      "score": 0.3471,
+      "metric": "rouge_l",
+      "score": 0.2676,
       "n": 20
     },
     "multi_news": {
-      "metric": "rouge1",
-      "score": 0.3142,
+      "metric": "rouge_l",
+      "score": 0.2557,
       "n": 20
     },
     "qmsum": {
-      "metric": "rouge1",
-      "score": 0.2759,
+      "metric": "rouge_l",
+      "score": 0.2466,
       "n": 20
     },
     "passage_count": {
-      "metric": "count_em",
+      "metric": "count",
       "score": 0.05,
       "n": 20
     },
     "trec": {
-      "metric": "accuracy",
+      "metric": "classification",
       "score": 0.65,
       "n": 20
     },
     "triviaqa": {
-      "metric": "f1",
-      "score": 0.9519,
+      "metric": "qa_f1",
+      "score": 0.9733,
       "n": 20
     },
     "_compression": {
@@ -83,7 +83,7 @@
       "avg_compression_ratio": 6.058
     }
   },
-  "longbench_avg": 0.413,
+  "longbench_avg": 0.3961,
   "longbench_avg_seq_len": 6195.9,
   "longbench_avg_kept_per_layer": 1022.8,
   "longbench_avg_kv_cache_mb_full": 677.68,

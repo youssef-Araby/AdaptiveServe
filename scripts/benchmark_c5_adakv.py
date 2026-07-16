@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """
-C5 benchmark — Ada-KV: head-wise adaptive budget allocation for KV eviction.
+C5 benchmark — Head-vote top-k eviction (Ada-KV-inspired budget weighting,
+shared index set).
 
-Ada-KV (Feng et al., 2024). arXiv:2407.11550  |  github.com/FFY0/AdaKV
+NOTE ON NAMING: this is NOT Ada-KV (Feng et al., 2024, arXiv:2407.11550).
+True Ada-KV retains a DIFFERENT token set per head (FlashAttention-2 varlen
+kernels); here the per-head adaptive budgets only WEIGHT a vote that is then
+collapsed to ONE shared index set per layer, so every head keeps the same
+positions. We label it honestly as a head-vote eviction method inspired by
+Ada-KV's budget weighting.
 
-Algorithm (this script, simplified-but-faithful):
+Algorithm (this script):
   1. Run a two-pass prefill (SDPA prefix + eager last-window) to get the
      last-`window_size` queries' attention scores per layer — same trick as C4.
   2. Per layer, compute per-head attention sums [n_kv_heads, S] and smooth with
@@ -17,30 +23,27 @@ Algorithm (this script, simplified-but-faithful):
   5. Vote tally: each selected prefix index accumulates the selecting head's
      score. Take the top `budget_per_head − window_size` positions by vote
      and add the recent window — final layer length is exactly
-     `budget_per_head` (uniform across layers, so HF's DynamicCache invariant
-     is preserved for sliding-window models).
+     `budget_per_head` (uniform across layers and heads: the shared index
+     set that distinguishes this method from true Ada-KV).
   6. Gather K/V along the sequence dim with the chosen indices.
-  7. Decode normally.
+  7. Decode normally under SDPA (same kernel as the C0 baseline).
 
 Differences vs. C4 (DynamicKV):
-  - C4 sums attentions across heads BEFORE selecting → uniform per-head
-    contribution, single layer-wide top-K.
-  - C5 selects PER HEAD with adaptive k_h then vote-aggregates → heads with
-    concentrated attention drive which positions are kept (head-wise
-    importance is preserved through the vote weights).
+  - C4 redistributes the global budget ACROSS layers (per-layer budgets
+    differ) and selects tokens by head-summed scores within a layer.
+  - C5 keeps a uniform per-layer budget but weights token votes by per-head
+    adaptive budgets → heads with concentrated attention drive which
+    positions are kept.
 
-Simplifications versus the paper:
-  - Paper uses FlashAttention-2 varlen so each head can keep different
-    positions; we vote-aggregate to a uniform per-layer budget (compatible
-    with HF DynamicCache's shared seq dim across heads).
+Other simplifications:
   - No re-pruning during decode.
   - Question-agnostic scoring (last-window queries), like SnapKV/DynamicKV.
 
 Measures:
-  Speed  : TTFT (ms incl. compression), TPOT (ms), tokens/sec, peak VRAM (MB),
-           compressed KV cache size (MB)
+  Speed  : TTFT (ms incl. compression), TPOT (ms, SDPA decode), tokens/sec,
+           peak VRAM (MB), compressed KV cache size (MB)
   Quality: WikiText-2 perplexity (teacher-forcing, unaffected by compression),
-           LongBench accuracy (7 tasks, with Ada-KV-compressed prefill)
+           LongBench accuracy (7 tasks, with compressed prefill)
 
 Output: runs/C5/{model}/results.json
 
@@ -72,13 +75,15 @@ from _common import (
     apply_chat_template,
     compute_score,
     extract_prompt_features,
-    kv_cache_mb,
+    fp16_decode_growth_bytes,
+    kv_cache_bytes,
     load_longbench_task,
+    postprocess_pred,
     run_ppl,
 )
 
 # ---------------------------------------------------------------------------
-# Ada-KV hyperparameters
+# Head-vote eviction hyperparameters (Ada-KV-inspired)
 # ---------------------------------------------------------------------------
 
 # Per-head average budget. Total per-layer budget pool is this × n_kv_heads,
@@ -135,9 +140,9 @@ def _adakv_layer_indices(
     window: int,
 ) -> torch.Tensor:
     """
-    Ada-KV head-wise adaptive allocation, with a UNIFORM per-layer output
-    size so HF's DynamicCache invariant (same past length across layers) is
-    preserved — required for sliding-window models like phi-3.
+    Ada-KV-inspired head-wise adaptive allocation, collapsed to a UNIFORM
+    per-layer output size shared by all heads (one index set per layer —
+    the honest-label distinction from true Ada-KV).
 
     Per-head adaptive budgets are still computed (heads with concentrated
     attention get more slots), each head picks its own top-k_h from the
@@ -217,7 +222,8 @@ def _compress_cache(
 ) -> tuple[DynamicCache, list[int]]:
     """
     Build a new DynamicCache where each layer's K and V are gathered along the
-    sequence dim using Ada-KV per-head adaptive selection (then unioned).
+    sequence dim using the per-head-weighted vote selection (one shared
+    index set per layer).
 
     Returns the new cache and a list of per-layer kept-token counts.
     """
@@ -254,7 +260,9 @@ def _prefill_and_compress(
               queries with the prefix as past_key_values, capturing
               attentions of shape [B, H, window, S].
 
-    Then run Ada-KV per-head adaptive selection on those attentions.
+    Then run the per-head-weighted vote selection on those attentions. After
+    compression the model is switched back to SDPA so the decode loop runs
+    the same kernel as the C0 baseline (TPOT comparability).
     """
     seq_len = ids_t.shape[1]
     w = min(window, seq_len)
@@ -262,14 +270,18 @@ def _prefill_and_compress(
     if seq_len <= w:
         model.set_attn_implementation("eager")
         out = model(ids_t, use_cache=True, output_attentions=True)
-        full_mb = kv_cache_mb(out.past_key_values)
+        full_bytes = kv_cache_bytes(out.past_key_values)
         past, kept = _compress_cache(
             out.past_key_values, out.attentions,
             n_kv_heads=n_kv_heads,
             budget_per_head=budget_per_head, window=window, kernel=kernel,
         )
-        comp_mb = kv_cache_mb(past)
-        stats = {"full_kv_mb": full_mb, "compressed_kv_mb": comp_mb,
+        model.set_attn_implementation("sdpa")
+        comp_bytes = kv_cache_bytes(past)
+        stats = {"full_kv_mb": full_bytes / (1024 ** 2),
+                 "compressed_kv_mb": comp_bytes / (1024 ** 2),
+                 "full_kv_bytes": full_bytes,
+                 "compressed_kv_bytes": comp_bytes,
                  "avg_kept": sum(kept) / len(kept), "seq_len": seq_len}
         return past, out.logits[:, -1, :], stats
 
@@ -287,16 +299,33 @@ def _prefill_and_compress(
     with torch.no_grad():
         out = model(last_ids, past_key_values=prefix_past, use_cache=True,
                     output_attentions=True, position_ids=pos)
-    full_mb = kv_cache_mb(out.past_key_values)
+    # Physical cache at end of prefill, BEFORE compression: this is the
+    # per-prompt FP16 reference (inherits any model-level truncation).
+    full_bytes = kv_cache_bytes(out.past_key_values)
     past, kept = _compress_cache(
         out.past_key_values, out.attentions,
         n_kv_heads=n_kv_heads,
         budget_per_head=budget_per_head, window=window, kernel=kernel,
     )
-    comp_mb = kv_cache_mb(past)
-    stats = {"full_kv_mb": full_mb, "compressed_kv_mb": comp_mb,
+    # Decode runs SDPA, same kernel as the C0 baseline.
+    model.set_attn_implementation("sdpa")
+    comp_bytes = kv_cache_bytes(past)
+    stats = {"full_kv_mb": full_bytes / (1024 ** 2),
+             "compressed_kv_mb": comp_bytes / (1024 ** 2),
+             "full_kv_bytes": full_bytes,
+             "compressed_kv_bytes": comp_bytes,
              "avg_kept": sum(kept) / len(kept), "seq_len": seq_len}
     return past, out.logits[:, -1, :], stats
+
+
+def _fp16_bytes_per_token(model) -> int:
+    """FP16 KV bytes appended per decoded token:
+    2 bytes × 2 (K&V) × n_layers × n_kv_heads × head_dim."""
+    cfg = model.config
+    n_kv = getattr(cfg, "num_key_value_heads", None) or cfg.num_attention_heads
+    head_dim = getattr(cfg, "head_dim", None) or (
+        cfg.hidden_size // cfg.num_attention_heads)
+    return 2 * 2 * cfg.num_hidden_layers * n_kv * head_dim
 
 
 # ---------------------------------------------------------------------------
@@ -309,7 +338,7 @@ def _get_n_kv_heads(model) -> int:
 
 
 def run_speed(model, tokenizer, model_key: str, n_kv_heads: int, device: str) -> dict:
-    print("\n=== Speed benchmark (Ada-KV) ===")
+    print("\n=== Speed benchmark (head-vote eviction) ===")
 
     target_len = LB_MAX_INPUT[model_key]
     all_ids    = tokenizer.encode(SPEED_TEXT, add_special_tokens=False)
@@ -426,12 +455,23 @@ def _generate_ada(
             past     = step.past_key_values
             next_tok = step.logits[:, -1, :].argmax(dim=-1, keepdim=True)
 
+    # Per-prompt byte accounting (§1): decode tokens are kept at fp16 (this
+    # config does not compress them; the rebuilt plain cache really grows).
+    # The FP16 reference is capped for sliding-window models (Phi-3 FP16
+    # serving evicts as it appends at cap, gaining nothing per decode token).
+    n_gen = len(generated)
+    bpt   = _fp16_bytes_per_token(model)
+    stats["n_generated"]  = n_gen
+    stats["kv_bytes"]      = stats["compressed_kv_bytes"] + n_gen * bpt
+    stats["kv_bytes_fp16"] = stats["full_kv_bytes"] + fp16_decode_growth_bytes(
+        stats["full_kv_bytes"], n_gen, bpt, model.config)
+
     return tokenizer.decode(generated, skip_special_tokens=True).strip(), stats
 
 
 def run_longbench(model, tokenizer, model_key: str, n_kv_heads: int,
                   device: str, pp_logger=None) -> dict:
-    print("\n=== LongBench (Ada-KV) ===")
+    print("\n=== LongBench (head-vote eviction) ===")
     max_input = LB_MAX_INPUT[model_key]
     budget_per_head = ADA_BUDGET_PER_HEAD[model_key]
     results   = {}
@@ -456,17 +496,24 @@ def run_longbench(model, tokenizer, model_key: str, n_kv_heads: int,
                                      device, use_chat=cfg["chat"],
                                      n_kv_heads=n_kv_heads,
                                      budget_per_head=budget_per_head)
+            pred = postprocess_pred(task, pred)
             full_mbs.append(st["full_kv_mb"])
             comp_mbs.append(st["compressed_kv_mb"])
             kept_list.append(st["avg_kept"])
             seq_lens.append(st["seq_len"])
-            if cfg["first_line"]:
-                pred = pred.split("\n")[0].strip()
-            s = compute_score(metric, pred, golds)
+            s = compute_score(metric, pred, golds,
+                              all_classes=sample.get("all_classes"))
             scores.append(s)
             if pp_logger is not None:
+                compression = (st["kv_bytes_fp16"] / st["kv_bytes"]
+                               if st["kv_bytes"] > 0 else 1.0)
                 pp_logger.log(task=task, sample_idx=j, metric=metric, score=s,
-                              features=extract_prompt_features(prompt, tokenizer))
+                              features=extract_prompt_features(prompt, tokenizer),
+                              compression=compression,
+                              pred=pred,
+                              kv_bytes=st["kv_bytes"],
+                              kv_bytes_fp16=st["kv_bytes_fp16"],
+                              extra={"n_generated": st["n_generated"]})
             if (j + 1) % 5 == 0:
                 print(f"  {task} [{j+1}/{len(samples)}]  {metric}={sum(scores)/len(scores):.4f}")
 
@@ -519,7 +566,7 @@ def main():
         ADA_BUDGET_PER_HEAD[args.model] = args.budget
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"\nConfig : C5 (Ada-KV, head-wise adaptive budget, "
+    print(f"\nConfig : C5 (head-vote top-k eviction, Ada-KV-inspired weighting, "
           f"per-head={ADA_BUDGET_PER_HEAD[args.model]}, window={ADA_WINDOW_SIZE}, "
           f"kernel={ADA_KERNEL_SIZE})")
     print(f"Model  : {model_id}")
@@ -531,16 +578,20 @@ def main():
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
+    # Attention kernels are switched per phase: _prefill_and_compress uses
+    # SDPA for the prefix pass, eager for the last-window capture pass (SDPA
+    # returns no attention scores on this transformers version), then resets
+    # to SDPA so decode runs the same kernel as the C0 baseline.
     model = AutoModelForCausalLM.from_pretrained(
         model_id, dtype=torch.float16, device_map="auto",
-        attn_implementation="eager",
+        attn_implementation="sdpa",
     )
     model.eval()
     n_kv_heads = _get_n_kv_heads(model)
 
     results = {
         "config":            "C5",
-        "method":            "Ada-KV (head-wise adaptive budget allocation, vote-aggregated to uniform layer length)",
+        "method":            "Head-vote top-k eviction (Ada-KV-inspired budget weighting, shared index set)",
         "model":             args.model,
         "model_id":          model_id,
         "budget_per_head":   ADA_BUDGET_PER_HEAD[args.model],
@@ -553,11 +604,10 @@ def main():
         results.update(run_speed(model, tokenizer, args.model, n_kv_heads, device))
         torch.cuda.empty_cache()
 
-        # PPL: SDPA is much faster than eager (no attention scores needed).
+        # PPL doesn't need attention scores; runs on SDPA.
         model.set_attn_implementation("sdpa")
         results.update(run_ppl(model, tokenizer, args.model, device))
         torch.cuda.empty_cache()
-        model.set_attn_implementation("eager")
 
     lb = run_longbench(model, tokenizer, args.model, n_kv_heads, device,
                        pp_logger=PerPromptLogger(out_dir / "per_prompt.jsonl",

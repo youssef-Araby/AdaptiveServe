@@ -19,70 +19,70 @@
   "ppl_n_chunks": 83,
   "longbench": {
     "narrativeqa": {
-      "metric": "f1",
-      "score": 0.1676,
+      "metric": "qa_f1",
+      "score": 0.1267,
       "n": 20
     },
     "qasper": {
-      "metric": "f1",
-      "score": 0.1556,
+      "metric": "qa_f1",
+      "score": 0.1451,
       "n": 20
     },
     "multifieldqa_en": {
-      "metric": "f1",
-      "score": 0.3355,
+      "metric": "qa_f1",
+      "score": 0.3163,
       "n": 20
     },
     "hotpotqa": {
-      "metric": "f1",
-      "score": 0.2156,
+      "metric": "qa_f1",
+      "score": 0.2442,
       "n": 20
     },
     "2wikimqa": {
-      "metric": "f1",
-      "score": 0.1193,
+      "metric": "qa_f1",
+      "score": 0.1173,
       "n": 20
     },
     "gov_report": {
-      "metric": "rouge1",
-      "score": 0.3525,
+      "metric": "rouge_l",
+      "score": 0.2934,
       "n": 20
     },
     "multi_news": {
-      "metric": "rouge1",
-      "score": 0.3276,
+      "metric": "rouge_l",
+      "score": 0.2597,
       "n": 20
     },
     "qmsum": {
-      "metric": "rouge1",
-      "score": 0.2392,
+      "metric": "rouge_l",
+      "score": 0.2197,
       "n": 20
     },
     "passage_count": {
-      "metric": "count_em",
-      "score": 0.0,
+      "metric": "count",
+      "score": 0.01,
       "n": 20
     },
     "trec": {
-      "metric": "accuracy",
+      "metric": "classification",
       "score": 0.65,
       "n": 20
     },
     "triviaqa": {
-      "metric": "f1",
-      "score": 0.9348,
+      "metric": "qa_f1",
+      "score": 0.9722,
       "n": 20
     },
     "_compression": {
       "avg_seq_len": 3406.1,
-      "avg_kv_cache_mb_full": 760.67,
-      "avg_kv_cache_mb": 222.97,
-      "avg_compression_ratio": 3.412
+      "avg_kv_cache_mb_full": 764.58,
+      "avg_kv_cache_mb": 265.09,
+      "avg_compression_ratio": 2.884
     }
   },
-  "longbench_avg": 0.318,
+  "longbench_avg": 0.305,
   "longbench_avg_seq_len": 3406.1,
-  "longbench_avg_kv_cache_mb_full": 760.67,
-  "longbench_avg_kv_cache_mb": 222.97,
-  "longbench_avg_compression_ratio": 3.412
+  "longbench_avg_kv_cache_mb_full": 764.58,
+  "longbench_avg_kv_cache_mb": 265.09,
+  "longbench_avg_compression_ratio": 2.884
 }

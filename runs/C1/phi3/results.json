@@ -1,6 +1,6 @@
 {
   "config": "C1",
-  "method": "TailorKV (hybrid: 1-bit quant on Q-layers + SnapKV 64+128 on S-layers)",
+  "method": "Hybrid aggressive eviction: SnapKV-style top-(64+128) retention on all layers + 1-bit quantization of layer-0 survivors (TailorKV-inspired)",
   "model": "phi3",
   "model_id": "microsoft/Phi-3-mini-4k-instruct",
   "q_layers": [
@@ -25,72 +25,74 @@
   "ppl_n_chunks": 83,
   "longbench": {
     "narrativeqa": {
-      "metric": "f1",
-      "score": 0.1524,
+      "metric": "qa_f1",
+      "score": 0.1403,
       "n": 20
     },
     "qasper": {
-      "metric": "f1",
-      "score": 0.1942,
+      "metric": "qa_f1",
+      "score": 0.196,
       "n": 20
     },
     "multifieldqa_en": {
-      "metric": "f1",
-      "score": 0.3663,
+      "metric": "qa_f1",
+      "score": 0.373,
       "n": 20
     },
     "hotpotqa": {
-      "metric": "f1",
-      "score": 0.2017,
+      "metric": "qa_f1",
+      "score": 0.2058,
       "n": 20
     },
     "2wikimqa": {
-      "metric": "f1",
-      "score": 0.1261,
+      "metric": "qa_f1",
+      "score": 0.115,
       "n": 20
     },
     "gov_report": {
-      "metric": "rouge1",
-      "score": 0.2615,
+      "metric": "rouge_l",
+      "score": 0.2092,
       "n": 20
     },
     "multi_news": {
-      "metric": "rouge1",
-      "score": 0.233,
+      "metric": "rouge_l",
+      "score": 0.1917,
       "n": 20
     },
     "qmsum": {
-      "metric": "rouge1",
-      "score": 0.2559,
+      "metric": "rouge_l",
+      "score": 0.2137,
       "n": 20
     },
     "passage_count": {
-      "metric": "count_em",
-      "score": 0.0,
+      "metric": "count",
+      "score": 0.01,
       "n": 20
     },
     "trec": {
-      "metric": "accuracy",
-      "score": 0.65,
+      "metric": "classification",
+      "score": 0.6,
       "n": 20
     },
     "triviaqa": {
-      "metric": "f1",
-      "score": 0.9348,
+      "metric": "qa_f1",
+      "score": 0.9722,
       "n": 20
     },
     "_compression": {
       "avg_seq_len": 3406.1,
       "avg_kept_per_layer": 192.0,
       "avg_kv_cache_mb_full": 760.67,
-      "avg_kv_cache_mb": 69.96,
-      "avg_compression_ratio": 10.873
+      "avg_kv_cache_mb": 69.97,
+      "avg_compression_ratio": 10.871,
+      "avg_per_prompt_compression": 8.452
     }
   },
-  "longbench_avg": 0.3069,
+  "longbench_avg": 0.2934,
   "longbench_avg_seq_len": 3406.1,
   "longbench_avg_kept_per_layer": 192.0,
   "longbench_avg_kv_cache_mb_full": 760.67,
-  "longbench_avg_kv_cache_mb": 69.96,
-  "longbench_avg_compression_ratio": 10.873
+  "longbench_avg_kv_cache_mb": 69.97,
+  "longbench_avg_compression_ratio": 10.871,
+  "longbench_avg_per_prompt_compression": 8.452
 }

@@ -1,0 +1,190 @@
+{
+  "phi3": {
+    "router_cv": {
+      "q": 0.304,
+      "cr": 4.81,
+      "picks": {
+        "C1": 97,
+        "C4": 16,
+        "C2": 61,
+        "C3": 23,
+        "C5": 23
+      }
+    },
+    "fixed_full": {
+      "C0": {
+        "q": 0.3033,
+        "cr": 1.0
+      },
+      "C1": {
+        "q": 0.2934,
+        "cr": 6.803
+      },
+      "C2": {
+        "q": 0.3175,
+        "cr": 4.622
+      },
+      "C3": {
+        "q": 0.305,
+        "cr": 2.88
+      },
+      "C4": {
+        "q": 0.295,
+        "cr": 3.242
+      },
+      "C5": {
+        "q": 0.3,
+        "cr": 3.215
+      }
+    },
+    "pareto_vs_router": {
+      "C0": "router_dominates",
+      "C1": "non_dominated",
+      "C2": "non_dominated",
+      "C3": "non_dominated",
+      "C4": "router_dominates",
+      "C5": "router_dominates"
+    }
+  },
+  "llama3": {
+    "router_cv": {
+      "q": 0.4189,
+      "cr": 5.993,
+      "picks": {
+        "C1": 70,
+        "C5": 72,
+        "C4": 15,
+        "C2": 39,
+        "C3": 24
+      }
+    },
+    "fixed_full": {
+      "C0": {
+        "q": 0.4293,
+        "cr": 1.0
+      },
+      "C1": {
+        "q": 0.3743,
+        "cr": 18.329
+      },
+      "C2": {
+        "q": 0.4231,
+        "cr": 4.607
+      },
+      "C3": {
+        "q": 0.4302,
+        "cr": 3.24
+      },
+      "C4": {
+        "q": 0.4233,
+        "cr": 4.697
+      },
+      "C5": {
+        "q": 0.428,
+        "cr": 4.705
+      }
+    },
+    "pareto_vs_router": {
+      "C0": "non_dominated",
+      "C1": "non_dominated",
+      "C2": "non_dominated",
+      "C3": "non_dominated",
+      "C4": "non_dominated",
+      "C5": "non_dominated"
+    }
+  },
+  "llama32_3b": {
+    "router_cv": {
+      "q": 0.3779,
+      "cr": 5.409,
+      "picks": {
+        "C4": 28,
+        "C1": 66,
+        "C2": 68,
+        "C5": 29,
+        "C3": 29
+      }
+    },
+    "fixed_full": {
+      "C0": {
+        "q": 0.4031,
+        "cr": 1.0
+      },
+      "C1": {
+        "q": 0.3353,
+        "cr": 17.506
+      },
+      "C2": {
+        "q": 0.4046,
+        "cr": 4.647
+      },
+      "C3": {
+        "q": 0.4013,
+        "cr": 3.215
+      },
+      "C4": {
+        "q": 0.396,
+        "cr": 4.647
+      },
+      "C5": {
+        "q": 0.3961,
+        "cr": 4.66
+      }
+    },
+    "pareto_vs_router": {
+      "C0": "non_dominated",
+      "C1": "non_dominated",
+      "C2": "non_dominated",
+      "C3": "non_dominated",
+      "C4": "non_dominated",
+      "C5": "non_dominated"
+    }
+  },
+  "llama31_8b": {
+    "router_cv": {
+      "q": 0.4227,
+      "cr": 5.415,
+      "picks": {
+        "C2": 50,
+        "C5": 41,
+        "C1": 63,
+        "C4": 24,
+        "C3": 42
+      }
+    },
+    "fixed_full": {
+      "C0": {
+        "q": 0.4358,
+        "cr": 1.0
+      },
+      "C1": {
+        "q": 0.3662,
+        "cr": 16.144
+      },
+      "C2": {
+        "q": 0.4348,
+        "cr": 4.602
+      },
+      "C3": {
+        "q": 0.4352,
+        "cr": 3.196
+      },
+      "C4": {
+        "q": 0.4297,
+        "cr": 4.632
+      },
+      "C5": {
+        "q": 0.4315,
+        "cr": 4.633
+      }
+    },
+    "pareto_vs_router": {
+      "C0": "non_dominated",
+      "C1": "non_dominated",
+      "C2": "non_dominated",
+      "C3": "non_dominated",
+      "C4": "non_dominated",
+      "C5": "non_dominated"
+    }
+  }
+}

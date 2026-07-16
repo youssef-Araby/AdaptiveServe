@@ -34,8 +34,10 @@ from _common import (
     apply_chat_template,
     compute_score,
     extract_prompt_features,
+    kv_cache_bytes,
     kv_cache_mb,
     load_longbench_task,
+    postprocess_pred,
     run_ppl,
 )
 
@@ -116,7 +118,13 @@ def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _generate(model, tokenizer, prompt: str, max_new: int, max_input: int, device: str,
-              use_chat: bool = True) -> str:
+              use_chat: bool = True) -> tuple[str, int]:
+    """Greedy-decode a prediction.
+
+    Returns (raw_pred_text, kv_bytes) where kv_bytes is the measured size of the
+    KV cache at the end of generation. For C0 (FP16, no compression) this is
+    both the effective and the FP16-reference byte count.
+    """
     if use_chat:
         prompt = apply_chat_template(tokenizer, prompt)
     ids = tokenizer.encode(prompt, add_special_tokens=False)
@@ -131,8 +139,12 @@ def _generate(model, tokenizer, prompt: str, max_new: int, max_input: int, devic
             max_length=None,
             do_sample=False,
             pad_token_id=tokenizer.eos_token_id,
+            use_cache=True,
+            return_dict_in_generate=True,
         )
-    return tokenizer.decode(out[0, len(ids):], skip_special_tokens=True).strip()
+    pred     = tokenizer.decode(out.sequences[0, len(ids):], skip_special_tokens=True)
+    kv_bytes = kv_cache_bytes(out.past_key_values)
+    return pred, kv_bytes
 
 
 def run_longbench(model, tokenizer, model_key: str, device: str,
@@ -155,15 +167,19 @@ def run_longbench(model, tokenizer, model_key: str, device: str,
         for j, sample in enumerate(samples):
             golds  = sample["answers"] if isinstance(sample["answers"], list) else [sample["answers"]]
             prompt = LB_TEMPLATES[task].format(context=sample.get("context", ""), input=sample["input"])
-            pred   = _generate(model, tokenizer, prompt, max_new, max_input, device,
-                               use_chat=cfg["chat"])
-            if cfg["first_line"]:
-                pred = pred.split("\n")[0].strip()
-            s = compute_score(metric, pred, golds)
+            pred_raw, kv_bytes = _generate(model, tokenizer, prompt, max_new, max_input,
+                                           device, use_chat=cfg["chat"])
+            pred = postprocess_pred(task, pred_raw)
+            s = compute_score(metric, pred, golds,
+                              all_classes=sample.get("all_classes"))
             scores.append(s)
             if pp_logger is not None:
+                # C0 does not compress: effective bytes == FP16-reference bytes.
                 pp_logger.log(task=task, sample_idx=j, metric=metric, score=s,
-                              features=extract_prompt_features(prompt, tokenizer))
+                              features=extract_prompt_features(prompt, tokenizer),
+                              compression=1.0, pred=pred,
+                              kv_bytes=float(kv_bytes),
+                              kv_bytes_fp16=float(kv_bytes))
             if (j + 1) % 5 == 0:
                 print(f"  {task} [{j+1}/{len(samples)}]  {metric}={sum(scores)/len(scores):.4f}")
 

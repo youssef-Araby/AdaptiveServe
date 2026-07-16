@@ -160,10 +160,10 @@ Stricter test of cross-task generalisation: regressors train on 10 LongBench tas
 
 The green curve (in-distribution router, swept across τ ∈ {0.99, 0.95, 0.90}) sits above and to the right of every fixed-method point on Phi-3 and LLaMA-3-8B (strict Pareto dominance). On LLaMA-3.1/3.2 it passes through the cluster of fixed-method points — the "Δ < 2%" regime where routing offers no quality improvement.
 
-![Phi-3 Pareto frontier](runs/figs/pareto_phi3.png)
-![LLaMA-3-8B Pareto frontier](runs/figs/pareto_llama3.png)
-![LLaMA-3.2-3B Pareto frontier](runs/figs/pareto_llama32_3b.png)
-![LLaMA-3.1-8B Pareto frontier](runs/figs/pareto_llama31_8b.png)
+![Phi-3 Pareto frontier](runs/figs/pareto_cv_phi3.png)
+![LLaMA-3-8B Pareto frontier](runs/figs/pareto_cv_llama3.png)
+![LLaMA-3.2-3B Pareto frontier](runs/figs/pareto_cv_llama32_3b.png)
+![LLaMA-3.1-8B Pareto frontier](runs/figs/pareto_cv_llama31_8b.png)
 
 ---
 
@@ -245,7 +245,7 @@ AdaptiveServe/
     ├── c{0..5}/{model}/results.json + per_prompt.jsonl
     ├── C6/{model}/results.json + results_tau{0.99,0.95,0.90}.json + per_prompt.jsonl
     ├── dataset/{model}.jsonl
-    └── figs/pareto_{model}.png
+    └── figs/pareto_cv_{model}.png + pareto_split_{model}.png
 ```
 
 Each `benchmark_cN_*.py` script is self-contained: it owns its own model loading, speed loop, and generation function. Only constants and method-agnostic helpers (scoring, LongBench task loading, feature extraction) are shared via `_common.py`. The router script (`benchmark_c6_classifier.py`) is pure CPU — it reads `runs/dataset/{model}.jsonl` and never loads the LLM.

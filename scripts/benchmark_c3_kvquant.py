@@ -15,10 +15,11 @@ Algorithm (this script, simplified-but-faithful):
               its own scale/zero-point along head_dim with `group_size`
               groups. (Paper §3.2: V is well-behaved per-token.)
   - Dense-and-Sparse (§3.3): the top `outlier_frac` (1 % by default) of
-              elements by magnitude are preserved in FP16. Their quantized
-              values are overwritten with the originals after round-trip,
-              and the effective-byte count adds index + FP16 storage for
-              them.
+              elements by magnitude are identified FIRST and excluded from
+              the quantization min/max ranges, so the remaining ~99 % are
+              quantized on a tighter grid. The outliers themselves are
+              preserved in FP16, and the effective-byte count adds index +
+              FP16 storage for them.
 
 Simplifications versus the paper:
   - Uniform asymmetric quantization rather than the paper's non-uniform
@@ -33,7 +34,9 @@ Simplifications versus the paper:
   - Only the prefix is quantized; tokens generated during decode are
     appended to the cache at full FP16. This matches every other prefix-
     only method in the suite (C1, C2, C4) and keeps decode arithmetic
-    unchanged.
+    unchanged. Per-prompt byte accounting charges those decode tokens at
+    FP16 on both the effective (kv_bytes) and the FP16-reference
+    (kv_bytes_fp16) side.
 
 Measures:
   Speed  : TTFT (ms incl. quantization), TPOT (ms), tokens/sec, peak VRAM,
@@ -71,8 +74,10 @@ from _common import (
     apply_chat_template,
     compute_score,
     extract_prompt_features,
-    kv_cache_mb,
+    fp16_decode_growth_bytes,
+    kv_cache_bytes,
     load_longbench_task,
+    postprocess_pred,
     run_ppl,
 )
 
@@ -90,12 +95,21 @@ KVQ_OUTLIER_FRAC = 0.01   # fraction of |x| outliers kept in FP16
 # ---------------------------------------------------------------------------
 
 def _quantize_dequantize(x: torch.Tensor, bits: int, group_size: int,
-                         channel_dim: int) -> torch.Tensor:
+                         channel_dim: int,
+                         exclude_mask: torch.Tensor | None = None
+                         ) -> torch.Tensor:
     """
     Group-wise asymmetric quantize→dequantize along `channel_dim`.
 
     Same primitive as C1: moves channel_dim to last, pads to group_size,
     asymmetric min/max → quantize → dequantize.
+
+    `exclude_mask` (optional, bool, same shape as `x`): elements marked True
+    (the FP16-preserved outliers) are EXCLUDED from each group's min/max
+    range so the remaining elements are quantized on a tighter grid
+    (Dense-and-Sparse done right). Padding is excluded from the range too.
+    The round-tripped values at excluded positions are meaningless — the
+    caller must overwrite them with the FP16 originals.
     """
     orig_dtype = x.dtype
     xf = x.float()
@@ -111,8 +125,22 @@ def _quantize_dequantize(x: torch.Tensor, bits: int, group_size: int,
     g = n_pad // group_size
 
     xf = xf.reshape(*lead, g, group_size)
-    x_min = xf.amin(dim=-1, keepdim=True)
-    x_max = xf.amax(dim=-1, keepdim=True)
+    if exclude_mask is None:
+        x_min = xf.amin(dim=-1, keepdim=True)
+        x_max = xf.amax(dim=-1, keepdim=True)
+    else:
+        excl = exclude_mask.movedim(channel_dim, -1)
+        if pad:
+            excl = F.pad(excl, (0, pad), value=True)  # pad never widens the range
+        excl = excl.reshape(*lead, g, group_size)
+        big  = torch.finfo(torch.float32).max
+        x_min = xf.masked_fill(excl, big).amin(dim=-1, keepdim=True)
+        x_max = xf.masked_fill(excl, -big).amax(dim=-1, keepdim=True)
+        # Groups whose real elements are ALL outliers have an empty range;
+        # zero it out (their positions are restored to FP16 by the caller).
+        empty = x_min > x_max
+        x_min = torch.where(empty, torch.zeros_like(x_min), x_min)
+        x_max = torch.where(empty, torch.zeros_like(x_max), x_max)
     levels = (1 << bits) - 1
     scale  = (x_max - x_min).clamp(min=1e-8) / levels
     q  = ((xf - x_min) / scale).round().clamp(0, levels)
@@ -126,28 +154,28 @@ def _quantize_dequantize(x: torch.Tensor, bits: int, group_size: int,
 
 
 # ---------------------------------------------------------------------------
-# Dense-and-Sparse: replace top-|x| outliers with their FP16 originals
+# Dense-and-Sparse: top-|x| outliers, kept in FP16 and excluded from ranges
 # ---------------------------------------------------------------------------
 
-def _apply_outliers(orig: torch.Tensor, quant: torch.Tensor,
-                    frac: float) -> tuple[torch.Tensor, int]:
+def _outlier_mask(x: torch.Tensor, frac: float
+                  ) -> tuple[torch.Tensor | None, int]:
     """
-    Restore the top `frac` |orig| values in `quant` to their FP16 originals.
-    Returns (mixed_tensor, n_outliers).
+    Boolean mask (same shape as `x`) of the top `frac` |x| elements — the
+    Dense-and-Sparse FP16 outlier set. Returns (mask_or_None, n_outliers).
     """
     if frac <= 0:
-        return quant, 0
-    n_total = orig.numel()
+        return None, 0
+    n_total = x.numel()
     n_out   = int(round(n_total * frac))
     if n_out <= 0:
-        return quant, 0
+        return None, 0
 
-    flat_abs = orig.detach().abs().reshape(-1)
+    flat_abs = x.detach().abs().reshape(-1)
     # topk on n_total elements is fine — fast on GPU.
-    idx = torch.topk(flat_abs, n_out, largest=True, sorted=False).indices
-    mixed = quant.clone().reshape(-1)
-    mixed[idx] = orig.reshape(-1)[idx]
-    return mixed.reshape(orig.shape), n_out
+    idx  = torch.topk(flat_abs, n_out, largest=True, sorted=False).indices
+    mask = torch.zeros(n_total, dtype=torch.bool, device=x.device)
+    mask[idx] = True
+    return mask.reshape(x.shape), n_out
 
 
 # ---------------------------------------------------------------------------
@@ -160,24 +188,36 @@ def _kvquant_layer(K: torch.Tensor, V: torch.Tensor,
     """
     K [B, H, S, D]:   per-channel quantization (groups along S, dim=2)
     V [B, H, S, D]:   per-token   quantization (groups along D, dim=3)
-    Outliers (|x|): top `outlier_frac` of K and V each restored to FP16.
+    Outliers (|x|): top `outlier_frac` of K and V each are identified FIRST,
+    excluded from the quantization min/max ranges (so the remaining ~99 %
+    use a tighter grid), and kept at FP16.
 
     Returns (K_mixed, V_mixed, effective_bytes).
     """
-    Kq = _quantize_dequantize(K, bits=bits, group_size=group_size, channel_dim=2)
-    Vq = _quantize_dequantize(V, bits=bits, group_size=group_size, channel_dim=3)
+    mask_k, n_out_k = _outlier_mask(K, outlier_frac)
+    mask_v, n_out_v = _outlier_mask(V, outlier_frac)
 
-    Km, n_out_k = _apply_outliers(K, Kq, outlier_frac)
-    Vm, n_out_v = _apply_outliers(V, Vq, outlier_frac)
+    Kq = _quantize_dequantize(K, bits=bits, group_size=group_size,
+                              channel_dim=2, exclude_mask=mask_k)
+    Vq = _quantize_dequantize(V, bits=bits, group_size=group_size,
+                              channel_dim=3, exclude_mask=mask_v)
+
+    Km = torch.where(mask_k, K, Kq) if mask_k is not None else Kq
+    Vm = torch.where(mask_v, V, Vq) if mask_v is not None else Vq
 
     # Effective storage:
     #   - quantized data: (n - n_outliers) × bits / 8
-    #   - scale + zero (fp16) per group: 4 bytes per group
+    #   - scale + zero (fp16) per group: 4 bytes per group, with groups
+    #     formed per vector along the quantization axis (ceil per vector —
+    #     matches what _quantize_dequantize physically forms; K groups along
+    #     S, V groups along head_dim, which pads e.g. Phi-3's D=96 to one
+    #     full group per (head, token) vector)
     #   - outliers:        n_outliers × (fp16 value + int32 index) = 6 B
     bytes_total = 0.0
-    for T, n_out in ((K, n_out_k), (V, n_out_v)):
+    for T, n_out, axis_len in ((K, n_out_k, K.shape[2]), (V, n_out_v, V.shape[3])):
         n        = T.numel()
-        n_groups = (n + group_size - 1) // group_size
+        n_vecs   = n // axis_len
+        n_groups = n_vecs * ((axis_len + group_size - 1) // group_size)
         bytes_total += (n - n_out) * bits / 8.0   # quantized data
         bytes_total += n_groups * 4.0             # fp16 scale + fp16 zero
         bytes_total += n_out * 6.0                # fp16 value + int32 index
@@ -199,10 +239,19 @@ def _quantize_cache(past: DynamicCache, bits: int, group_size: int,
         total_bytes += b
 
     stats = {
-        "compressed_kv_mb": total_bytes / (1024 ** 2),
-        "n_layers":         n_layers,
+        "compressed_kv_bytes": total_bytes,
+        "compressed_kv_mb":    total_bytes / (1024 ** 2),
+        "n_layers":            n_layers,
     }
     return new_cache, stats
+
+
+def _fp16_bytes_per_token(model) -> float:
+    """FP16 KV bytes per token: 2 B × 2 (K&V) × n_layers × n_kv_heads × head_dim."""
+    cfg      = model.config
+    n_kv     = getattr(cfg, "num_key_value_heads", None) or cfg.num_attention_heads
+    head_dim = getattr(cfg, "head_dim", None) or cfg.hidden_size // cfg.num_attention_heads
+    return 2.0 * 2.0 * cfg.num_hidden_layers * n_kv * head_dim
 
 
 def _prefill_and_quantize(model, ids_t: torch.Tensor, device: str
@@ -210,12 +259,13 @@ def _prefill_and_quantize(model, ids_t: torch.Tensor, device: str
     """Single-pass SDPA prefill, then quantize the resulting cache."""
     with torch.no_grad():
         out = model(ids_t, use_cache=True)
-    full_mb = kv_cache_mb(out.past_key_values)
+    full_bytes = kv_cache_bytes(out.past_key_values)  # measured pre-compression
     past, st = _quantize_cache(out.past_key_values,
                                bits=KVQ_BITS, group_size=KVQ_GROUP_SIZE,
                                outlier_frac=KVQ_OUTLIER_FRAC)
-    st["full_kv_mb"] = full_mb
-    st["seq_len"]    = ids_t.shape[1]
+    st["full_kv_bytes"] = float(full_bytes)
+    st["full_kv_mb"]    = full_bytes / (1024 ** 2)
+    st["seq_len"]       = ids_t.shape[1]
     return past, out.logits[:, -1, :], st
 
 
@@ -326,6 +376,9 @@ def _generate_kvq(model, tokenizer, prompt: str, max_new: int, max_input: int,
             past     = step.past_key_values
             next_tok = step.logits[:, -1, :].argmax(dim=-1, keepdim=True)
 
+    # Every generated token was fed through the model, so each appended one
+    # FP16 K/V entry per layer to the cache.
+    stats["n_generated"] = len(generated)
     return tokenizer.decode(generated, skip_special_tokens=True).strip(), stats
 
 
@@ -335,6 +388,7 @@ def run_longbench(model, tokenizer, model_key: str, device: str,
     max_input = LB_MAX_INPUT[model_key]
     results   = {}
     full_mbs, comp_mbs, seq_lens = [], [], []
+    bpt_fp16  = _fp16_bytes_per_token(model)
 
     for task, cfg in LB_TASKS.items():
         try:
@@ -349,18 +403,31 @@ def run_longbench(model, tokenizer, model_key: str, device: str,
             golds  = sample["answers"] if isinstance(sample["answers"], list) else [sample["answers"]]
             prompt = LB_TEMPLATES[task].format(context=sample.get("context", ""),
                                                input=sample["input"])
-            pred, st = _generate_kvq(model, tokenizer, prompt, max_new, max_input,
-                                     device, use_chat=cfg["chat"])
-            full_mbs.append(st["full_kv_mb"])
-            comp_mbs.append(st["compressed_kv_mb"])
+            pred_raw, st = _generate_kvq(model, tokenizer, prompt, max_new,
+                                         max_input, device, use_chat=cfg["chat"])
+            # Per-prompt bytes: prefill measured before/after quantization.
+            # Decode tokens append at FP16 to the rebuilt plain cache (really
+            # grows) and are charged FP16 in kv_bytes; the FP16 reference is
+            # capped for sliding-window models (Phi-3 FP16 serving evicts as
+            # it appends once at cap, gaining nothing per decode token).
+            decode_bytes  = st["n_generated"] * bpt_fp16
+            kv_bytes_fp16 = st["full_kv_bytes"] + fp16_decode_growth_bytes(
+                st["full_kv_bytes"], st["n_generated"], bpt_fp16, model.config)
+            kv_bytes      = st["compressed_kv_bytes"] + decode_bytes
+            compression   = kv_bytes_fp16 / kv_bytes if kv_bytes > 0 else 1.0
+            full_mbs.append(kv_bytes_fp16 / (1024 ** 2))
+            comp_mbs.append(kv_bytes / (1024 ** 2))
             seq_lens.append(st["seq_len"])
-            if cfg["first_line"]:
-                pred = pred.split("\n")[0].strip()
-            s = compute_score(metric, pred, golds)
+            pred = postprocess_pred(task, pred_raw)
+            s = compute_score(metric, pred, golds,
+                              all_classes=sample.get("all_classes"))
             scores.append(s)
             if pp_logger is not None:
                 pp_logger.log(task=task, sample_idx=j, metric=metric, score=s,
-                              features=extract_prompt_features(prompt, tokenizer))
+                              features=extract_prompt_features(prompt, tokenizer),
+                              compression=compression, pred=pred,
+                              kv_bytes=kv_bytes, kv_bytes_fp16=kv_bytes_fp16,
+                              extra={"n_generated": st["n_generated"]})
             if (j + 1) % 5 == 0:
                 print(f"  {task} [{j+1}/{len(samples)}]  {metric}={sum(scores)/len(scores):.4f}")
         avg = sum(scores) / len(scores) if scores else 0.0
@@ -368,6 +435,8 @@ def run_longbench(model, tokenizer, model_key: str, device: str,
         results[task] = {"metric": metric, "score": round(avg, 4), "n": len(scores)}
 
     if full_mbs:
+        # Run-level aggregate on the same basis as the per-prompt logs:
+        # prefill (quantized+metadata vs FP16) + FP16 decode tokens both sides.
         avg_full  = sum(full_mbs) / len(full_mbs)
         avg_comp  = sum(comp_mbs) / len(comp_mbs)
         avg_ratio = avg_full / avg_comp if avg_comp > 0 else 1.0

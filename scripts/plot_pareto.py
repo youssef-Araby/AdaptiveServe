@@ -10,7 +10,8 @@ Plots:
   - C6 LOTO (OOD)         as a curve through the 3 tau points
   - C6 in-dist (random split) as a second curve
 
-Saves to runs/figs/pareto_{model}.png
+Saves to runs/figs/pareto_split_{model}.png (split-based router evaluation; the
+headline CV-based figure pareto_cv_{model}.png comes from plot_pareto_cv.py).
 
 Usage:
   python scripts/plot_pareto.py --model llama3
@@ -112,7 +113,7 @@ def main() -> None:
     ax.grid(True, which="both", alpha=0.3)
     ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
 
-    out = Path(args.out) if args.out else RUNS / "figs" / f"pareto_{args.model}.png"
+    out = Path(args.out) if args.out else RUNS / "figs" / f"pareto_split_{args.model}.png"
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
     fig.savefig(out, dpi=150)

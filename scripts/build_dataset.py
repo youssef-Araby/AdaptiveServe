@@ -8,13 +8,21 @@ Joins the 6 configs by (task, sample_idx). Output rows:
     "sample_idx": 0,
     "features":   {...prompt-intrinsic features (from C0's row)...},
     "scores":     {"C0": 0.44, "C1": 0.30, ... "C5": 0.41},
-    "compression": {"C0": 1.0, "C1": 34.6, ...},   # constant per config
+    "compression": {"C0": 1.0, "C1": 34.6, ...},   # MEASURED per prompt
+    "kv_bytes":      {"C0": 1.2e8, ...},           # effective compressed KV bytes
+    "kv_bytes_fp16": {"C0": 1.2e8, ...},           # FP16-reference KV bytes
     "best_quality":      "C3",        # argmax score (ties: lowest config id)
     "best_quality_score": 0.50,
     "best_iso_quality_99": "C1",      # most compression s.t. score >= 0.99 * C0
     "best_iso_quality_95": "C4",
     "best_iso_quality_90": "C1",
   }
+
+Per-prompt compression comes EXCLUSIVELY from the `compression` field each
+benchmark logs (computed from measured kv_bytes / kv_bytes_fp16 — see the
+unified CR basis in the benchmark scripts). There are no analytic fallbacks:
+a per_prompt.jsonl row without kv_bytes means the config was produced by an
+old script version and must be re-run.
 
 Saved to runs/dataset/{model}.jsonl.
 
@@ -25,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 ROOT    = Path(__file__).resolve().parent.parent
@@ -32,14 +41,8 @@ RUNS    = ROOT / "runs"
 CONFIGS = ["C0", "C1", "C2", "C3", "C4", "C5"]
 TAUS    = [0.99, 0.95, 0.90]
 
-# Per-model max input length (matches LB_MAX_INPUT in _common.py — the head+tail
-# truncation each benchmark applies before feeding the prompt to the model).
-LB_MAX_INPUT: dict[str, int] = {
-    "phi3":       3500,
-    "llama3":     7500,
-    "llama31_8b": 7500,
-    "llama32_3b": 7500,
-}
+# Fields every per_prompt.jsonl row must now carry (measured-CR basis).
+REQUIRED_CR_FIELDS = ("kv_bytes", "kv_bytes_fp16", "compression")
 
 
 def _load_per_prompt(model: str) -> dict[str, list[dict]]:
@@ -54,91 +57,15 @@ def _load_per_prompt(model: str) -> dict[str, list[dict]]:
     return out
 
 
-def _load_run_stats(model: str) -> dict[str, dict]:
-    """Return the full results.json for each config (for per-prompt compression)."""
-    out = {}
-    for cfg in CONFIGS:
-        path = RUNS / cfg / model / "results.json"
-        if not path.exists():
-            continue
-        out[cfg] = json.loads(path.read_text())
-    return out
-
-
-def per_prompt_compression(
-    config: str, seq_len: int, stats: dict, model_max_input: int
-) -> float:
-    """Compression ratio for ONE prompt under ONE config.
-
-    Derived from each method's known per-prompt semantics rather than the
-    run-level average, so the router sees real prompt-length-dependent
-    behaviour (e.g. C4 compresses 7x on a 7000-token prompt and 1x on a
-    500-token prompt — the run-level average of 6.05x would hide both).
-
-      C0: trivially 1x (no compression).
-      C3: ~constant (4-bit + 1% outliers → ~3.41x regardless of prompt). Use
-          the run-level number from results.json.
-      C4: per-layer length = min(seq_len, max_capacity). Ratio is exactly
-          seq_len / min(seq_len, max_capacity).
-      C5: same per-layer length as C4 (vote-aggregated to uniform).
-      C1: per-layer length pinned to (n_local + n_topk) once seq_len exceeds
-          that threshold. Compressed bytes are then ~constant in seq_len, so
-          ratio scales LINEARLY in seq_len above the threshold. Below the
-          threshold only the 1-bit Q-layer quant contributes (≈3% saving on
-          1/32 layers), giving ratio ≈ 1.03 — used as a floor.
-      C2: data-dependent (per-token-head variable bits driven by K/V dynamic
-          range). Not recoverable from features. Falls back to the run-level
-          average. Will be fixed once C2 logs per-prompt avg_bits.
-    """
-    eff_len = max(1, min(seq_len, model_max_input))
-
-    if config == "C0":
-        return 1.0
-
-    if config == "C3":
-        return float(stats.get("longbench_avg_compression_ratio",
-                               stats.get("kv_compression_ratio", 3.412)))
-
-    if config == "C4":
-        budget = int(stats.get("max_capacity", 1024))
-        return eff_len / max(min(eff_len, budget), 1)
-
-    if config == "C5":
-        budget = int(stats.get("budget_per_head", 1024))
-        return eff_len / max(min(eff_len, budget), 1)
-
-    if config == "C1":
-        prune_thr = int(stats.get("n_local", 64)) + int(stats.get("n_topk", 128))
-        if eff_len <= prune_thr:
-            return 1.03  # no pruning; only Q-layer 1-bit quant on 1/n_layers
-        avg_seq   = float(stats.get("longbench_avg_seq_len") or eff_len)
-        avg_ratio = float(stats.get("longbench_avg_compression_ratio",
-                                    stats.get("kv_compression_ratio", 1.0)))
-        # Linear-in-seq_len scaling, calibrated by the run-level average.
-        return avg_ratio * eff_len / max(avg_seq, 1.0)
-
-    if config == "C2":
-        # TODO(#1, follow-up): log per-prompt avg_bits in benchmark_c2_qaq.py
-        # and use here. For now: run-level average.
-        return float(stats.get("longbench_avg_compression_ratio",
-                               stats.get("kv_compression_ratio", 1.0)))
-
-    raise ValueError(f"unknown config: {config}")
-
-
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--model", required=True, choices=["llama3", "phi3", "llama31_8b", "llama32_3b"])
     p.add_argument("--out",   default=None)
     args = p.parse_args()
 
-    pp    = _load_per_prompt(args.model)
-    stats = _load_run_stats(args.model)
+    pp = _load_per_prompt(args.model)
     if not pp or "C0" not in pp:
         raise SystemExit(f"no C0 per_prompt log for {args.model} — run benchmarks first")
-    if args.model not in LB_MAX_INPUT:
-        raise SystemExit(f"no LB_MAX_INPUT for model {args.model}; update build_dataset.py")
-    max_input = LB_MAX_INPUT[args.model]
 
     # Index by (task, sample_idx)
     idx: dict[tuple[str, int], dict[str, dict]] = {}
@@ -156,21 +83,38 @@ def main() -> None:
         scores  = {c: cfg_rows[c]["score"] for c in CONFIGS}
         feats   = dict(cfg_rows["C0"]["features"])   # prompt-intrinsic, same across configs
 
-        # Per-prompt compression:
-        #   1. If the benchmark logged `compression` directly in per_prompt.jsonl
-        #      (preferred — e.g. C2 logs measured avg_bits-derived ratio), use it.
-        #   2. Otherwise derive from method semantics + seq_len (see
-        #      per_prompt_compression() — exact for C0/C3/C4/C5, calibrated for C1).
-        seq_len = int(feats.get("seq_len_tokens", 0))
-        cr_per_prompt = {}
+        # Guard: (task, sample_idx) must be the SAME underlying prompt in every
+        # config's log. A config re-run with a different ADAPTIVESERVE_LB_N
+        # subsamples different records and would silently join mismatched
+        # prompts; seq_len_chars is tokenizer-independent, so it must agree.
         for c in CONFIGS:
-            logged = cfg_rows[c].get("compression")
-            if logged is not None:
-                cr_per_prompt[c] = round(float(logged), 4)
-            else:
-                cr_per_prompt[c] = round(
-                    per_prompt_compression(c, seq_len, stats.get(c, {}), max_input), 4
+            if cfg_rows[c]["features"].get("seq_len_chars") != feats.get("seq_len_chars"):
+                sys.exit(
+                    f"ERROR: prompt mismatch at (task={task}, sample_idx={sidx}): "
+                    f"config {c} logged seq_len_chars="
+                    f"{cfg_rows[c]['features'].get('seq_len_chars')} vs C0's "
+                    f"{feats.get('seq_len_chars')} — configs were run with "
+                    f"different LongBench subsampling (ADAPTIVESERVE_LB_N); re-run."
                 )
+
+        # Per-prompt MEASURED compression: every benchmark logs kv_bytes,
+        # kv_bytes_fp16 and compression (= kv_bytes_fp16 / kv_bytes) per prompt.
+        # No analytic derivations, no run-level fallbacks — fail loudly instead.
+        cr_per_prompt: dict[str, float] = {}
+        kv_bytes:      dict[str, float] = {}
+        kv_bytes_fp16: dict[str, float] = {}
+        for c in CONFIGS:
+            row = cfg_rows[c]
+            missing = [f for f in REQUIRED_CR_FIELDS if row.get(f) is None]
+            if missing:
+                sys.exit(
+                    f"ERROR: runs/{c}/{args.model}/per_prompt.jsonl row "
+                    f"(task={task}, sample_idx={sidx}) lacks {'/'.join(missing)}. "
+                    f"This log predates the measured-CR accounting — re-run config {c}."
+                )
+            cr_per_prompt[c] = round(float(row["compression"]), 4)
+            kv_bytes[c]      = float(row["kv_bytes"])
+            kv_bytes_fp16[c] = float(row["kv_bytes_fp16"])
 
         # Best by quality (ties → lowest-numbered config = simplest)
         best_q = max(CONFIGS, key=lambda c: (scores[c], -CONFIGS.index(c)))
@@ -191,6 +135,8 @@ def main() -> None:
             "features":           feats,
             "scores":             scores,
             "compression":        cr_per_prompt,
+            "kv_bytes":           kv_bytes,
+            "kv_bytes_fp16":      kv_bytes_fp16,
             "best_quality":       best_q,
             "best_quality_score": scores[best_q],
             **iso,

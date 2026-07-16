@@ -14,150 +14,151 @@
     "newline_density"
   ],
   "n_features": 7,
-  "router_overhead_us_per_prompt": 61.81,
+  "routing_overhead_ms_median": 22.731,
+  "routing_overhead_ms_p95": 40.636,
+  "routing_overhead_n_prompts": 50,
   "longbench": {
     "2wikimqa": {
-      "score": 0.1261,
+      "score": 0.125,
       "n": 20,
-      "compression": 8.593,
+      "compression": 6.77,
       "picks": {
-        "C1": 14,
-        "C5": 1,
-        "C2": 2,
-        "C4": 2,
-        "C3": 1
+        "C1": 13,
+        "C2": 4,
+        "C3": 2,
+        "C4": 1
       }
     },
     "gov_report": {
-      "score": 0.288,
+      "score": 0.2631,
       "n": 20,
-      "compression": 6.889,
+      "compression": 3.239,
       "picks": {
-        "C2": 6,
-        "C4": 7,
-        "C1": 6,
-        "C3": 1
+        "C2": 11,
+        "C1": 4,
+        "C3": 3,
+        "C5": 1,
+        "C4": 1
       }
     },
     "hotpotqa": {
-      "score": 0.2251,
+      "score": 0.2208,
       "n": 20,
-      "compression": 6.107,
+      "compression": 4.595,
       "picks": {
-        "C2": 9,
+        "C2": 11,
         "C5": 4,
-        "C1": 3,
-        "C3": 2,
-        "C4": 2
+        "C1": 2,
+        "C4": 3
       }
     },
     "multi_news": {
-      "score": 0.2937,
+      "score": 0.2341,
       "n": 20,
-      "compression": 5.065,
+      "compression": 2.803,
       "picks": {
-        "C4": 5,
         "C2": 10,
-        "C3": 2,
-        "C1": 3
+        "C4": 6,
+        "C3": 3,
+        "C1": 1
       }
     },
     "multifieldqa_en": {
-      "score": 0.3893,
+      "score": 0.3819,
       "n": 20,
-      "compression": 7.556,
+      "compression": 5.205,
       "picks": {
-        "C2": 4,
+        "C1": 7,
         "C5": 4,
-        "C1": 8,
-        "C4": 4
+        "C4": 1,
+        "C2": 7,
+        "C3": 1
       }
     },
     "narrativeqa": {
-      "score": 0.124,
+      "score": 0.1743,
       "n": 20,
-      "compression": 8.941,
+      "compression": 6.949,
       "picks": {
-        "C1": 13,
-        "C5": 5,
-        "C2": 2
+        "C2": 8,
+        "C1": 12
       }
     },
     "passage_count": {
-      "score": 0.05,
+      "score": 0.055,
       "n": 20,
-      "compression": 4.133,
+      "compression": 3.917,
       "picks": {
-        "C2": 6,
+        "C3": 9,
+        "C2": 8,
         "C5": 2,
-        "C3": 12
+        "C1": 1
       }
     },
     "qasper": {
-      "score": 0.1597,
+      "score": 0.2132,
       "n": 20,
-      "compression": 7.232,
+      "compression": 6.542,
       "picks": {
-        "C1": 10,
-        "C2": 4,
-        "C3": 2,
-        "C4": 3,
-        "C5": 1
+        "C1": 12,
+        "C2": 3,
+        "C5": 1,
+        "C4": 4
       }
     },
     "qmsum": {
-      "score": 0.2469,
+      "score": 0.2084,
       "n": 20,
-      "compression": 7.16,
+      "compression": 5.15,
       "picks": {
-        "C1": 9,
-        "C2": 9,
-        "C3": 1,
+        "C1": 6,
+        "C2": 13,
         "C4": 1
       }
     },
     "trec": {
-      "score": 0.65,
+      "score": 0.6,
       "n": 20,
-      "compression": 11.076,
+      "compression": 8.165,
       "picks": {
         "C1": 20
       }
     },
     "triviaqa": {
-      "score": 0.9348,
+      "score": 0.9722,
       "n": 20,
-      "compression": 8.413,
+      "compression": 5.306,
       "picks": {
-        "C1": 11,
-        "C5": 5,
-        "C2": 3,
-        "C4": 1
+        "C1": 10,
+        "C5": 6,
+        "C2": 1,
+        "C4": 1,
+        "C3": 2
       }
     }
   },
-  "longbench_avg": 0.3171,
-  "longbench_avg_compression_ratio": 6.892,
+  "longbench_avg": 0.3135,
+  "longbench_avg_compression_ratio": 4.824,
   "picks": {
-    "C1": 97,
-    "C5": 22,
-    "C2": 55,
-    "C4": 25,
-    "C3": 21
+    "C1": 88,
+    "C2": 76,
+    "C3": 20,
+    "C4": 18,
+    "C5": 18
   },
   "eval_split_70_30": {
     "n_train": 154,
     "n_test": 66,
-    "longbench_avg_train": 0.3377,
-    "longbench_avg_compression_ratio_train": 6.417,
-    "longbench_avg": 0.3515,
-    "longbench_avg_compression_ratio": 6.201,
+    "longbench_avg_train": 0.3365,
+    "longbench_avg_compression_ratio_train": 4.593,
+    "longbench_avg": 0.328,
+    "longbench_avg_compression_ratio": 4.136,
     "picks": {
-      "C3": 12,
-      "C1": 23,
-      "C2": 21,
-      "C4": 8,
-      "C5": 2
+      "C5": 6,
+      "C1": 17,
+      "C2": 23,
+      "C3": 11,
+      "C4": 9
     }
   },
   "regressor_fit": {
@@ -166,45 +167,46 @@
     "n_test": 66,
     "per_config": {
       "C0": {
-        "r2_train": 0.8366,
-        "r2_test": -0.1868,
-        "mae_train": 0.1032,
-        "mae_test": 0.245
+        "r2_train": 0.8385,
+        "r2_test": -0.1546,
+        "mae_train": 0.102,
+        "mae_test": 0.2425
       },
       "C1": {
-        "r2_train": 0.8485,
-        "r2_test": -0.0082,
-        "mae_train": 0.0989,
-        "mae_test": 0.2248
+        "r2_train": 0.8309,
+        "r2_test": 0.0179,
+        "mae_train": 0.1005,
+        "mae_test": 0.2224
       },
       "C2": {
-        "r2_train": 0.8334,
-        "r2_test": -0.2227,
-        "mae_train": 0.1044,
-        "mae_test": 0.2526
+        "r2_train": 0.8383,
+        "r2_test": -0.1744,
+        "mae_train": 0.1031,
+        "mae_test": 0.262
       },
       "C3": {
-        "r2_train": 0.8388,
-        "r2_test": -0.1311,
-        "mae_train": 0.099,
-        "mae_test": 0.235
+        "r2_train": 0.8291,
+        "r2_test": -0.0676,
+        "mae_train": 0.1019,
+        "mae_test": 0.2268
       },
       "C4": {
-        "r2_train": 0.843,
-        "r2_test": -0.0649,
-        "mae_train": 0.0997,
-        "mae_test": 0.2334
+        "r2_train": 0.8517,
+        "r2_test": -0.0213,
+        "mae_train": 0.0958,
+        "mae_test": 0.2183
       },
       "C5": {
-        "r2_train": 0.8448,
-        "r2_test": -0.0836,
-        "mae_train": 0.0978,
-        "mae_test": 0.2328
+        "r2_train": 0.8531,
+        "r2_test": -0.0643,
+        "mae_train": 0.0961,
+        "mae_test": 0.2346
       }
     },
-    "mean_r2_train": 0.8409,
-    "mean_r2_test": -0.1162,
-    "mean_mae_train": 0.1005,
-    "mean_mae_test": 0.2373
-  }
+    "mean_r2_train": 0.8403,
+    "mean_r2_test": -0.0774,
+    "mean_mae_train": 0.0999,
+    "mean_mae_test": 0.2344
+  },
+  "filter_candidates": false
 }

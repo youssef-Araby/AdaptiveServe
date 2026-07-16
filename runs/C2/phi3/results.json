@@ -1,6 +1,6 @@
 {
   "config": "C2",
-  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=K-formula (SDPA))",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
   "model": "phi3",
   "model_id": "microsoft/Phi-3-mini-4k-instruct",
   "ttft_ms": 1326.15,
@@ -16,72 +16,72 @@
   "qaq_outlier_ratio": 0.01,
   "qaq_target_error": 1.0,
   "qaq_window": 5,
-  "qaq_q_norm": 247.45,
+  "qaq_q_norm": 247.49,
   "qaq_avg_bits": 3.377,
   "ppl_wikitext2": 5.6349,
   "ppl_n_chunks": 83,
   "longbench": {
     "narrativeqa": {
-      "metric": "f1",
-      "score": 0.1381,
+      "metric": "qa_f1",
+      "score": 0.1251,
       "n": 20
     },
     "qasper": {
-      "metric": "f1",
-      "score": 0.1974,
+      "metric": "qa_f1",
+      "score": 0.215,
       "n": 20
     },
     "multifieldqa_en": {
-      "metric": "f1",
-      "score": 0.369,
+      "metric": "qa_f1",
+      "score": 0.3723,
       "n": 20
     },
     "hotpotqa": {
-      "metric": "f1",
-      "score": 0.2144,
+      "metric": "qa_f1",
+      "score": 0.2351,
       "n": 20
     },
     "2wikimqa": {
-      "metric": "f1",
-      "score": 0.1261,
+      "metric": "qa_f1",
+      "score": 0.1293,
       "n": 20
     },
     "gov_report": {
-      "metric": "rouge1",
-      "score": 0.3557,
+      "metric": "rouge_l",
+      "score": 0.2774,
       "n": 20
     },
     "multi_news": {
-      "metric": "rouge1",
-      "score": 0.3316,
+      "metric": "rouge_l",
+      "score": 0.2583,
       "n": 20
     },
     "qmsum": {
-      "metric": "rouge1",
-      "score": 0.2473,
+      "metric": "rouge_l",
+      "score": 0.2073,
       "n": 20
     },
     "passage_count": {
-      "metric": "count_em",
+      "metric": "count",
       "score": 0.05,
       "n": 20
     },
     "trec": {
-      "metric": "accuracy",
+      "metric": "classification",
       "score": 0.65,
       "n": 20
     },
     "triviaqa": {
-      "metric": "f1",
-      "score": 0.9348,
+      "metric": "qa_f1",
+      "score": 0.9722,
       "n": 20
     },
     "_compression": {
-      "avg_bits": 2.744,
-      "avg_compression_ratio": 5.83
+      "avg_bits": 3.462,
+      "avg_compression_ratio": 4.622
     }
   },
-  "longbench_avg": 0.3286,
-  "longbench_avg_bits": 2.744,
-  "longbench_avg_compression_ratio": 5.83
+  "longbench_avg": 0.3175,
+  "longbench_avg_bits": 3.462,
+  "longbench_avg_compression_ratio": 4.622
 }

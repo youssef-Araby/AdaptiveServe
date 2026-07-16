@@ -1,44 +1,42 @@
 #!/usr/bin/env python3
 """
-C1 benchmark — TailorKV: hybrid per-layer KV cache compression.
+C1 benchmark — hybrid aggressive eviction (TailorKV-INSPIRED; it is NOT TailorKV).
 
-TailorKV (Yao et al., 2025). arXiv:2505.19586
+Method (honest label):
+  "Hybrid aggressive eviction: SnapKV-style top-(64+128) retention on all
+   layers + 1-bit quantization of layer-0 survivors (TailorKV-inspired)."
 
-Algorithm (this script, simplified-but-faithful):
-  Layers are split into two classes:
-    - Quantization-friendly layers (Q): dense attention, global info.
-        → 1-bit KIVI-style quantization: per-channel for K, per-token for V.
-    - Sparsity-friendly layers (S): sparse attention, dominant tokens.
-        → SnapKV-style retention: keep `n_local` recent tokens plus the
-          top-`n_topk` prefix tokens scored by the last-window attention
-          aggregated across heads.
+Algorithm:
+  1. EVERY layer is pruned SnapKV-style (Li et al., 2024) to the same budget:
+     keep the `n_local`=64 most recent tokens plus the top-`n_topk`=128 prefix
+     tokens scored by the last-window attention aggregated across heads.
+  2. The survivors on the designated Q layers (default Q={0}) are ADDITIONALLY
+     quantized to 1 bit, KIVI-style: per-channel for K, per-token for V.
 
-  The paper identifies Q layers offline via a "dense preference score"
-  (Eq. 6-9). For Llama-3.1-8B the prescribed set is Q={0}; for Yi/Llama-2
-  it is Q={0,1}. We default to Q={0} for both phi3 and llama3 — overridable
-  with --q-layers.
+Relation to TailorKV (Yao et al., 2025, arXiv:2505.19586): the paper keeps the
+FULL-length cache on its quantization-friendly layers (1-bit, CPU-offloaded
+with asynchronous prefetch) and applies dynamic per-step Top-K only to the
+sparsity-friendly layers. HuggingFace's DynamicCache requires a UNIFORM
+per-layer sequence length, so this script instead prunes ALL layers to the
+S-budget and 1-bit-quantizes the layer-0 survivors on top. That is a
+materially different — and much more aggressive — scheme, so it is reported
+under the honest label above (a legitimate aggressive member of the
+compression candidate pool), NOT as TailorKV. Only the choice of Q={0}
+follows the paper's dense-preference analysis (Eq. 6-9; Llama-3.1-8B → {0}),
+overridable with --q-layers.
 
-Simplifications versus the paper:
-  - No CPU offloading / asynchronous prefetching. We keep everything on GPU
-    and report the EFFECTIVE compressed KV size assuming 1-bit packed
-    storage for Q layers and FP16 for S layers.
-  - No dynamic per-step Top-K with critical-channel prefetch. We do a single
-    SnapKV-style Top-K at end of prefill (the same shape as C4).
+Implementation notes:
   - 1-bit quantization is simulated by round-trip quantize→dequantize so the
-    quality impact is real even though the underlying tensors stay in FP16.
-  - HuggingFace's DynamicCache requires a UNIFORM per-layer sequence length,
-    which the paper sidesteps with a custom Cache. We therefore prune all
-    layers to the same S-budget length (n_local + n_topk) and additionally
-    quantize the Q layers to 1-bit. Q layers thus get the full hybrid
-    treatment (pruned to top tokens AND 1-bit), and S layers get only the
-    pruning. This still exercises the paper's "tailored compression per
-    layer" idea, just within the GPU-only single-cache invariant.
+    quality impact is real even though the tensors physically stay FP16.
+    Reported bytes charge Q layers their EFFECTIVE packed cost (bits/8 per
+    element + fp16 scale/zero-point per quantization group), not FP16.
+  - Decode tokens are appended to the cache uncompressed → charged at FP16.
 
 Measures:
   Speed  : TTFT (ms incl. compression), TPOT (ms), tokens/sec, peak VRAM (MB),
            compressed KV cache size (MB)
   Quality: WikiText-2 perplexity (teacher-forcing, unaffected by prefix-only
-           compression), LongBench accuracy (7 tasks, with TailorKV prefill)
+           compression), LongBench accuracy (with compressed prefill)
 
 Output: runs/C1/{model}/results.json
 
@@ -51,6 +49,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import time
 from pathlib import Path
 
@@ -70,13 +69,15 @@ from _common import (
     apply_chat_template,
     compute_score,
     extract_prompt_features,
-    kv_cache_mb,
+    fp16_decode_growth_bytes,
+    kv_cache_bytes,
     load_longbench_task,
+    postprocess_pred,
     run_ppl,
 )
 
 # ---------------------------------------------------------------------------
-# TailorKV hyperparameters (paper LongBench config)
+# Hyperparameters (S-budget follows the TailorKV LongBench config)
 # ---------------------------------------------------------------------------
 
 # Quantization-friendly layers per model. Paper: Llama-3.1-8B uses Q={0}.
@@ -159,17 +160,20 @@ def _quantize_layer_kv(K: torch.Tensor, V: torch.Tensor,
 def _quant_layer_bytes(K: torch.Tensor, V: torch.Tensor,
                        bits: int, group_size: int) -> float:
     """
-    Effective storage for a quantized layer:
-      data:    n_elements × bits / 8
-      scale:   one fp16 per group  (2 bytes)
-      zero:    one fp16 per group  (2 bytes)
+    Effective storage for a quantized layer, metadata-inclusive:
+      data:       n_elements × bits / 8
+      scale+zero: one fp16 pair (2 × 2 bytes) PER GROUP, with groups counted
+                  exactly as _quantize_layer_kv forms them — ceil(len /
+                  group_size) groups per vector along the group axis
+                  (K groups along the sequence axis, V along head_dim).
     Same for K and V (each gets its own scale/zero-point arrays).
     """
     total = 0.0
-    for T in (K, V):
-        n = T.numel()
-        n_groups = n // group_size + (1 if n % group_size else 0)
-        total += n * bits / 8.0          # quantized data
+    for T, group_axis in ((K, 2), (V, 3)):
+        n_along   = T.shape[group_axis]
+        n_vectors = T.numel() // max(n_along, 1)
+        n_groups  = n_vectors * math.ceil(n_along / group_size)
+        total += T.numel() * bits / 8.0  # quantized data
         total += n_groups * 2 * 2.0      # scale + zero-point in fp16
     return total
 
@@ -241,6 +245,7 @@ def _compress_cache(
     layer_bytes: list[float] = []
     layer_kept:  list[int]   = []
     layer_kind:  list[str]   = []
+    fp16_bytes_per_token = 0.0  # K+V fp16 bytes one token adds across all layers
 
     n_layers = len(attentions)
     for L in range(n_layers):
@@ -248,6 +253,8 @@ def _compress_cache(
         V = past.layers[L].values
         attn = attentions[L]
         k_len = K.shape[2]
+        fp16_bytes_per_token += (K.numel() // k_len) * K.element_size() \
+                              + (V.numel() // k_len) * V.element_size()
 
         scores = _layer_token_scores(attn, window=window, kernel=kernel, k_len=k_len)
         idx    = _select_indices(scores, n_local=n_local, n_topk=n_topk)
@@ -270,10 +277,12 @@ def _compress_cache(
         layer_kept.append(kept_len)
 
     stats = {
-        "compressed_kv_mb": sum(layer_bytes) / (1024 ** 2),
-        "avg_kept":         sum(layer_kept)  / len(layer_kept),
-        "n_q_layers":       sum(1 for k in layer_kind if k == "Q"),
-        "n_s_layers":       sum(1 for k in layer_kind if k == "S"),
+        "compressed_kv_bytes":  sum(layer_bytes),
+        "compressed_kv_mb":     sum(layer_bytes) / (1024 ** 2),
+        "fp16_bytes_per_token": fp16_bytes_per_token,
+        "avg_kept":             sum(layer_kept)  / len(layer_kept),
+        "n_q_layers":           sum(1 for k in layer_kind if k == "Q"),
+        "n_s_layers":           sum(1 for k in layer_kind if k == "S"),
     }
     return new_cache, stats
 
@@ -288,7 +297,8 @@ def _prefill_and_compress(
               `TKV_WINDOW_SIZE` tokens with that prefix as past_key_values
               — gives us the SnapKV scoring matrix without the O(N^2) blow-up.
 
-    Then apply hybrid compression (quantize Q layers, prune S layers).
+    Then apply hybrid compression (prune ALL layers to the S-budget;
+    additionally 1-bit quantize the Q-layer survivors).
 
     Returns (compressed_cache, last_logits, stats).
     """
@@ -299,15 +309,16 @@ def _prefill_and_compress(
         model.set_attn_implementation("eager")
         with torch.no_grad():
             out = model(ids_t, use_cache=True, output_attentions=True)
-        full_mb = kv_cache_mb(out.past_key_values)
+        full_bytes = kv_cache_bytes(out.past_key_values)  # pre-compression FP16 reference
         past, st = _compress_cache(
             out.past_key_values, out.attentions,
             q_layers=q_layers, bits=TKV_BITS, group_size=TKV_GROUP_SIZE,
             n_local=TKV_N_LOCAL, n_topk=TKV_N_TOPK,
             window=TKV_WINDOW_SIZE, kernel=TKV_KERNEL_SIZE,
         )
-        st["full_kv_mb"] = full_mb
-        st["seq_len"]    = seq_len
+        st["full_kv_bytes"] = full_bytes
+        st["full_kv_mb"]    = full_bytes / (1024 ** 2)
+        st["seq_len"]       = seq_len
         return past, out.logits[:, -1, :], st
 
     prefix_ids = ids_t[:, :-w]
@@ -324,15 +335,16 @@ def _prefill_and_compress(
     with torch.no_grad():
         out = model(last_ids, past_key_values=prefix_past, use_cache=True,
                     output_attentions=True, position_ids=pos)
-    full_mb = kv_cache_mb(out.past_key_values)
+    full_bytes = kv_cache_bytes(out.past_key_values)  # pre-compression FP16 reference
     past, st = _compress_cache(
         out.past_key_values, out.attentions,
         q_layers=q_layers, bits=TKV_BITS, group_size=TKV_GROUP_SIZE,
         n_local=TKV_N_LOCAL, n_topk=TKV_N_TOPK,
         window=TKV_WINDOW_SIZE, kernel=TKV_KERNEL_SIZE,
     )
-    st["full_kv_mb"] = full_mb
-    st["seq_len"]    = seq_len
+    st["full_kv_bytes"] = full_bytes
+    st["full_kv_mb"]    = full_bytes / (1024 ** 2)
+    st["seq_len"]       = seq_len
     return past, out.logits[:, -1, :], st
 
 
@@ -342,7 +354,7 @@ def _prefill_and_compress(
 
 def run_speed(model, tokenizer, model_key: str, q_layers: set[int],
               device: str) -> dict:
-    print("\n=== Speed benchmark (TailorKV) ===")
+    print("\n=== Speed benchmark (C1 hybrid aggressive eviction) ===")
     target_len = LB_MAX_INPUT[model_key]
     all_ids = tokenizer.encode(SPEED_TEXT, add_special_tokens=False)
     if len(all_ids) < target_len:
@@ -453,15 +465,18 @@ def _generate_tkv(
             past     = step.past_key_values
             next_tok = step.logits[:, -1, :].argmax(dim=-1, keepdim=True)
 
+    # Each generated token corresponds to exactly one decode forward that
+    # appended one (uncompressed fp16) token to every layer of the cache.
+    stats["n_decode_tokens"] = len(generated)
     return tokenizer.decode(generated, skip_special_tokens=True).strip(), stats
 
 
 def run_longbench(model, tokenizer, model_key: str, q_layers: set[int],
                   device: str, pp_logger=None) -> dict:
-    print("\n=== LongBench (TailorKV) ===")
+    print("\n=== LongBench (C1 hybrid aggressive eviction) ===")
     max_input = LB_MAX_INPUT[model_key]
     results   = {}
-    full_mbs, comp_mbs, kept_list, seq_lens = [], [], [], []
+    full_mbs, comp_mbs, kept_list, seq_lens, pp_crs = [], [], [], [], []
 
     for task, cfg in LB_TASKS.items():
         try:
@@ -484,13 +499,36 @@ def run_longbench(model, tokenizer, model_key: str, q_layers: set[int],
             comp_mbs.append(st["compressed_kv_mb"])
             kept_list.append(st["avg_kept"])
             seq_lens.append(st["seq_len"])
-            if cfg["first_line"]:
-                pred = pred.split("\n")[0].strip()
-            s = compute_score(metric, pred, golds)
+            pred = postprocess_pred(task, pred)
+            s = compute_score(metric, pred, golds,
+                              all_classes=sample.get("all_classes"))
             scores.append(s)
+            # Per-prompt bytes (self-contained, metadata-inclusive):
+            #   kv_bytes_fp16 : FP16 cache measured at end of prefill
+            #                   (pre-compression) + decode growth at the FP16
+            #                   rate, capped for sliding-window models (Phi-3
+            #                   FP16 serving evicts as it appends at cap)
+            #   kv_bytes      : physical pruned cache with Q layers (layer 0)
+            #                   charged their effective 1-bit+metadata cost
+            #                   and S layers FP16, + decode tokens at FP16
+            #                   (decode K/V are appended uncompressed to a
+            #                   plain rebuilt cache, which really grows)
+            dec_bytes     = st["n_decode_tokens"] * st["fp16_bytes_per_token"]
+            kv_bytes      = st["compressed_kv_bytes"] + dec_bytes
+            kv_bytes_fp16 = st["full_kv_bytes"] + fp16_decode_growth_bytes(
+                st["full_kv_bytes"], st["n_decode_tokens"],
+                st["fp16_bytes_per_token"], model.config)
+            pp_cr         = kv_bytes_fp16 / kv_bytes if kv_bytes > 0 else 1.0
+            pp_crs.append(pp_cr)
             if pp_logger is not None:
                 pp_logger.log(task=task, sample_idx=j, metric=metric, score=s,
-                              features=extract_prompt_features(prompt, tokenizer))
+                              features=extract_prompt_features(prompt, tokenizer),
+                              compression=pp_cr,
+                              pred=pred,
+                              kv_bytes=kv_bytes,
+                              kv_bytes_fp16=kv_bytes_fp16,
+                              extra={"n_decode_tokens": st["n_decode_tokens"],
+                                     "avg_kept_per_layer": st["avg_kept"]})
             if (j + 1) % 5 == 0:
                 print(f"  {task} [{j+1}/{len(samples)}]  {metric}={sum(scores)/len(scores):.4f}")
 
@@ -512,7 +550,12 @@ def run_longbench(model, tokenizer, model_key: str, q_layers: set[int],
             "avg_kept_per_layer":    round(avg_kept, 1),
             "avg_kv_cache_mb_full":  round(avg_full, 2),
             "avg_kv_cache_mb":       round(avg_comp, 2),
+            # prefill-only ratio (excludes decode tokens):
             "avg_compression_ratio": round(avg_ratio, 3),
+            # mean of the per-prompt CRs actually logged (decode-inclusive,
+            # same basis as per_prompt.jsonl) — lower than the prefill-only
+            # ratio on generation-heavy tasks:
+            "avg_per_prompt_compression": round(sum(pp_crs) / len(pp_crs), 3),
         }
 
     return results
@@ -550,8 +593,9 @@ def main():
     q_set = set(TKV_Q_LAYERS[args.model])
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"\nConfig : C1 (TailorKV — hybrid: {TKV_BITS}-bit quant on Q-layers + "
-          f"SnapKV Top-K on S-layers)")
+    print(f"\nConfig : C1 (hybrid aggressive eviction — SnapKV-style "
+          f"top-({TKV_N_LOCAL}+{TKV_N_TOPK}) on all layers + {TKV_BITS}-bit "
+          f"quant of layer {sorted(q_set)} survivors; TailorKV-inspired)")
     print(f"Model  : {model_id}")
     print(f"Device : {torch.cuda.get_device_name(0)}  "
           f"({torch.cuda.get_device_properties(0).total_memory/1e9:.1f} GB)")
@@ -569,8 +613,11 @@ def main():
 
     results = {
         "config":        "C1",
-        "method":        f"TailorKV (hybrid: {TKV_BITS}-bit quant on Q-layers + "
-                         f"SnapKV {TKV_N_LOCAL}+{TKV_N_TOPK} on S-layers)",
+        "method":        f"Hybrid aggressive eviction: SnapKV-style "
+                         f"top-({TKV_N_LOCAL}+{TKV_N_TOPK}) retention on all "
+                         f"layers + {TKV_BITS}-bit quantization of "
+                         f"layer-{','.join(str(l) for l in sorted(q_set))} "
+                         f"survivors (TailorKV-inspired)",
         "model":         args.model,
         "model_id":      model_id,
         "q_layers":      sorted(q_set),

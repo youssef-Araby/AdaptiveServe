@@ -9,20 +9,22 @@ score of C0 (iso-quality routing).
 
 Reads the joined dataset built by ``build_dataset.py`` (which already contains
 each prompt's features and the measured score under every config). Therefore
-this script does NOT call the model — the routing decision is a pure CPU step,
-making per-request overhead negligible relative to LLM inference.
+this script does NOT call the model — the routing decision is a pure CPU step.
+Its true single-request cost (feature extraction incl. tokenization + scaling +
+6 regressor predicts) is measured honestly at millisecond scale, see
+``measure_routing_overhead_ms``.
 
 Two evaluations are reported and saved:
   - LOTO  : leave-one-task-out CV (out-of-distribution by task family)
   - Split : single random 70/30 split (in-distribution per-workload calibration)
 
-Top-level results.json fields mirror benchmark_c{0..5} so plotting tools can
-treat C6 as just another config. Aggregate scores at the top level use the
+Top-level fields of results_tau{tau}.json mirror the results.json written by
+benchmark_c{0..5} so plotting tools can treat C6 as just another config. Aggregate scores at the top level use the
 LOTO predictions; the random-split summary is included under ``eval_split``.
 
-Output:
-  runs/C6/{model}/results.json
-  runs/C6/{model}/per_prompt.jsonl     (one row per prompt with chosen config)
+Output (per tau, so runs at different taus never overwrite each other):
+  runs/C6/{model}/results_tau{tau}.json
+  runs/C6/{model}/per_prompt_tau{tau}.jsonl  (one row per prompt with chosen config)
 
 Usage:
   python scripts/benchmark_c6_classifier.py --model llama3 --tau 0.99
@@ -117,15 +119,39 @@ def viable_candidates(rows_tr: list[dict], tau: float) -> list[str]:
     return out if out else list(CANDIDATES)   # fail-safe: never empty
 
 
+def train_mean_compression(rows_tr: list[dict]) -> dict[str, float]:
+    """Per-config harmonic-mean measured compression over the TRAINING fold.
+
+    This is the deployment-safe ranking key for ``route()``: at request time
+    the router cannot know the prompt's measured compression under each config
+    (that is only observable after running the config), so candidates are
+    ranked by the per-config mean compression estimated from training data.
+    """
+    out: dict[str, float] = {}
+    for c in CONFIGS:
+        crs = [r["compression"][c] for r in rows_tr if r["compression"][c] > 0]
+        out[c] = float(harmonic_mean(crs)) if crs else 1.0
+    return out
+
+
 def route(
     rows: list[dict],
     q_pred: dict[str, np.ndarray],
     tau: float,
     c0_floor: float = 0.0,
     candidates: list[str] | None = None,
+    cr_rank: dict[str, float] | None = None,
 ) -> list[str]:
-    """Pick the compressed candidate with the highest measured compression
-    whose predicted quality is at least ``tau`` * max(predicted q[C0], c0_floor).
+    """Pick the candidate with the highest TRAIN-FOLD MEAN compression
+    (``cr_rank``) whose predicted quality is at least
+    ``tau`` * max(predicted q[C0], c0_floor).
+
+    ``cr_rank`` must be the per-config mean compression computed on the
+    TRAINING fold (see ``train_mean_compression``). Ranking by the routed
+    prompt's own measured compression would leak post-hoc information that is
+    unavailable pre-run at deployment; measured per-prompt compression is used
+    only for CREDITING the achieved compression in evaluation aggregates
+    (see ``aggregate``).
 
     C0 (uncompressed) is the quality YARDSTICK only — it is never a routing
     choice. The router always selects from ``CANDIDATES`` = {C1..C5}.
@@ -140,16 +166,23 @@ def route(
     to the training-set empirical mean of actual C0 scores) keeps the
     iso-quality bar honest. Set to 0.0 to disable.
     """
+    if cr_rank is None:
+        raise ValueError(
+            "route() requires cr_rank — the per-config mean compression of the "
+            "TRAINING fold (use train_mean_compression(rows_tr)). Per-prompt "
+            "measured compression is not available at deployment time."
+        )
     cand = candidates if candidates is not None else list(CANDIDATES)
     picks: list[str] = []
-    for i, r in enumerate(rows):
+    for i, _r in enumerate(rows):
         anchor = max(float(q_pred[REFERENCE][i]), c0_floor)
         thresh = tau * anchor
-        # Among candidates that clear the bar, pick the highest-compression one.
+        # Among candidates that clear the bar, pick the one with the highest
+        # train-fold mean compression.
         best_c, best_cr = None, -1.0
         for c in cand:
-            if q_pred[c][i] >= thresh and r["compression"][c] > best_cr:
-                best_c, best_cr = c, r["compression"][c]
+            if q_pred[c][i] >= thresh and cr_rank[c] > best_cr:
+                best_c, best_cr = c, cr_rank[c]
         if best_c is None:
             # Nothing clears the bar: pick the safest candidate (highest
             # predicted quality among viable candidates, still never C0).
@@ -208,7 +241,9 @@ def loto_picks(rows: list[dict], X: np.ndarray, tau: float,
         rows_te = [rows[i] for i in te]
         floor = c0_floor_from_train(rows_tr) if use_floor else 0.0
         cand  = viable_candidates(rows_tr, tau) if filter_candidates else None
-        for i, c in zip(te, route(rows_te, q_pred, tau, c0_floor=floor, candidates=cand)):
+        cr_tr = train_mean_compression(rows_tr)
+        for i, c in zip(te, route(rows_te, q_pred, tau, c0_floor=floor,
+                                  candidates=cand, cr_rank=cr_tr)):
             picks[i] = c
     return picks  # type: ignore[return-value]
 
@@ -240,18 +275,72 @@ def split_picks(rows: list[dict], X: np.ndarray, tau: float, seed: int = 0,
     rows_tr = [rows[i] for i in tr]
     floor = c0_floor_from_train(rows_tr) if use_floor else 0.0
     cand  = viable_candidates(rows_tr, tau) if filter_candidates else None
-    picks_te = route(rows_te, q_pred_te, tau, c0_floor=floor, candidates=cand)
-    picks_tr = route(rows_tr, q_pred_tr, tau, c0_floor=floor, candidates=cand)
+    cr_tr = train_mean_compression(rows_tr)
+    picks_te = route(rows_te, q_pred_te, tau, c0_floor=floor, candidates=cand, cr_rank=cr_tr)
+    picks_tr = route(rows_tr, q_pred_tr, tau, c0_floor=floor, candidates=cand, cr_rank=cr_tr)
     return rows_te, picks_te, rows_tr, picks_tr, fit_metrics
 
 
-def measure_overhead_us(models, X: np.ndarray, n_rep: int = 100) -> float:
-    """Mean per-prompt routing latency (microseconds) including all 6 predicts."""
-    t0 = time.perf_counter()
-    for _ in range(n_rep):
-        predict_q(models, X)
-    elapsed = time.perf_counter() - t0
-    return (elapsed / n_rep / len(X)) * 1e6
+def measure_routing_overhead_ms(models, model_key: str, n_prompts: int = 50) -> dict:
+    """Honest single-request routing overhead, in MILLISECONDS.
+
+    For ~``n_prompts`` real LongBench prompts (reconstructed exactly as the
+    benchmarks build them: load_longbench_task + LB_TEMPLATES), times the full
+    per-request routing path on a batch of ONE:
+
+        extract_prompt_features(prompt, tokenizer)   # incl. tokenization+gzip
+        + StandardScaler.transform                   # per config
+        + regressor.predict on the 1-row batch       # 6 configs
+
+    Returns {"routing_overhead_ms_median", "routing_overhead_ms_p95",
+    "routing_overhead_n_prompts"}. This replaces the old batched
+    microsecond-scale number, which amortized sklearn predict over hundreds of
+    prompts and excluded feature extraction entirely — tokenizing a multi-k-token
+    prompt dominates the real cost, putting it at millisecond scale.
+
+    CPU-only: loads the tokenizer (AutoTokenizer), never the model.
+    """
+    # Lazy imports: _common pulls in torch/datasets, which the pure-routing
+    # paths (cv_router_220.py, plot_pareto_cv.py) don't need.
+    from transformers import AutoTokenizer
+    from _common import LB_TASKS, LB_TEMPLATES, MODELS, load_longbench_task, \
+        extract_prompt_features
+
+    tokenizer = AutoTokenizer.from_pretrained(MODELS[model_key])
+
+    per_task = max(1, -(-n_prompts // len(LB_TASKS)))  # ceil division
+    prompts: list[str] = []
+    for task in LB_TASKS:
+        try:
+            samples = load_longbench_task(task)
+        except FileNotFoundError:
+            continue
+        for sample in samples[:per_task]:
+            prompts.append(LB_TEMPLATES[task].format(
+                context=sample.get("context", ""), input=sample["input"]))
+    prompts = prompts[:n_prompts]
+    if not prompts:
+        raise RuntimeError("no LongBench prompts available for overhead measurement")
+
+    def _route_one(prompt: str) -> None:
+        feats = extract_prompt_features(prompt, tokenizer)
+        x = np.array([[(-1.0 if feats.get(k) is None else float(feats[k]))
+                       for k in FEATURE_KEYS]], dtype=np.float32)
+        for sc, reg in models.values():
+            reg.predict(sc.transform(x))
+
+    _route_one(prompts[0])  # warm-up (sklearn/tokenizer first-call costs)
+    times_ms = []
+    for prompt in prompts:
+        t0 = time.perf_counter()
+        _route_one(prompt)
+        times_ms.append((time.perf_counter() - t0) * 1e3)
+
+    return {
+        "routing_overhead_ms_median": round(float(np.median(times_ms)), 3),
+        "routing_overhead_ms_p95":    round(float(np.percentile(times_ms, 95)), 3),
+        "routing_overhead_n_prompts": len(times_ms),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -275,7 +364,9 @@ def main() -> None:
                          "models at tau=0.99.")
     ap.add_argument("--tau-sweep", type=str, default=None,
                     help="comma-separated tau values to evaluate; writes a summary "
-                         "to runs/C6/{model}/tau_sweep.json and skips the headline run")
+                         "to runs/C6/{model}/tau_sweep[_nofloor][_filtered].json "
+                         "(suffix encodes --no-floor/--filter-candidates) and skips "
+                         "the headline run")
     args = ap.parse_args()
     use_floor       = not args.no_floor
     filter_cands    = args.filter_candidates
@@ -336,9 +427,12 @@ def main() -> None:
                   f"picks={entry['split_test']['picks']}")
         out_dir = REPO / "runs" / "C6" / args.model
         out_dir.mkdir(parents=True, exist_ok=True)
-        suffix = "_nofloor" if not use_floor else ""
+        # Filename encodes BOTH ablation flags so sweeps never overwrite each other.
+        suffix = ("_nofloor" if not use_floor else "") + \
+                 ("_filtered" if filter_cands else "")
         (out_dir / f"tau_sweep{suffix}.json").write_text(json.dumps({
-            "model": args.model, "use_floor": use_floor, "sweep": sweep,
+            "model": args.model, "use_floor": use_floor,
+            "filter_candidates": filter_cands, "sweep": sweep,
         }, indent=2))
         print(f"\nwrote {out_dir/('tau_sweep'+suffix+'.json')}")
         return
@@ -378,11 +472,13 @@ def main() -> None:
         print(f"  {c}: R2 tr={m['r2_train']:+.3f} te={m['r2_test']:+.3f}  "
               f"MAE tr={m['mae_train']:.3f} te={m['mae_test']:.3f}")
 
-    # ---- Routing overhead
+    # ---- Routing overhead (honest single-request path, ms scale)
     full_models = fit_regressors(X, rows)
-    overhead_us = measure_overhead_us(full_models, X)
-    print(f"Routing overhead: {overhead_us:.2f} us / prompt "
-          f"(features-already-extracted; sklearn predict only)")
+    overhead = measure_routing_overhead_ms(full_models, args.model)
+    print(f"Routing overhead (single request: feature extraction + scaling + "
+          f"6 predicts): median {overhead['routing_overhead_ms_median']:.2f} ms, "
+          f"p95 {overhead['routing_overhead_ms_p95']:.2f} ms "
+          f"(n={overhead['routing_overhead_n_prompts']} prompts)")
 
     # ---- Save
     results = {
@@ -393,7 +489,9 @@ def main() -> None:
         "use_floor": use_floor,
         "features": FEATURE_KEYS,
         "n_features": len(FEATURE_KEYS),
-        "router_overhead_us_per_prompt": round(overhead_us, 2),
+        # Honest single-request overhead: feature extraction (incl. tokenizing
+        # the prompt) + scaler.transform + 6 regressor predicts on batch of 1.
+        **overhead,
 
         # Top-level fields mirror C0..C5 using the LOTO (honest OOD) headline.
         "longbench":                       agg_loto["longbench"],
@@ -430,10 +528,12 @@ def main() -> None:
 
     out_dir = REPO / "runs" / "C6" / args.model
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / f"results{suffix}.json").write_text(json.dumps(results, indent=2))
-    (out_dir / f"results_tau{args.tau}{suffix}.json").write_text(json.dumps(results, indent=2))
+    # Tau-specific filename ONLY: a plain results.json would silently be
+    # overwritten by whichever tau ran last.
+    res_path = out_dir / f"results_tau{args.tau}{suffix}.json"
+    res_path.write_text(json.dumps(results, indent=2))
 
-    pp_path = out_dir / "per_prompt.jsonl"
+    pp_path = out_dir / f"per_prompt_tau{args.tau}{suffix}.jsonl"
     with pp_path.open("w") as f:
         for r, c in zip(rows, picks_loto):
             f.write(json.dumps({
@@ -445,7 +545,7 @@ def main() -> None:
                 "score":       r["scores"][c],
                 "compression": r["compression"][c],
             }) + "\n")
-    print(f"\nwrote {out_dir/'results.json'}")
+    print(f"\nwrote {res_path}")
     print(f"wrote {pp_path}")
 
 

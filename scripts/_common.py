@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import re
 import string
 from collections import Counter
 from pathlib import Path
@@ -77,19 +79,36 @@ SPEED_TEXT = (
 # LongBench tasks
 # ---------------------------------------------------------------------------
 
+# Metrics follow the official THUDM/LongBench scoring (metrics.py + eval.py):
+#   qa_f1          — token-level F1 with SQuAD-style normalization (articles removed)
+#   rouge_l        — ROUGE-L F-measure via the `rouge` package
+#   classification — official classification_score over the record's all_classes
+#   count          — official fractional count_score
+# max_new_tokens per official dataset2maxlen.json.
+# The official first-line truncation (trec, triviaqa only) lives in postprocess_pred().
 LB_TASKS: dict[str, dict] = {
-    "narrativeqa":     {"metric": "f1",       "max_new_tokens": 128, "chat": True,  "first_line": False},
-    "qasper":          {"metric": "f1",       "max_new_tokens": 128, "chat": True,  "first_line": False},
-    "multifieldqa_en": {"metric": "f1",       "max_new_tokens": 64,  "chat": True,  "first_line": True},
-    "hotpotqa":        {"metric": "f1",       "max_new_tokens": 32,  "chat": True,  "first_line": True},
-    "2wikimqa":        {"metric": "f1",       "max_new_tokens": 32,  "chat": True,  "first_line": True},
-    "gov_report":      {"metric": "rouge1",   "max_new_tokens": 512, "chat": True,  "first_line": False},
-    "multi_news":      {"metric": "rouge1",   "max_new_tokens": 512, "chat": True,  "first_line": False},
-    "qmsum":           {"metric": "rouge1",   "max_new_tokens": 512, "chat": True,  "first_line": False},
-    "passage_count":   {"metric": "count_em", "max_new_tokens": 32,  "chat": True,  "first_line": True},
-    "trec":            {"metric": "accuracy", "max_new_tokens": 32,  "chat": False, "first_line": True},
-    "triviaqa":        {"metric": "f1",       "max_new_tokens": 32,  "chat": False, "first_line": True},
+    "narrativeqa":     {"metric": "qa_f1",          "max_new_tokens": 128, "chat": True},
+    "qasper":          {"metric": "qa_f1",          "max_new_tokens": 128, "chat": True},
+    "multifieldqa_en": {"metric": "qa_f1",          "max_new_tokens": 64,  "chat": True},
+    "hotpotqa":        {"metric": "qa_f1",          "max_new_tokens": 32,  "chat": True},
+    "2wikimqa":        {"metric": "qa_f1",          "max_new_tokens": 32,  "chat": True},
+    "gov_report":      {"metric": "rouge_l",        "max_new_tokens": 512, "chat": True},
+    "multi_news":      {"metric": "rouge_l",        "max_new_tokens": 512, "chat": True},
+    "qmsum":           {"metric": "rouge_l",        "max_new_tokens": 512, "chat": True},
+    "passage_count":   {"metric": "count",          "max_new_tokens": 32,  "chat": True},
+    "trec":            {"metric": "classification", "max_new_tokens": 64,  "chat": False},
+    "triviaqa":        {"metric": "qa_f1",          "max_new_tokens": 32,  "chat": False},
 }
+
+# Official LongBench applies first-line truncation to these datasets before scoring.
+_FIRST_LINE_TASKS = {"trec", "triviaqa"}
+
+
+def postprocess_pred(task: str, pred: str) -> str:
+    """Official LongBench prediction post-processing (eval.py)."""
+    if task in _FIRST_LINE_TASKS:
+        return pred.lstrip("\n").split("\n")[0].strip()
+    return pred.strip()
 
 LB_TEMPLATES: dict[str, str] = {
     "narrativeqa": (
@@ -160,7 +179,8 @@ LB_TEMPLATES: dict[str, str] = {
 }
 
 LB_CACHE     = Path("~/.cache/longbench/data").expanduser()
-LB_N_SAMPLES = 20
+# Overridable for smoke tests (ADAPTIVESERVE_LB_N=2 → 2 prompts/task).
+LB_N_SAMPLES = int(os.environ.get("ADAPTIVESERVE_LB_N", "20"))
 
 
 def load_longbench_task(task: str) -> list[dict]:
@@ -237,18 +257,20 @@ def apply_chat_template(tokenizer, prompt: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Scoring helpers (LongBench)
+# Scoring (official THUDM/LongBench metrics.py, verbatim semantics)
 # ---------------------------------------------------------------------------
 
-def _normalize(s: str) -> str:
+def _lb_normalize(s: str) -> str:
+    """Official normalize_answer: lower, strip punctuation, remove articles, fix whitespace."""
     s = s.lower()
-    s = s.translate(str.maketrans("", "", string.punctuation))
+    s = "".join(ch for ch in s if ch not in set(string.punctuation))
+    s = re.sub(r"\b(a|an|the)\b", " ", s)
     return " ".join(s.split())
 
 
-def _token_f1(pred: str, gold: str) -> float:
-    pred_toks = _normalize(pred).split()
-    gold_toks = _normalize(gold).split()
+def qa_f1_score(pred: str, gold: str) -> float:
+    pred_toks = _lb_normalize(pred).split()
+    gold_toks = _lb_normalize(gold).split()
     if not pred_toks or not gold_toks:
         return 0.0
     common = Counter(pred_toks) & Counter(gold_toks)
@@ -260,60 +282,59 @@ def _token_f1(pred: str, gold: str) -> float:
     return 2 * p * r / (p + r)
 
 
-def _rouge1(pred: str, ref: str) -> float:
-    pred_set = set(_normalize(pred).split())
-    ref_set  = set(_normalize(ref).split())
-    if not pred_set or not ref_set:
-        return 0.0
-    common = len(pred_set & ref_set)
-    p = common / len(pred_set)
-    r = common / len(ref_set)
-    if p + r == 0:
-        return 0.0
-    return 2 * p * r / (p + r)
+_ROUGE = None
 
 
-def _accuracy(pred: str, golds: list[str]) -> float:
-    pred_norm = _normalize(pred)
-    return float(any(
-        _normalize(g) in pred_norm or pred_norm in _normalize(g)
-        for g in golds
-    ))
-
-
-def _count_em(pred: str, golds: list[str]) -> float:
-    """Exact-match on first integer in prediction vs gold integer.
-    Used for passage_count."""
-    import re as _re
-    m = _re.search(r"-?\d+", pred)
-    if m is None:
-        return 0.0
+def rouge_l_score(pred: str, gold: str) -> float:
+    """Official rouge_score: ROUGE-L F-measure via the `rouge` package."""
+    global _ROUGE
+    if _ROUGE is None:
+        from rouge import Rouge
+        _ROUGE = Rouge()
     try:
-        p = int(m.group(0))
-    except ValueError:
+        scores = _ROUGE.get_scores([pred], [gold], avg=True)
+    except Exception:
         return 0.0
-    for g in golds:
-        gm = _re.search(r"-?\d+", str(g))
-        if gm is None:
-            continue
-        try:
-            if int(gm.group(0)) == p:
-                return 1.0
-        except ValueError:
-            continue
+    return scores["rouge-l"]["f"]
+
+
+def classification_score(pred: str, gold: str, all_classes: list[str]) -> float:
+    """Official classification_score: match class names inside the raw prediction."""
+    em_match_list = [c for c in (all_classes or []) if c in pred]
+    for match_term in list(em_match_list):
+        if match_term in gold and match_term != gold:
+            em_match_list.remove(match_term)
+    if gold in em_match_list:
+        return 1.0 / len(em_match_list)
     return 0.0
 
 
-def compute_score(metric: str, pred: str, golds: list[str]) -> float:
-    if metric == "f1":
-        return max(_token_f1(pred, g) for g in golds)
-    if metric == "rouge1":
-        return max(_rouge1(pred, g) for g in golds)
-    if metric == "accuracy":
-        return _accuracy(pred, golds)
-    if metric == "count_em":
-        return _count_em(pred, golds)
-    raise ValueError(f"Unknown metric: {metric}")
+def count_score(pred: str, gold: str) -> float:
+    """Official count_score: fractional credit = (numbers matching gold) / (all numbers in pred)."""
+    numbers = re.findall(r"\d+", pred)
+    if not numbers:
+        return 0.0
+    right = sum(1 for n in numbers if str(n) == str(gold))
+    return right / len(numbers)
+
+
+def compute_score(metric: str, pred: str, golds: list[str],
+                  all_classes: list[str] | None = None) -> float:
+    """Max over gold answers, per the official eval.py loop."""
+    score = 0.0
+    for g in golds:
+        g = str(g)
+        if metric == "qa_f1":
+            score = max(score, qa_f1_score(pred, g))
+        elif metric == "rouge_l":
+            score = max(score, rouge_l_score(pred, g))
+        elif metric == "classification":
+            score = max(score, classification_score(pred, g, all_classes or []))
+        elif metric == "count":
+            score = max(score, count_score(pred, g))
+        else:
+            raise ValueError(f"Unknown metric: {metric}")
+    return score
 
 
 # ---------------------------------------------------------------------------
@@ -365,8 +386,8 @@ def run_ppl(model, tokenizer, model_key: str, device: str) -> dict:
 # KV cache size (FP16 default — methods that compress define their own)
 # ---------------------------------------------------------------------------
 
-def kv_cache_mb(past) -> float:
-    """Total bytes (as MB) of every key+value tensor in a HuggingFace cache."""
+def kv_cache_bytes(past) -> int:
+    """Total bytes of every key+value tensor in a HuggingFace cache."""
     total = 0
     try:
         for k, v in zip(past.key_cache, past.value_cache):
@@ -379,7 +400,31 @@ def kv_cache_mb(past) -> float:
             k, v = layer[0], layer[1]
             total += k.numel() * k.element_size()
             total += v.numel() * v.element_size()
-    return total / (1024 ** 2)
+    return total
+
+
+def kv_cache_mb(past) -> float:
+    """Total bytes (as MB) of every key+value tensor in a HuggingFace cache."""
+    return kv_cache_bytes(past) / (1024 ** 2)
+
+
+def fp16_decode_growth_bytes(prefill_kv_bytes: float, n_generated: int,
+                             bytes_per_token_fp16: float, model_config) -> float:
+    """FP16 bytes an *uncompressed* HF cache actually gains during decode.
+
+    Sliding-window models (Phi-3: uniform sliding_window on every layer) cap
+    each layer at sliding_window - 1 tokens and evict as they append, so FP16
+    serving gains nothing per decode token once the cap is reached. Without a
+    sliding window the cache grows linearly. `prefill_kv_bytes` must be the
+    measured (already capped) pre-compression prefill cache.
+    """
+    sw = getattr(model_config, "sliding_window", None)
+    if not sw:
+        return n_generated * bytes_per_token_fp16
+    cap_tokens     = sw - 1
+    prefill_tokens = prefill_kv_bytes / bytes_per_token_fp16
+    growth = max(0.0, min(prefill_tokens + n_generated, cap_tokens) - prefill_tokens)
+    return growth * bytes_per_token_fp16
 
 
 # ---------------------------------------------------------------------------
@@ -494,7 +539,11 @@ class PerPromptLogger:
         self.path.write_text("")
 
     def log(self, *, task: str, sample_idx: int, metric: str, score: float,
-            features: dict, compression: float | None = None) -> None:
+            features: dict, compression: float | None = None,
+            pred: str | None = None,
+            kv_bytes: float | None = None,
+            kv_bytes_fp16: float | None = None,
+            extra: dict | None = None) -> None:
         rec = {
             "config":     self.config,
             "model":      self.model,
@@ -506,5 +555,13 @@ class PerPromptLogger:
         }
         if compression is not None:
             rec["compression"] = round(float(compression), 4)
+        if pred is not None:
+            rec["pred"] = pred
+        if kv_bytes is not None:
+            rec["kv_bytes"] = round(float(kv_bytes), 1)
+        if kv_bytes_fp16 is not None:
+            rec["kv_bytes_fp16"] = round(float(kv_bytes_fp16), 1)
+        if extra:
+            rec.update(extra)
         with self.path.open("a") as f:
             f.write(json.dumps(rec) + "\n")

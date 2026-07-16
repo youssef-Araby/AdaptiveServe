@@ -56,7 +56,10 @@ from _common import (
     apply_chat_template,
     compute_score,
     extract_prompt_features,
+    fp16_decode_growth_bytes,
+    kv_cache_bytes,
     load_longbench_task,
+    postprocess_pred,
     run_ppl,
 )
 
@@ -67,8 +70,15 @@ from _common import (
 #                      ("eager" = needed for output_attentions; "sdpa" = flash/fast)
 #   attn_aware_decode: True  → capture attention per decode step and compute attention-aware
 #                              V bits (requires eager + output_attentions, 1 tok = O(seq_len))
-#                      False → use K formula for V bits in decode too (SDPA, faster)
-#                      Phi-3-mini's eager attention is ~43× slower than SDPA, so we use SDPA.
+#                      False → skip per-step decode quantization; decode tokens stay fp16
+#                              (and are charged at fp16 in the per-prompt kv_bytes accounting)
+#
+# All models now run attn_aware_decode=True so C2 is methodologically identical
+# across models. Phi-3 previously used sdpa/False because full-prompt EAGER
+# prefill is ~43× slower than SDPA — but prefill goes through the two-pass
+# helper (SDPA prefix + eager last-n) regardless, and per-step eager decode is
+# only O(seq_len) per token. A GPU smoke run (eager decode + output_attentions
+# on sliding-window-capped caches, transformers 5.7) passed with sane outputs.
 MODELS_CFG: dict[str, dict] = {
     "llama3": {
         "id":               MODELS["llama3"],
@@ -77,8 +87,8 @@ MODELS_CFG: dict[str, dict] = {
     },
     "phi3": {
         "id":               MODELS["phi3"],
-        "attn_impl":        "sdpa",    # phi3 eager is 43× slower than SDPA
-        "attn_aware_decode": False,
+        "attn_impl":        "eager",   # needed for decode output_attentions
+        "attn_aware_decode": True,
     },
     # Llama-3.x family shares the same eager-attention behavior as Llama-3-8B,
     # so we keep the attention-aware decode path enabled for QAQ fidelity.
@@ -152,6 +162,7 @@ def _qaq_calc_bits_value(
     target_error: float,
     n_bits_min: int,
     n_bits_max: int,
+    ctx_len: int | None = None,
 ) -> torch.Tensor:
     """
     Per-token per-head bit allocation for VALUE cache.
@@ -160,9 +171,14 @@ def _qaq_calc_bits_value(
         σ_t(V) ≤ sqrt(12/T) * σ_max / S_t
         B_t(V) = ceil(log2((V_max - V_min) / (2*σ_t(V)) + 1))
 
+    T is the TRUE context length. At prefill v_tensor covers the whole context
+    so shape[2] is correct; at decode v_tensor is a 1-token slice and callers
+    MUST pass ctx_len (the cache length at that step) — otherwise T collapses
+    to 1 and the bit allocation is wrong.
+
     Returns: (batch, n_heads, seq_len) int64 tensor of bits per token-head.
     """
-    T = v_tensor.shape[2]   # seq_len
+    T = ctx_len if ctx_len is not None else v_tensor.shape[2]   # true context length
     # σ_t(V) upper bound per token: inversely proportional to attention score
     # clip attention to avoid div by zero; floor at 1e-6
     s_t = attn_score.clamp(min=1e-6)   # (batch, n_heads, seq_len)
@@ -193,6 +209,7 @@ def _qaq_calc_bits_key(
     target_error: float,
     n_bits_min: int,
     n_bits_max: int,
+    ctx_len: int | None = None,
 ) -> torch.Tensor:
     """
     Per-token per-head bit allocation for KEY cache.
@@ -201,10 +218,15 @@ def _qaq_calc_bits_key(
         σ_t(K) ≤ sqrt(12 / ||Q||^2 * log(T^3/(T-1) * σ_max^2 + 1))
         B_t(K) = ceil(log2((K_max - K_min) / (2*σ_t(K)) + 1))
 
-    σ_t(K) is the same for all tokens in a given context (depends on seq_len and q_norm).
+    σ_t(K) is the same for all tokens in a given context (depends on the true
+    context length T and q_norm). At prefill k_tensor covers the whole context
+    so shape[2] is correct; at decode k_tensor is a 1-token slice and callers
+    MUST pass ctx_len (the cache length at that step) — otherwise T collapses
+    to 1 and σ_t(K) comes out far too small (over-allocating bits).
+
     Returns: (batch, n_heads, seq_len) int64 tensor.
     """
-    T = k_tensor.shape[2]
+    T = ctx_len if ctx_len is not None else k_tensor.shape[2]
     sigma_k_sq = (12.0 / q_norm) * math.log(
         max(T**3 / max(T - 1, 1) * target_error**2 + 1, 1 + 1e-30)
     )
@@ -262,6 +284,11 @@ class QAQState:
     attn_history: list (length = n_layers) of tensors
                   (batch, n_heads, n_steps, seq_len)  — rolling window of
                   attention weights from recent decode steps.
+
+    Also accumulates the effective-storage accounting over every quantized
+    (token, head) vector (prefill AND decode): `bits_sum` is the sum of
+    assigned bit-widths, `n_vectors` the number of vectors (K and V counted
+    separately), `head_dim` the vector length in elements.
     """
     def __init__(self, n_layers: int, window: int):
         self.window   = window
@@ -270,6 +297,42 @@ class QAQState:
         # We store the max-over-window directly as we accumulate (memory efficient)
         self.attn_max: list[torch.Tensor | None] = [None] * n_layers
         self.step_attns: list[list[torch.Tensor]] = [[] for _ in range(n_layers)]
+        # Effective-storage accounting (metadata-inclusive, see effective_avg_bits)
+        self.bits_sum:  float = 0.0   # Σ assigned bit-width over (token,head) vectors
+        self.n_vectors: int   = 0     # number of quantized vectors (K + V)
+        self.head_dim:  int   = 0     # elements per vector
+
+    def effective_avg_bits(self) -> float:
+        """
+        Metadata-inclusive effective bits per stored ELEMENT of the quantized
+        cache (mirrors C3's Dense-and-Sparse accounting):
+          - quantized elements: assigned bit-width b, on (1 - outlier_frac)
+            of elements
+          - outliers kept at fp16: 16-bit value + 32-bit int32 index each,
+            on outlier_frac of elements — charged at the fraction the mask
+            ACTUALLY keeps: _qaq_outlier_mask's lower tail never fires (k=1
+            makes "x < min" vacuous) and its upper tail flags exactly one
+            element per head_dim vector, so outlier_frac = 1 / head_dim
+            (0.78 % on Llama D=128, 1.04 % on Phi-3 D=96), not the nominal
+            QAQ_OUTLIER_RATIO
+          - per-(token,head) vector: fp16 scale + fp16 zero-point (32 bits)
+            and a 4-bit stored bit-width field, amortized over head_dim elements
+        """
+        if self.n_vectors == 0 or self.head_dim == 0:
+            return float("nan")
+        avg_b        = self.bits_sum / self.n_vectors
+        outlier_frac = 1.0 / self.head_dim
+        return (
+            (1.0 - outlier_frac) * avg_b
+            + outlier_frac * (16.0 + 32.0)
+            + (2 * 16.0 + 4.0) / self.head_dim
+        )
+
+    def effective_bytes(self) -> float:
+        """Total metadata-inclusive bytes of every quantized (token,head) vector."""
+        if self.n_vectors == 0 or self.head_dim == 0:
+            return 0.0
+        return self.n_vectors * self.head_dim * self.effective_avg_bits() / 8.0
 
     def update(self, new_attns: list[torch.Tensor]):
         """new_attns[i]: (batch, n_heads, 1, seq_len) from one decode step."""
@@ -451,8 +514,6 @@ def _qaq_quantize_full_cache_aware(
     """
     n_layers = len(cache.layers)
     state    = QAQState(n_layers, QAQ_LAST_N_ATTENTIONS)
-    _bits_sum = 0.0
-    _bits_n   = 0
 
     for i, layer in enumerate(cache.layers):
         k = layer.keys    # (batch, n_kv_heads, seq_len, head_dim)
@@ -500,8 +561,9 @@ def _qaq_quantize_full_cache_aware(
         # ----- Apply quantization -----
         layer.keys   = _qaq_apply_variable_bits(k, k_bits, QAQ_OUTLIER_RATIO)
         layer.values = _qaq_apply_variable_bits(v, v_bits, QAQ_OUTLIER_RATIO)
-        _bits_sum += float(k_bits.float().sum().item()) + float(v_bits.float().sum().item())
-        _bits_n   += int(k_bits.numel()) + int(v_bits.numel())
+        state.bits_sum  += float(k_bits.float().sum().item()) + float(v_bits.float().sum().item())
+        state.n_vectors += int(k_bits.numel()) + int(v_bits.numel())
+        state.head_dim   = k.shape[-1]
 
         # Initialise attention history
         if last_attn is not None:
@@ -511,10 +573,6 @@ def _qaq_quantize_full_cache_aware(
             state.step_attns[i] = []
             state.attn_max[i]   = None
 
-    measured_avg_bits = (_bits_sum / max(_bits_n, 1)) if _bits_n > 0 else float("nan")
-    # Account for outlier overhead (outlier_ratio of channels stored at 16 bits)
-    measured_avg_bits = (1.0 - QAQ_OUTLIER_RATIO) * measured_avg_bits + QAQ_OUTLIER_RATIO * 16.0
-    state.measured_avg_bits = measured_avg_bits
     return cache, state
 
 
@@ -526,11 +584,14 @@ def _qaq_quantize_new_token_aware(
     Quantize the newly appended token's KV entry.
 
     When new_attns is provided (eager attention-aware mode):
-      - K bits: K formula (q_norm, seq_len)
+      - K bits: K formula (q_norm, cache length)
       - V bits: attention-aware (inversely proportional to max-window attention)
-    When new_attns is None (K-formula-only mode, used when eager is too slow):
+    When new_attns is None (attention unavailable):
       - K bits: K formula
       - V bits: same K formula (no attention needed)
+      (The benchmark currently skips per-step quantization entirely when
+      attn_aware_decode=False rather than taking this path; kept for API
+      completeness.)
 
     new_attns[i]: (batch, n_q_heads, 1, seq_len_new) from one eager decode step.
     """
@@ -541,16 +602,17 @@ def _qaq_quantize_new_token_aware(
     for i, layer in enumerate(cache.layers):
         k = layer.keys    # (batch, n_heads, seq_len, head_dim)
         v = layer.values
-        seq_len = k.shape[2]
+        seq_len = k.shape[2]   # TRUE context length (cache length at this step)
 
         # Only quantize the LAST token (index -1), the rest are already quantized
         k_new = k[:, :, -1:, :]   # (batch, n_heads, 1, head_dim)
         v_new = v[:, :, -1:, :]
 
-        # Key bits for new token
+        # Key bits for new token. ctx_len MUST be the cache length, not the
+        # 1-token slice's shape[2] (T=1 would make σ_t(K) ~5× too small).
         k_bits_new = _qaq_calc_bits_key(
             q_norm, k_new, QAQ_OUTLIER_RATIO, QAQ_TARGET_ERROR,
-            QAQ_N_BITS_MIN, QAQ_N_BITS_MAX,
+            QAQ_N_BITS_MIN, QAQ_N_BITS_MAX, ctx_len=seq_len,
         )   # (batch, n_heads, 1)
 
         # Value bits for new token
@@ -566,9 +628,11 @@ def _qaq_quantize_new_token_aware(
                 v_attn_score = torch.ones(
                     (v_new.shape[0], n_kv_heads, 1), device=v_new.device
                 )
+            # ctx_len as above: T=1 would make σ_t(V) sqrt(12)× too large and
+            # collapse V bits to the floor.
             v_bits_new = _qaq_calc_bits_value(
                 v_attn_score, v_new, QAQ_OUTLIER_RATIO, QAQ_TARGET_ERROR,
-                QAQ_N_BITS_MIN, QAQ_N_BITS_MAX,
+                QAQ_N_BITS_MIN, QAQ_N_BITS_MAX, ctx_len=seq_len,
             )
         else:
             # K-formula approximation (used when attention weights unavailable)
@@ -580,15 +644,11 @@ def _qaq_quantize_new_token_aware(
         layer.keys   = torch.cat([k[:, :, :-1, :], k_quantized], dim=2)
         layer.values = torch.cat([v[:, :, :-1, :], v_quantized], dim=2)
 
+        # Accumulate effective-storage accounting for the decode token
+        state.bits_sum  += float(k_bits_new.float().sum().item()) + float(v_bits_new.float().sum().item())
+        state.n_vectors += int(k_bits_new.numel()) + int(v_bits_new.numel())
+
     return cache, state
-
-
-def _average_bits_from_cache(cache) -> float:
-    """Estimate average bits per element from current cache (FP16 = 16 bits)."""
-    # We can't directly measure stored bits since we dequantize; report theoretical
-    # average from outlier ratio and effective quantization.
-    return (1.0 - QAQ_OUTLIER_RATIO) * ((QAQ_N_BITS_MIN + QAQ_N_BITS_MAX) / 2) \
-           + QAQ_OUTLIER_RATIO * 16.0
 
 
 # ---------------------------------------------------------------------------
@@ -607,10 +667,16 @@ def _actual_kv_mb(cache) -> float:
     return total / (1024 ** 2)
 
 
-def _theoretical_kv_mb_variable(cache, avg_bits: float) -> float:
-    """Theoretical compressed size given an average bits-per-element."""
-    actual_mb = _actual_kv_mb(cache)
-    return actual_mb * (avg_bits / 16.0)
+def _fp16_bytes_per_token(cache) -> float:
+    """
+    FP16 bytes ONE appended token adds across all layers:
+    2 (K&V) × n_kv_heads × head_dim × 2 bytes per layer.
+    """
+    total = 0.0
+    for layer in cache.layers:
+        k = layer.keys   # (batch, n_kv_heads, seq_len, head_dim)
+        total += 2 * 2 * k.shape[1] * k.shape[3]
+    return total
 
 
 # ---------------------------------------------------------------------------
@@ -657,6 +723,11 @@ def run_speed(model, tokenizer, model_key: str, device: str,
         prefill_past, last_logits, prefill_attns = _prefill_with_window_attn(
             model, input_ids, QAQ_LAST_N_ATTENTIONS, device,
         )
+        # FP16 reference: physical cache bytes at the end of prefill, BEFORE
+        # compression (inherits any model-level truncation, e.g. Phi-3's
+        # sliding-window cap). Negligible cost — metadata reads only.
+        prefill_fp16_bytes = float(kv_cache_bytes(prefill_past))
+        bytes_per_tok_fp16 = _fp16_bytes_per_token(prefill_past)
         past, state = _qaq_quantize_full_cache_aware(
             prefill_past, q_norm, prefill_attns=prefill_attns,
         )
@@ -667,7 +738,8 @@ def run_speed(model, tokenizer, model_key: str, device: str,
 
     actual_mb = _actual_kv_mb(past)
     print(f"  KV cache after prefill: {actual_mb:.1f} MB actual (FP16 sim)")
-    print(f"  Theoretical: bits range [{QAQ_N_BITS_MIN},{QAQ_N_BITS_MAX}], outliers at 16-bit")
+    print(f"  Theoretical: bits range [{QAQ_N_BITS_MIN},{QAQ_N_BITS_MAX}], "
+          f"outliers at 16-bit value + 32-bit index")
 
     next_tok = last_logits.argmax(dim=-1, keepdim=True)
     del last_logits
@@ -686,8 +758,8 @@ def run_speed(model, tokenizer, model_key: str, device: str,
                     step.past_key_values, new_attns, q_norm, state
                 )
             else:
-                # K-formula-only (SDPA): skip per-step decode quantization.
-                # Prefill compression dominates; decode tokens are a small fraction.
+                # No per-step decode quantization: decode tokens stay fp16 in
+                # the cache and are charged at fp16 in the accounting below.
                 step = model(next_tok, past_key_values=past, use_cache=True)
                 past = step.past_key_values
             torch.cuda.synchronize()
@@ -698,14 +770,20 @@ def run_speed(model, tokenizer, model_key: str, device: str,
     tokens_per_sec = 1000.0 / tpot_ms
     peak_vram_mb   = torch.cuda.max_memory_allocated() / (1024 ** 2)
 
-    # Measured avg bits from actual prefill bit allocation (K + V combined)
-    avg_bits          = float(getattr(state, "measured_avg_bits", float("nan")))
-    theoretical_mb    = _theoretical_kv_mb_variable(past, avg_bits)
-    compression_ratio = 16.0 / avg_bits
+    # Measured, metadata-inclusive accounting (mirrors the LongBench per-prompt
+    # basis): quantized tokens at their assigned bits + scale/zero/bit-width/
+    # outlier-index overhead; decode tokens at fp16 when not quantized.
+    avg_bits      = state.effective_avg_bits()
+    n_decode_fp16 = 0 if attn_aware_decode else SPEED_N_DECODE
+    eff_bytes     = state.effective_bytes() + n_decode_fp16 * bytes_per_tok_fp16
+    fp16_bytes    = prefill_fp16_bytes + SPEED_N_DECODE * bytes_per_tok_fp16
+    theoretical_mb    = eff_bytes / (1024 ** 2)
+    compression_ratio = fp16_bytes / eff_bytes if eff_bytes > 0 else 1.0
 
     print(f"  TPOT (incl. attn+quantize): {tpot_ms:.2f} ms/tok  ({tokens_per_sec:.1f} tok/s)")
     print(f"  Peak VRAM: {peak_vram_mb:.0f} MB")
-    print(f"  Measured avg bits: {avg_bits:.2f}  Compression: {compression_ratio:.2f}×")
+    print(f"  Measured avg bits (incl. metadata): {avg_bits:.2f}  "
+          f"Compression: {compression_ratio:.2f}×")
 
     return {
         "ttft_ms":              round(ttft_ms, 2),
@@ -733,18 +811,28 @@ def run_speed(model, tokenizer, model_key: str, device: str,
 def _generate_qaq(
     model, tokenizer, prompt: str, max_new: int, max_input: int,
     device: str, use_chat: bool, q_norm: float, attn_aware_decode: bool = True,
-) -> tuple[str, float]:
+) -> tuple[str, dict]:
     """
     Generate with full QAQ attention-aware variable-bit KV cache quantization.
 
     Prefill (both models): two-pass SDPA prefix + eager last-`n` attention.
     V-bits are derived from the max attention over those last n=5 query rows
     (paper Section 3.2 + 5.1).
-    Decode (attn_aware_decode=True):  eager + output_attentions, attention-aware V bits.
-    Decode (attn_aware_decode=False): SDPA, K formula for V bits (fast, for phi3, etc.)
+    Decode (attn_aware_decode=True):  eager + output_attentions, attention-aware
+        V bits; each decode token is quantized (and charged quantized bits +
+        metadata in kv_bytes).
+    Decode (attn_aware_decode=False): SDPA, no per-step quantization; decode
+        tokens stay fp16 and are charged 2 bytes/element in kv_bytes.
 
-    Returns (decoded_text, avg_bits) where avg_bits is the measured per-prompt
-    average bit allocation (used by build_dataset to log per-prompt compression).
+    Returns (decoded_text, stats) with stats:
+      kv_bytes        — effective bytes actually kept (metadata-inclusive;
+                        on sliding-window models, scaled to the tokens the
+                        capped cache physically holds)
+      kv_bytes_fp16   — measured FP16-reference bytes (prefill cache measured
+                        pre-compression + decode growth at fp16, capped for
+                        sliding-window models)
+      avg_bits        — metadata-inclusive avg bits/element of quantized tokens
+      n_decode_tokens — decode tokens appended to the cache
     """
     if use_chat:
         prompt = apply_chat_template(tokenizer, prompt)
@@ -755,6 +843,7 @@ def _generate_qaq(
     ids_t = torch.tensor([ids], device=device)
 
     generated_ids = []
+    n_decode      = 0   # decode forwards executed = KV entries appended after prefill
 
     with torch.no_grad():
         # Prefill with paper-faithful attention-aware V-bits. The two-pass helper
@@ -763,6 +852,11 @@ def _generate_qaq(
         prefill_past, last_logits, prefill_attns = _prefill_with_window_attn(
             model, ids_t, QAQ_LAST_N_ATTENTIONS, device,
         )
+        # FP16 reference measured on the physical cache BEFORE compression —
+        # inherits model-level truncation (e.g. Phi-3 sliding window) exactly
+        # as FP16 serving would pay it.
+        prefill_fp16_bytes = float(kv_cache_bytes(prefill_past))
+        bytes_per_tok_fp16 = _fp16_bytes_per_token(prefill_past)
         past, state = _qaq_quantize_full_cache_aware(
             prefill_past, q_norm, prefill_attns=prefill_attns,
         )
@@ -785,16 +879,43 @@ def _generate_qaq(
                     out.past_key_values, new_attns, q_norm, state
                 )
             else:
-                # SDPA, K-formula-only: skip per-step decode quantization.
-                # Decode tokens are a small fraction of total KV; prefill compression dominates.
+                # SDPA, no per-step quantization: decode tokens stay fp16 in the
+                # cache and are charged at fp16 in kv_bytes below.
                 out  = model(next_tok, past_key_values=past, use_cache=True)
                 past = out.past_key_values
+            n_decode += 1
             next_tok = out.logits[:, -1, :].argmax(dim=-1, keepdim=True)
             if next_tok.item() != tokenizer.eos_token_id:
                 generated_ids.append(next_tok.item())
 
-    avg_bits = float(getattr(state, "measured_avg_bits", float("nan")))
-    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip(), avg_bits
+    # Per-prompt effective bytes (metadata-inclusive):
+    #   quantized (token,head) vectors — prefill always; decode too when
+    #   attn_aware_decode=True — at assigned bits + scale/zero/bit-width/outliers;
+    #   plus fp16 decode tokens when attn_aware_decode=False.
+    # C2 decodes on the ORIGINAL cache object, so on sliding-window models
+    # (Phi-3) each capped decode append evicts the oldest quantized token:
+    # charged vectors are scaled down to what the cache physically holds
+    # (evicted tokens cost 0), and the FP16 reference gains nothing at cap.
+    kv_bytes = state.effective_bytes()
+    sw = getattr(model.config, "sliding_window", None)
+    if sw:
+        prefill_tokens = prefill_fp16_bytes / bytes_per_tok_fp16
+        charged_tokens = prefill_tokens + n_decode
+        held_tokens    = min(charged_tokens, sw - 1)
+        kv_bytes      *= held_tokens / charged_tokens
+    if not attn_aware_decode:
+        kv_bytes += fp16_decode_growth_bytes(
+            prefill_fp16_bytes, n_decode, bytes_per_tok_fp16, model.config)
+    kv_bytes_fp16 = prefill_fp16_bytes + fp16_decode_growth_bytes(
+        prefill_fp16_bytes, n_decode, bytes_per_tok_fp16, model.config)
+
+    stats = {
+        "kv_bytes":        kv_bytes,
+        "kv_bytes_fp16":   kv_bytes_fp16,
+        "avg_bits":        state.effective_avg_bits(),
+        "n_decode_tokens": n_decode,
+    }
+    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip(), stats
 
 
 def run_longbench(
@@ -805,6 +926,7 @@ def run_longbench(
     max_input = LB_MAX_INPUT[model_key]
     results   = {}
     bits_all  = []   # per-prompt avg bits (for run-level compression summary)
+    kv_all, kv_fp16_all = [], []   # per-prompt effective / fp16-reference bytes
     if limit_per_task is not None:
         print(f"  (smoke-test mode: --limit {limit_per_task} samples per task)")
 
@@ -826,22 +948,30 @@ def run_longbench(
             golds  = sample["answers"] if isinstance(sample["answers"], list) else [sample["answers"]]
             tmpl   = LB_TEMPLATES[task]
             prompt = tmpl.format(context=sample.get("context", ""), input=sample["input"])
-            pred, avg_bits = _generate_qaq(
+            pred, gstats = _generate_qaq(
                 model, tokenizer, prompt, max_new, max_input, device,
                 use_chat=cfg["chat"], q_norm=q_norm,
                 attn_aware_decode=attn_aware_decode,
             )
-            if cfg["first_line"]:
-                pred = pred.split("\n")[0].strip()
-            s = compute_score(metric, pred, golds)
+            pred = postprocess_pred(task, pred)
+            s = compute_score(metric, pred, golds,
+                              all_classes=sample.get("all_classes"))
             scores.append(s)
-            # Per-prompt compression = 16 / measured avg bits per element.
-            per_prompt_cr = (16.0 / avg_bits) if avg_bits and avg_bits == avg_bits else None
+            kv_bytes      = gstats["kv_bytes"]
+            kv_bytes_fp16 = gstats["kv_bytes_fp16"]
+            avg_bits      = gstats["avg_bits"]
+            per_prompt_cr = (kv_bytes_fp16 / kv_bytes) if kv_bytes > 0 else None
             bits_all.append(avg_bits)
+            kv_all.append(kv_bytes)
+            kv_fp16_all.append(kv_bytes_fp16)
             if pp_logger is not None:
                 pp_logger.log(task=task, sample_idx=j, metric=metric, score=s,
                               features=extract_prompt_features(prompt, tokenizer),
-                              compression=per_prompt_cr)
+                              compression=per_prompt_cr, pred=pred,
+                              kv_bytes=kv_bytes, kv_bytes_fp16=kv_bytes_fp16,
+                              extra={"avg_bits": round(avg_bits, 3)
+                                     if avg_bits == avg_bits else None,
+                                     "n_decode_tokens": gstats["n_decode_tokens"]})
             if (j + 1) % 5 == 0:
                 print(f"  {task} [{j+1}/{len(samples)}]  {metric}={sum(scores)/len(scores):.4f}")
 
@@ -852,10 +982,12 @@ def run_longbench(
     if bits_all:
         valid = [b for b in bits_all if b == b]   # filter NaN
         if valid:
-            mean_bits  = sum(valid) / len(valid)
-            mean_cr    = 16.0 / mean_bits
-            print(f"\n  LongBench QAQ avg bits: {mean_bits:.3f}  ({mean_cr:.2f}× compression, "
-                  f"n={len(valid)} prompts)")
+            mean_bits = sum(valid) / len(valid)
+            # Run-level CR from measured bytes (fp16 reference / effective kept)
+            tot_kv, tot_fp16 = sum(kv_all), sum(kv_fp16_all)
+            mean_cr = (tot_fp16 / tot_kv) if tot_kv > 0 else 1.0
+            print(f"\n  LongBench QAQ avg bits (incl. metadata): {mean_bits:.3f}  "
+                  f"({mean_cr:.2f}× compression, n={len(valid)} prompts)")
             results["_compression"] = {
                 "avg_bits":              round(mean_bits, 3),
                 "avg_compression_ratio": round(mean_cr, 3),
@@ -872,7 +1004,8 @@ def parse_args():
     p.add_argument("--model",  required=True, choices=list(MODELS.keys()))
     p.add_argument("--output", default="runs/C2")
     p.add_argument("--skip-speed-ppl", action="store_true",
-                   help="skip speed + perplexity phases; reuse qaq_q_norm from existing results.json")
+                   help="skip speed + perplexity phases; q_norm is recomputed from "
+                        "SPEED_TEXT at startup (never recycled from an old results.json)")
     p.add_argument("--limit",  type=int, default=None,
                    help="LongBench samples per task to run (default: all 20). Use a small "
                         "value (e.g. 1) for a quick smoke test before kicking off the full run.")
@@ -891,7 +1024,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # Prefill V-bits are always attention-aware (paper-faithful, both models).
     # The flag now controls only decode-time V-bit allocation.
-    decode_mode = "attention-aware" if attn_aware_decode else "K-formula (SDPA)"
+    decode_mode = "attention-aware" if attn_aware_decode else "fp16 (no per-step quantization)"
     print(f"\nConfig : C2 (Full QAQ — variable-bit [{QAQ_N_BITS_MIN},{QAQ_N_BITS_MAX}], "
           f"{QAQ_OUTLIER_RATIO*100:.0f}% outliers, window={QAQ_LAST_N_ATTENTIONS}, "
           f"decode={decode_mode})")
@@ -921,14 +1054,16 @@ def main():
     }
 
     if args.skip_speed_ppl:
-        old_path = out_dir / "results.json"
-        if not old_path.exists():
-            raise FileNotFoundError(
-                f"--skip-speed-ppl requires existing {old_path} (need qaq_q_norm)")
-        old = json.loads(old_path.read_text())
-        if "qaq_q_norm" not in old:
-            raise KeyError(f"qaq_q_norm not found in {old_path}")
-        q_norm = old["qaq_q_norm"]
+        # Recompute the q_norm calibration from SPEED_TEXT instead of silently
+        # recycling a possibly-stale value from an old results.json. This is the
+        # exact same calibration run_speed performs (first 128 SPEED_TEXT tokens,
+        # one cheap forward), so full runs and --skip-speed-ppl runs agree.
+        print("\nCalibrating q_norm from SPEED_TEXT (skip-speed-ppl mode)...")
+        calib_ids = tokenizer.encode(SPEED_TEXT, add_special_tokens=False)[:128]
+        calib_t   = torch.tensor([calib_ids], device=device)
+        q_norm    = _precompute_q_norm(model, calib_t, device)
+        print(f"  q_norm = {q_norm:.1f}")
+        results["qaq_q_norm"] = round(q_norm, 2)
     else:
         speed_results = run_speed(model, tokenizer, args.model, device,
                                   attn_aware_decode=attn_aware_decode)

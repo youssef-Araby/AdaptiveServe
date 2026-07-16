@@ -14,152 +14,151 @@
     "newline_density"
   ],
   "n_features": 7,
-  "router_overhead_us_per_prompt": 65.96,
+  "routing_overhead_ms_median": 22.386,
+  "routing_overhead_ms_p95": 42.481,
+  "routing_overhead_n_prompts": 50,
   "longbench": {
     "2wikimqa": {
-      "score": 0.1261,
+      "score": 0.115,
       "n": 20,
-      "compression": 8.808,
+      "compression": 7.279,
       "picks": {
-        "C1": 15,
-        "C5": 1,
-        "C2": 2,
-        "C3": 1,
-        "C4": 1
+        "C1": 14,
+        "C2": 4,
+        "C4": 1,
+        "C3": 1
       }
     },
     "gov_report": {
-      "score": 0.2849,
+      "score": 0.25,
       "n": 20,
-      "compression": 7.103,
+      "compression": 3.293,
       "picks": {
-        "C5": 1,
-        "C4": 6,
-        "C1": 7,
-        "C2": 5,
-        "C3": 1
-      }
-    },
-    "hotpotqa": {
-      "score": 0.2251,
-      "n": 20,
-      "compression": 6.376,
-      "picks": {
-        "C2": 8,
-        "C5": 4,
-        "C1": 5,
-        "C3": 2,
+        "C2": 10,
+        "C1": 6,
+        "C5": 2,
+        "C3": 1,
         "C4": 1
       }
     },
-    "multi_news": {
-      "score": 0.2868,
+    "hotpotqa": {
+      "score": 0.2208,
       "n": 20,
-      "compression": 5.199,
+      "compression": 4.867,
       "picks": {
-        "C1": 4,
-        "C4": 6,
-        "C2": 8,
-        "C3": 2
-      }
-    },
-    "multifieldqa_en": {
-      "score": 0.4055,
-      "n": 20,
-      "compression": 8.348,
-      "picks": {
-        "C1": 12,
+        "C2": 9,
         "C5": 4,
-        "C4": 1,
-        "C2": 3
-      }
-    },
-    "narrativeqa": {
-      "score": 0.1524,
-      "n": 20,
-      "compression": 10.202,
-      "picks": {
-        "C1": 17,
+        "C1": 4,
         "C4": 3
       }
     },
-    "passage_count": {
-      "score": 0.05,
+    "multi_news": {
+      "score": 0.2401,
       "n": 20,
-      "compression": 5.05,
+      "compression": 3.167,
       "picks": {
-        "C2": 7,
-        "C4": 2,
-        "C3": 7,
-        "C1": 3,
-        "C5": 1
+        "C2": 12,
+        "C3": 3,
+        "C4": 4,
+        "C1": 1
       }
     },
-    "qasper": {
-      "score": 0.1597,
+    "multifieldqa_en": {
+      "score": 0.3625,
       "n": 20,
-      "compression": 7.565,
+      "compression": 5.603,
       "picks": {
-        "C1": 10,
-        "C2": 5,
-        "C4": 3,
-        "C5": 1,
+        "C1": 9,
+        "C5": 3,
+        "C4": 1,
+        "C2": 6,
         "C3": 1
       }
     },
-    "qmsum": {
-      "score": 0.244,
+    "narrativeqa": {
+      "score": 0.1403,
       "n": 20,
-      "compression": 7.378,
+      "compression": 8.757,
       "picks": {
-        "C1": 10,
-        "C2": 8,
-        "C3": 1,
+        "C1": 17,
+        "C2": 3
+      }
+    },
+    "passage_count": {
+      "score": 0.055,
+      "n": 20,
+      "compression": 3.988,
+      "picks": {
+        "C3": 8,
+        "C2": 9,
+        "C5": 2,
+        "C1": 1
+      }
+    },
+    "qasper": {
+      "score": 0.2132,
+      "n": 20,
+      "compression": 7.206,
+      "picks": {
+        "C1": 14,
+        "C5": 1,
+        "C4": 3,
+        "C2": 2
+      }
+    },
+    "qmsum": {
+      "score": 0.2084,
+      "n": 20,
+      "compression": 5.15,
+      "picks": {
+        "C1": 6,
+        "C2": 13,
         "C4": 1
       }
     },
     "trec": {
-      "score": 0.65,
+      "score": 0.6,
       "n": 20,
-      "compression": 11.076,
+      "compression": 8.165,
       "picks": {
         "C1": 20
       }
     },
     "triviaqa": {
-      "score": 0.9348,
+      "score": 0.9722,
       "n": 20,
-      "compression": 8.413,
+      "compression": 5.371,
       "picks": {
-        "C1": 11,
-        "C5": 5,
-        "C2": 3,
-        "C4": 1
+        "C1": 10,
+        "C5": 7,
+        "C2": 1,
+        "C4": 1,
+        "C3": 1
       }
     }
   },
-  "longbench_avg": 0.3199,
-  "longbench_avg_compression_ratio": 7.352,
+  "longbench_avg": 0.3071,
+  "longbench_avg_compression_ratio": 5.123,
   "picks": {
-    "C1": 114,
-    "C5": 17,
-    "C2": 49,
+    "C1": 102,
+    "C2": 69,
+    "C4": 15,
     "C3": 15,
-    "C4": 25
+    "C5": 19
   },
   "eval_split_70_30": {
     "n_train": 154,
     "n_test": 66,
-    "longbench_avg_train": 0.333,
-    "longbench_avg_compression_ratio_train": 7.018,
-    "longbench_avg": 0.349,
-    "longbench_avg_compression_ratio": 6.424,
+    "longbench_avg_train": 0.3322,
+    "longbench_avg_compression_ratio_train": 5.049,
+    "longbench_avg": 0.3285,
+    "longbench_avg_compression_ratio": 4.5,
     "picks": {
+      "C5": 4,
+      "C1": 28,
+      "C2": 16,
       "C3": 11,
-      "C1": 27,
-      "C2": 18,
-      "C4": 8,
-      "C5": 2
+      "C4": 7
     }
   },
   "regressor_fit": {
@@ -168,45 +167,46 @@
     "n_test": 66,
     "per_config": {
       "C0": {
-        "r2_train": 0.8366,
-        "r2_test": -0.1868,
-        "mae_train": 0.1032,
-        "mae_test": 0.245
+        "r2_train": 0.8385,
+        "r2_test": -0.1546,
+        "mae_train": 0.102,
+        "mae_test": 0.2425
       },
       "C1": {
-        "r2_train": 0.8485,
-        "r2_test": -0.0082,
-        "mae_train": 0.0989,
-        "mae_test": 0.2248
+        "r2_train": 0.8309,
+        "r2_test": 0.0179,
+        "mae_train": 0.1005,
+        "mae_test": 0.2224
       },
       "C2": {
-        "r2_train": 0.8334,
-        "r2_test": -0.2227,
-        "mae_train": 0.1044,
-        "mae_test": 0.2526
+        "r2_train": 0.8383,
+        "r2_test": -0.1744,
+        "mae_train": 0.1031,
+        "mae_test": 0.262
       },
       "C3": {
-        "r2_train": 0.8388,
-        "r2_test": -0.1311,
-        "mae_train": 0.099,
-        "mae_test": 0.235
+        "r2_train": 0.8291,
+        "r2_test": -0.0676,
+        "mae_train": 0.1019,
+        "mae_test": 0.2268
       },
       "C4": {
-        "r2_train": 0.843,
-        "r2_test": -0.0649,
-        "mae_train": 0.0997,
-        "mae_test": 0.2334
+        "r2_train": 0.8517,
+        "r2_test": -0.0213,
+        "mae_train": 0.0958,
+        "mae_test": 0.2183
       },
       "C5": {
-        "r2_train": 0.8448,
-        "r2_test": -0.0836,
-        "mae_train": 0.0978,
-        "mae_test": 0.2328
+        "r2_train": 0.8531,
+        "r2_test": -0.0643,
+        "mae_train": 0.0961,
+        "mae_test": 0.2346
       }
     },
-    "mean_r2_train": 0.8409,
-    "mean_r2_test": -0.1162,
-    "mean_mae_train": 0.1005,
-    "mean_mae_test": 0.2373
-  }
+    "mean_r2_train": 0.8403,
+    "mean_r2_test": -0.0774,
+    "mean_mae_train": 0.0999,
+    "mean_mae_test": 0.2344
+  },
+  "filter_candidates": false
 }

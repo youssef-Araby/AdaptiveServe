@@ -1,0 +1,2915 @@
+=== P0 re-run started Wed Jul 15 17:20:07 EEST 2026 ===
+--- RUN C0/phi3 (scripts/benchmark_c0_baseline.py) 2026-07-15 17:20:07
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Config : C0 (FP16 full KV cache, no compression)
+Model  : microsoft/Phi-3-mini-4k-instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C0/phi3/results.json
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   1%|          | 1/195 [00:00<00:37,  5.14it/s]Loading weights:  15%|█▍        | 29/195 [00:00<00:01, 116.62it/s]Loading weights:  30%|██▉       | 58/195 [00:00<00:00, 170.88it/s]Loading weights:  45%|████▌     | 88/195 [00:00<00:00, 209.21it/s]Loading weights:  57%|█████▋    | 112/195 [00:00<00:00, 217.86it/s]Loading weights:  70%|███████   | 137/195 [00:00<00:00, 220.91it/s]Loading weights:  85%|████████▌ | 166/195 [00:00<00:00, 241.06it/s]Loading weights:  98%|█████████▊| 191/195 [00:00<00:00, 238.73it/s]Loading weights: 100%|██████████| 195/195 [00:00<00:00, 205.69it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35536 > 4096). Running this sequence through the model will result in indexing errors
+[transformers] The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+
+=== LongBench ===
+  narrativeqa [5/20]  qa_f1=0.0939
+  narrativeqa [10/20]  qa_f1=0.1095
+  narrativeqa [15/20]  qa_f1=0.1545
+  narrativeqa [20/20]  qa_f1=0.1278
+  narrativeqa  FINAL qa_f1=0.1278  (n=20)
+  qasper [5/20]  qa_f1=0.0941
+  qasper [10/20]  qa_f1=0.2666
+  qasper [15/20]  qa_f1=0.1835
+  qasper [20/20]  qa_f1=0.1593
+  qasper  FINAL qa_f1=0.1593  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5429
+  multifieldqa_en [10/20]  qa_f1=0.4478
+  multifieldqa_en [15/20]  qa_f1=0.3587
+  multifieldqa_en [20/20]  qa_f1=0.3284
+  multifieldqa_en  FINAL qa_f1=0.3284  (n=20)
+  hotpotqa [5/20]  qa_f1=0.3467
+  hotpotqa [10/20]  qa_f1=0.2800
+  hotpotqa [15/20]  qa_f1=0.2211
+  hotpotqa [20/20]  qa_f1=0.2242
+  hotpotqa  FINAL qa_f1=0.2242  (n=20)
+  2wikimqa [5/20]  qa_f1=0.0727
+  2wikimqa [10/20]  qa_f1=0.0364
+  2wikimqa [15/20]  qa_f1=0.1442
+  2wikimqa [20/20]  qa_f1=0.1082
+  2wikimqa  FINAL qa_f1=0.1082  (n=20)
+  gov_report [5/20]  rouge_l=0.2805
+  gov_report [10/20]  rouge_l=0.2977
+  gov_report [15/20]  rouge_l=0.2888
+  gov_report [20/20]  rouge_l=0.2944
+  gov_report  FINAL rouge_l=0.2944  (n=20)
+  multi_news [5/20]  rouge_l=0.2372
+  multi_news [10/20]  rouge_l=0.2424
+  multi_news [15/20]  rouge_l=0.2546
+  multi_news [20/20]  rouge_l=0.2574
+  multi_news  FINAL rouge_l=0.2574  (n=20)
+  qmsum [5/20]  rouge_l=0.2162
+  qmsum [10/20]  rouge_l=0.2163
+  qmsum [15/20]  rouge_l=0.2132
+  qmsum [20/20]  rouge_l=0.2049
+  qmsum  FINAL rouge_l=0.2049  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.0000
+  passage_count [15/20]  count=0.0133
+  passage_count [20/20]  count=0.0100
+  passage_count  FINAL count=0.0100  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.8889
+  triviaqa [10/20]  qa_f1=0.9444
+  triviaqa [15/20]  qa_f1=0.9630
+  triviaqa [20/20]  qa_f1=0.9722
+  triviaqa  FINAL qa_f1=0.9722  (n=20)
+
+Saved → runs/C0/phi3/results.json
+{
+  "config": "C0",
+  "method": "none (FP16 full KV cache)",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "ttft_ms": 618.0,
+  "tpot_ms": 68.227,
+  "tokens_per_sec": 14.66,
+  "peak_vram_mb": 8927.7,
+  "kv_cache_mb": 767.25,
+  "kv_compression_ratio": 1.0,
+  "speed_prompt_tokens": 3500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 5.6349,
+  "ppl_n_chunks": 83,
+  "longbench_avg": 0.3033
+}
+--- RUN C1/phi3 (scripts/benchmark_c1_tailorkv.py) 2026-07-15 17:36:35
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C1 (hybrid aggressive eviction — SnapKV-style top-(64+128) on all layers + 1-bit quant of layer [0] survivors; TailorKV-inspired)
+Model  : microsoft/Phi-3-mini-4k-instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C1/phi3/results.json
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   1%|          | 1/195 [00:00<00:33,  5.87it/s]Loading weights:  12%|█▏        | 23/195 [00:00<00:01, 103.47it/s]Loading weights:  26%|██▌       | 50/195 [00:00<00:00, 165.70it/s]Loading weights:  39%|███▉      | 76/195 [00:00<00:00, 199.19it/s]Loading weights:  53%|█████▎    | 104/195 [00:00<00:00, 214.37it/s]Loading weights:  67%|██████▋   | 131/195 [00:00<00:00, 229.36it/s]Loading weights:  81%|████████  | 158/195 [00:00<00:00, 241.54it/s]Loading weights:  95%|█████████▍| 185/195 [00:00<00:00, 239.25it/s]Loading weights: 100%|██████████| 195/195 [00:00<00:00, 209.51it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35536 > 4096). Running this sequence through the model will result in indexing errors
+
+=== LongBench (C1 hybrid aggressive eviction) ===
+  narrativeqa [5/20]  qa_f1=0.0988
+  narrativeqa [10/20]  qa_f1=0.1127
+  narrativeqa [15/20]  qa_f1=0.0900
+  narrativeqa [20/20]  qa_f1=0.1403
+  narrativeqa  FINAL qa_f1=0.1403  (n=20)
+  qasper [5/20]  qa_f1=0.0133
+  qasper [10/20]  qa_f1=0.3225
+  qasper [15/20]  qa_f1=0.2205
+  qasper [20/20]  qa_f1=0.1960
+  qasper  FINAL qa_f1=0.1960  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5771
+  multifieldqa_en [10/20]  qa_f1=0.4992
+  multifieldqa_en [15/20]  qa_f1=0.4107
+  multifieldqa_en [20/20]  qa_f1=0.3730
+  multifieldqa_en  FINAL qa_f1=0.3730  (n=20)
+  hotpotqa [5/20]  qa_f1=0.3067
+  hotpotqa [10/20]  qa_f1=0.2933
+  hotpotqa [15/20]  qa_f1=0.2300
+  hotpotqa [20/20]  qa_f1=0.2058
+  hotpotqa  FINAL qa_f1=0.2058  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1000
+  2wikimqa [10/20]  qa_f1=0.0500
+  2wikimqa [15/20]  qa_f1=0.1533
+  2wikimqa [20/20]  qa_f1=0.1150
+  2wikimqa  FINAL qa_f1=0.1150  (n=20)
+  gov_report [5/20]  rouge_l=0.2000
+  gov_report [10/20]  rouge_l=0.2090
+  gov_report [15/20]  rouge_l=0.2018
+  gov_report [20/20]  rouge_l=0.2092
+  gov_report  FINAL rouge_l=0.2092  (n=20)
+  multi_news [5/20]  rouge_l=0.2027
+  multi_news [10/20]  rouge_l=0.1944
+  multi_news [15/20]  rouge_l=0.2036
+  multi_news [20/20]  rouge_l=0.1917
+  multi_news  FINAL rouge_l=0.1917  (n=20)
+  qmsum [5/20]  rouge_l=0.2181
+  qmsum [10/20]  rouge_l=0.2226
+  qmsum [15/20]  rouge_l=0.2174
+  qmsum [20/20]  rouge_l=0.2137
+  qmsum  FINAL rouge_l=0.2137  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.0000
+  passage_count [15/20]  count=0.0133
+  passage_count [20/20]  count=0.0100
+  passage_count  FINAL count=0.0100  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.5333
+  trec [20/20]  classification=0.6000
+  trec  FINAL classification=0.6000  (n=20)
+  triviaqa [5/20]  qa_f1=0.8889
+  triviaqa [10/20]  qa_f1=0.9444
+  triviaqa [15/20]  qa_f1=0.9630
+  triviaqa [20/20]  qa_f1=0.9722
+  triviaqa  FINAL qa_f1=0.9722  (n=20)
+
+  LongBench compression: full 760.7 MB → compressed 70.0 MB (10.87×, avg seq 3406 → 192 avg kept/layer)
+
+Saved → runs/C1/phi3/results.json
+{
+  "config": "C1",
+  "method": "Hybrid aggressive eviction: SnapKV-style top-(64+128) retention on all layers + 1-bit quantization of layer-0 survivors (TailorKV-inspired)",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "q_layers": [
+    0
+  ],
+  "bits": 1,
+  "group_size": 64,
+  "n_local": 64,
+  "n_topk": 128,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 759.92,
+  "tpot_ms": 28.63,
+  "tokens_per_sec": 34.93,
+  "peak_vram_mb": 8910.3,
+  "kv_cache_mb_full": 767.25,
+  "kv_cache_mb": 69.96,
+  "kv_compression_ratio": 10.967,
+  "speed_prompt_tokens": 3500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 5.6349,
+  "ppl_n_chunks": 83,
+  "longbench_avg": 0.2934,
+  "longbench_avg_seq_len": 3406.1,
+  "longbench_avg_kept_per_layer": 192.0,
+  "longbench_avg_kv_cache_mb_full": 760.67,
+  "longbench_avg_kv_cache_mb": 69.97,
+  "longbench_avg_compression_ratio": 10.871,
+  "longbench_avg_per_prompt_compression": 8.452
+}
+--- RUN C2/phi3 (scripts/benchmark_c2_qaq.py) 2026-07-15 17:52:08
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)
+Model  : microsoft/Phi-3-mini-4k-instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/phi3/results.json
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   1%|          | 1/195 [00:00<00:35,  5.54it/s]Loading weights:  13%|█▎        | 26/195 [00:00<00:01, 111.15it/s]Loading weights:  27%|██▋       | 53/195 [00:00<00:00, 169.54it/s]Loading weights:  41%|████      | 80/195 [00:00<00:00, 194.27it/s]Loading weights:  54%|█████▍    | 106/195 [00:00<00:00, 214.16it/s]Loading weights:  67%|██████▋   | 131/195 [00:00<00:00, 220.54it/s]Loading weights:  81%|████████  | 158/195 [00:00<00:00, 234.95it/s]Loading weights:  95%|█████████▍| 185/195 [00:00<00:00, 234.96it/s]Loading weights: 100%|██████████| 195/195 [00:00<00:00, 205.65it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (9001 > 4096). Running this sequence through the model will result in indexing errors
+
+Calibrating q_norm from SPEED_TEXT (skip-speed-ppl mode)...
+  q_norm = 247.5
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  narrativeqa [5/20]  qa_f1=0.0835
+  narrativeqa [10/20]  qa_f1=0.1051
+  narrativeqa [15/20]  qa_f1=0.1412
+  narrativeqa [20/20]  qa_f1=0.1251
+  narrativeqa  FINAL qa_f1=0.1251  (n=20)
+  qasper [5/20]  qa_f1=0.0906
+  qasper [10/20]  qa_f1=0.3648
+  qasper [15/20]  qa_f1=0.2570
+  qasper [20/20]  qa_f1=0.2150
+  qasper  FINAL qa_f1=0.2150  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.4910
+  multifieldqa_en [10/20]  qa_f1=0.4561
+  multifieldqa_en [15/20]  qa_f1=0.3961
+  multifieldqa_en [20/20]  qa_f1=0.3723
+  multifieldqa_en  FINAL qa_f1=0.3723  (n=20)
+  hotpotqa [5/20]  qa_f1=0.3067
+  hotpotqa [10/20]  qa_f1=0.2600
+  hotpotqa [15/20]  qa_f1=0.2357
+  hotpotqa [20/20]  qa_f1=0.2351
+  hotpotqa  FINAL qa_f1=0.2351  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1000
+  2wikimqa [10/20]  qa_f1=0.0500
+  2wikimqa [15/20]  qa_f1=0.1667
+  2wikimqa [20/20]  qa_f1=0.1293
+  2wikimqa  FINAL qa_f1=0.1293  (n=20)
+  gov_report [5/20]  rouge_l=0.2348
+  gov_report [10/20]  rouge_l=0.2850
+  gov_report [15/20]  rouge_l=0.2762
+  gov_report [20/20]  rouge_l=0.2774
+  gov_report  FINAL rouge_l=0.2774  (n=20)
+  multi_news [5/20]  rouge_l=0.2470
+  multi_news [10/20]  rouge_l=0.2410
+  multi_news [15/20]  rouge_l=0.2540
+  multi_news [20/20]  rouge_l=0.2583
+  multi_news  FINAL rouge_l=0.2583  (n=20)
+  qmsum [5/20]  rouge_l=0.2389
+  qmsum [10/20]  rouge_l=0.2337
+  qmsum [15/20]  rouge_l=0.2180
+  qmsum [20/20]  rouge_l=0.2073
+  qmsum  FINAL rouge_l=0.2073  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.0000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.0500
+  passage_count  FINAL count=0.0500  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.8889
+  triviaqa [10/20]  qa_f1=0.9444
+  triviaqa [15/20]  qa_f1=0.9630
+  triviaqa [20/20]  qa_f1=0.9722
+  triviaqa  FINAL qa_f1=0.9722  (n=20)
+
+  LongBench QAQ avg bits (incl. metadata): 3.462  (4.62× compression, n=220 prompts)
+
+Saved → runs/C2/phi3/results.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "ttft_ms": 1326.15,
+  "tpot_ms": 35.059,
+  "tokens_per_sec": 28.52,
+  "peak_vram_mb": 9007.3,
+  "kv_cache_mb": 161.93,
+  "kv_compression_ratio": 4.738,
+  "speed_prompt_tokens": 3500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 247.49,
+  "qaq_avg_bits": 3.377,
+  "ppl_wikitext2": 5.6349,
+  "ppl_n_chunks": 83,
+  "longbench_avg": 0.3175,
+  "longbench_avg_bits": 3.462,
+  "longbench_avg_compression_ratio": 4.622
+}
+--- RUN C3/phi3 (scripts/benchmark_c3_kvquant.py) 2026-07-15 19:22:44
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C3 (KVQuant — 4-bit per-channel K + per-token V, 1.0% FP16 outliers)
+Model  : microsoft/Phi-3-mini-4k-instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C3/phi3/results.json
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   1%|          | 1/195 [00:00<00:35,  5.52it/s]Loading weights:  12%|█▏        | 23/195 [00:00<00:01, 99.93it/s]Loading weights:  27%|██▋       | 52/195 [00:00<00:00, 167.92it/s]Loading weights:  39%|███▉      | 77/195 [00:00<00:00, 194.91it/s]Loading weights:  52%|█████▏    | 101/195 [00:00<00:00, 197.81it/s]Loading weights:  67%|██████▋   | 131/195 [00:00<00:00, 223.04it/s]Loading weights:  82%|████████▏ | 160/195 [00:00<00:00, 237.01it/s]Loading weights:  95%|█████████▍| 185/195 [00:00<00:00, 234.98it/s]Loading weights: 100%|██████████| 195/195 [00:00<00:00, 203.48it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35536 > 4096). Running this sequence through the model will result in indexing errors
+
+=== LongBench (KVQuant) ===
+  narrativeqa [5/20]  qa_f1=0.0898
+  narrativeqa [10/20]  qa_f1=0.1074
+  narrativeqa [15/20]  qa_f1=0.1531
+  narrativeqa [20/20]  qa_f1=0.1267
+  narrativeqa  FINAL qa_f1=0.1267  (n=20)
+  qasper [5/20]  qa_f1=0.0375
+  qasper [10/20]  qa_f1=0.2383
+  qasper [15/20]  qa_f1=0.1646
+  qasper [20/20]  qa_f1=0.1451
+  qasper  FINAL qa_f1=0.1451  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5500
+  multifieldqa_en [10/20]  qa_f1=0.4234
+  multifieldqa_en [15/20]  qa_f1=0.3431
+  multifieldqa_en [20/20]  qa_f1=0.3163
+  multifieldqa_en  FINAL qa_f1=0.3163  (n=20)
+  hotpotqa [5/20]  qa_f1=0.3467
+  hotpotqa [10/20]  qa_f1=0.2800
+  hotpotqa [15/20]  qa_f1=0.2478
+  hotpotqa [20/20]  qa_f1=0.2442
+  hotpotqa  FINAL qa_f1=0.2442  (n=20)
+  2wikimqa [5/20]  qa_f1=0.0727
+  2wikimqa [10/20]  qa_f1=0.0364
+  2wikimqa [15/20]  qa_f1=0.1442
+  2wikimqa [20/20]  qa_f1=0.1173
+  2wikimqa  FINAL qa_f1=0.1173  (n=20)
+  gov_report [5/20]  rouge_l=0.2807
+  gov_report [10/20]  rouge_l=0.2933
+  gov_report [15/20]  rouge_l=0.2923
+  gov_report [20/20]  rouge_l=0.2934
+  gov_report  FINAL rouge_l=0.2934  (n=20)
+  multi_news [5/20]  rouge_l=0.2470
+  multi_news [10/20]  rouge_l=0.2458
+  multi_news [15/20]  rouge_l=0.2589
+  multi_news [20/20]  rouge_l=0.2597
+  multi_news  FINAL rouge_l=0.2597  (n=20)
+  qmsum [5/20]  rouge_l=0.2204
+  qmsum [10/20]  rouge_l=0.2364
+  qmsum [15/20]  rouge_l=0.2267
+  qmsum [20/20]  rouge_l=0.2197
+  qmsum  FINAL rouge_l=0.2197  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.0000
+  passage_count [15/20]  count=0.0133
+  passage_count [20/20]  count=0.0100
+  passage_count  FINAL count=0.0100  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.8889
+  triviaqa [10/20]  qa_f1=0.9444
+  triviaqa [15/20]  qa_f1=0.9630
+  triviaqa [20/20]  qa_f1=0.9722
+  triviaqa  FINAL qa_f1=0.9722  (n=20)
+
+  LongBench compression: full 764.6 MB → compressed 265.1 MB (2.88×, avg seq 3406)
+
+Saved → runs/C3/phi3/results.json
+{
+  "config": "C3",
+  "method": "KVQuant (4-bit per-channel K + per-token V, 1.0% FP16 outliers)",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "bits": 4,
+  "group_size": 128,
+  "outlier_frac": 0.01,
+  "ttft_ms": 781.47,
+  "tpot_ms": 36.256,
+  "tokens_per_sec": 27.58,
+  "peak_vram_mb": 9735.1,
+  "kv_cache_mb_full": 767.25,
+  "kv_cache_mb": 224.9,
+  "kv_compression_ratio": 3.412,
+  "speed_prompt_tokens": 3500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 5.6349,
+  "ppl_n_chunks": 83,
+  "longbench_avg": 0.305,
+  "longbench_avg_seq_len": 3406.1,
+  "longbench_avg_kv_cache_mb_full": 764.58,
+  "longbench_avg_kv_cache_mb": 265.09,
+  "longbench_avg_compression_ratio": 2.884
+}
+--- RUN C4/phi3 (scripts/benchmark_c4_dynamickv.py) 2026-07-15 19:41:08
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C4 (DynamicKV, mean per-layer budget=512, window=32, kernel=7, ratio_max=10)
+Model  : microsoft/Phi-3-mini-4k-instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C4/phi3/results.json
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   1%|          | 1/195 [00:00<00:34,  5.67it/s]Loading weights:  13%|█▎        | 26/195 [00:00<00:01, 113.08it/s]Loading weights:  27%|██▋       | 53/195 [00:00<00:00, 162.79it/s]Loading weights:  42%|████▏     | 82/195 [00:00<00:00, 205.14it/s]Loading weights:  55%|█████▍    | 107/195 [00:00<00:00, 217.69it/s]Loading weights:  67%|██████▋   | 131/195 [00:00<00:00, 220.94it/s]Loading weights:  82%|████████▏ | 160/195 [00:00<00:00, 236.56it/s]Loading weights:  95%|█████████▍| 185/195 [00:00<00:00, 239.40it/s]Loading weights: 100%|██████████| 195/195 [00:00<00:00, 206.37it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35536 > 4096). Running this sequence through the model will result in indexing errors
+
+=== LongBench (DynamicKV) ===
+  narrativeqa [5/20]  qa_f1=0.0719
+  narrativeqa [10/20]  qa_f1=0.0993
+  narrativeqa [15/20]  qa_f1=0.1254
+  narrativeqa [20/20]  qa_f1=0.1141
+  narrativeqa  FINAL qa_f1=0.1141  (n=20)
+  qasper [5/20]  qa_f1=0.0190
+  qasper [10/20]  qa_f1=0.2306
+  qasper [15/20]  qa_f1=0.1591
+  qasper [20/20]  qa_f1=0.1443
+  qasper  FINAL qa_f1=0.1443  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5481
+  multifieldqa_en [10/20]  qa_f1=0.4643
+  multifieldqa_en [15/20]  qa_f1=0.4063
+  multifieldqa_en [20/20]  qa_f1=0.3654
+  multifieldqa_en  FINAL qa_f1=0.3654  (n=20)
+  hotpotqa [5/20]  qa_f1=0.3067
+  hotpotqa [10/20]  qa_f1=0.2267
+  hotpotqa [15/20]  qa_f1=0.1856
+  hotpotqa [20/20]  qa_f1=0.1975
+  hotpotqa  FINAL qa_f1=0.1975  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1000
+  2wikimqa [10/20]  qa_f1=0.0500
+  2wikimqa [15/20]  qa_f1=0.1533
+  2wikimqa [20/20]  qa_f1=0.1150
+  2wikimqa  FINAL qa_f1=0.1150  (n=20)
+  gov_report [5/20]  rouge_l=0.2458
+  gov_report [10/20]  rouge_l=0.2384
+  gov_report [15/20]  rouge_l=0.2289
+  gov_report [20/20]  rouge_l=0.2315
+  gov_report  FINAL rouge_l=0.2315  (n=20)
+  multi_news [5/20]  rouge_l=0.2112
+  multi_news [10/20]  rouge_l=0.2149
+  multi_news [15/20]  rouge_l=0.2397
+  multi_news [20/20]  rouge_l=0.2333
+  multi_news  FINAL rouge_l=0.2333  (n=20)
+  qmsum [5/20]  rouge_l=0.2326
+  qmsum [10/20]  rouge_l=0.2391
+  qmsum [15/20]  rouge_l=0.2231
+  qmsum [20/20]  rouge_l=0.2123
+  qmsum  FINAL rouge_l=0.2123  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.0000
+  passage_count [15/20]  count=0.0133
+  passage_count [20/20]  count=0.0100
+  passage_count  FINAL count=0.0100  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.8889
+  triviaqa [10/20]  qa_f1=0.9444
+  triviaqa [15/20]  qa_f1=0.9630
+  triviaqa [20/20]  qa_f1=0.9722
+  triviaqa  FINAL qa_f1=0.9722  (n=20)
+
+  LongBench compression: full 760.7 MB → compressed 192.0 MB (3.96×, avg seq 3406 → 512 kept)
+
+Saved → runs/C4/phi3/results.json
+{
+  "config": "C4",
+  "method": "DynamicKV (cross-layer adaptive budget reallocation, shared index set per layer; Zhou et al. 2024)",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "max_capacity": 512,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 772.52,
+  "tpot_ms": 74.892,
+  "tokens_per_sec": 13.35,
+  "peak_vram_mb": 8910.3,
+  "kv_cache_mb_full": 767.25,
+  "kv_cache_mb": 192.0,
+  "kv_compression_ratio": 3.996,
+  "avg_kept_per_layer": 512.0,
+  "speed_prompt_tokens": 3500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 5.6349,
+  "ppl_n_chunks": 83,
+  "longbench_avg": 0.2951,
+  "longbench_avg_seq_len": 3406.1,
+  "longbench_avg_kept_per_layer": 512.0,
+  "longbench_avg_kv_cache_mb_full": 760.67,
+  "longbench_avg_kv_cache_mb": 192.0,
+  "longbench_avg_compression_ratio": 3.962,
+  "ratio_max": 10
+}
+--- RUN C5/phi3 (scripts/benchmark_c5_adakv.py) 2026-07-15 19:59:50
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C5 (head-vote top-k eviction, Ada-KV-inspired weighting, per-head=512, window=32, kernel=7)
+Model  : microsoft/Phi-3-mini-4k-instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C5/phi3/results.json
+Loading weights:   0%|          | 0/195 [00:00<?, ?it/s]Loading weights:   1%|          | 1/195 [00:00<00:38,  5.06it/s]Loading weights:  13%|█▎        | 26/195 [00:00<00:01, 105.07it/s]Loading weights:  27%|██▋       | 53/195 [00:00<00:00, 161.66it/s]Loading weights:  39%|███▉      | 77/195 [00:00<00:00, 186.81it/s]Loading weights:  55%|█████▍    | 107/195 [00:00<00:00, 218.30it/s]Loading weights:  67%|██████▋   | 131/195 [00:00<00:00, 222.97it/s]Loading weights:  81%|████████  | 158/195 [00:00<00:00, 232.66it/s]Loading weights:  95%|█████████▍| 185/195 [00:00<00:00, 239.49it/s]Loading weights: 100%|██████████| 195/195 [00:00<00:00, 203.11it/s]
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35536 > 4096). Running this sequence through the model will result in indexing errors
+
+=== LongBench (head-vote eviction) ===
+  narrativeqa [5/20]  qa_f1=0.0681
+  narrativeqa [10/20]  qa_f1=0.0965
+  narrativeqa [15/20]  qa_f1=0.1458
+  narrativeqa [20/20]  qa_f1=0.1294
+  narrativeqa  FINAL qa_f1=0.1294  (n=20)
+  qasper [5/20]  qa_f1=0.0286
+  qasper [10/20]  qa_f1=0.2353
+  qasper [15/20]  qa_f1=0.1622
+  qasper [20/20]  qa_f1=0.1455
+  qasper  FINAL qa_f1=0.1455  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5500
+  multifieldqa_en [10/20]  qa_f1=0.4653
+  multifieldqa_en [15/20]  qa_f1=0.4115
+  multifieldqa_en [20/20]  qa_f1=0.3754
+  multifieldqa_en  FINAL qa_f1=0.3754  (n=20)
+  hotpotqa [5/20]  qa_f1=0.3467
+  hotpotqa [10/20]  qa_f1=0.3133
+  hotpotqa [15/20]  qa_f1=0.2256
+  hotpotqa [20/20]  qa_f1=0.2275
+  hotpotqa  FINAL qa_f1=0.2275  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1000
+  2wikimqa [10/20]  qa_f1=0.0500
+  2wikimqa [15/20]  qa_f1=0.1533
+  2wikimqa [20/20]  qa_f1=0.1150
+  2wikimqa  FINAL qa_f1=0.1150  (n=20)
+  gov_report [5/20]  rouge_l=0.2590
+  gov_report [10/20]  rouge_l=0.2496
+  gov_report [15/20]  rouge_l=0.2369
+  gov_report [20/20]  rouge_l=0.2381
+  gov_report  FINAL rouge_l=0.2381  (n=20)
+  multi_news [5/20]  rouge_l=0.2074
+  multi_news [10/20]  rouge_l=0.2063
+  multi_news [15/20]  rouge_l=0.2247
+  multi_news [20/20]  rouge_l=0.2240
+  multi_news  FINAL rouge_l=0.2240  (n=20)
+  qmsum [5/20]  rouge_l=0.2121
+  qmsum [10/20]  rouge_l=0.2190
+  qmsum [15/20]  rouge_l=0.2209
+  qmsum [20/20]  rouge_l=0.2174
+  qmsum  FINAL rouge_l=0.2174  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.0000
+  passage_count [15/20]  count=0.0067
+  passage_count [20/20]  count=0.0050
+  passage_count  FINAL count=0.0050  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.8889
+  triviaqa [10/20]  qa_f1=0.9444
+  triviaqa [15/20]  qa_f1=0.9630
+  triviaqa [20/20]  qa_f1=0.9722
+  triviaqa  FINAL qa_f1=0.9722  (n=20)
+
+  LongBench compression: full 760.7 MB → compressed 192.0 MB (3.96×, avg seq 3406 → 512 kept)
+
+Saved → runs/C5/phi3/results.json
+{
+  "config": "C5",
+  "method": "Head-vote top-k eviction (Ada-KV-inspired budget weighting, shared index set)",
+  "model": "phi3",
+  "model_id": "microsoft/Phi-3-mini-4k-instruct",
+  "budget_per_head": 512,
+  "n_kv_heads": 32,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 976.67,
+  "tpot_ms": 62.446,
+  "tokens_per_sec": 16.01,
+  "peak_vram_mb": 8910.3,
+  "kv_cache_mb_full": 767.25,
+  "kv_cache_mb": 192.0,
+  "kv_compression_ratio": 3.996,
+  "avg_kept_per_layer": 512.0,
+  "speed_prompt_tokens": 3500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 5.6349,
+  "ppl_n_chunks": 83,
+  "longbench_avg": 0.3,
+  "longbench_avg_seq_len": 3406.1,
+  "longbench_avg_kept_per_layer": 512.0,
+  "longbench_avg_kv_cache_mb_full": 760.67,
+  "longbench_avg_kv_cache_mb": 192.0,
+  "longbench_avg_compression_ratio": 3.962
+}
+--- RUN C0/llama32_3b (scripts/benchmark_c0_baseline.py) 2026-07-15 20:20:05
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Config : C0 (FP16 full KV cache, no compression)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C0/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<03:18,  1.27it/s]Loading weights:  16%|█▌        | 41/254 [00:00<00:03, 62.61it/s]Loading weights:  26%|██▌       | 66/254 [00:01<00:02, 93.00it/s]Loading weights:  35%|███▌      | 89/254 [00:01<00:01, 117.87it/s]Loading weights:  44%|████▎     | 111/254 [00:01<00:01, 130.57it/s]Loading weights:  52%|█████▏    | 131/254 [00:01<00:00, 144.00it/s]Loading weights:  59%|█████▉    | 151/254 [00:01<00:00, 150.50it/s]Loading weights:  67%|██████▋   | 170/254 [00:01<00:00, 142.26it/s]Loading weights:  74%|███████▎  | 187/254 [00:01<00:00, 148.36it/s]Loading weights:  83%|████████▎ | 210/254 [00:01<00:00, 151.83it/s]Loading weights:  90%|█████████ | 229/254 [00:01<00:00, 159.45it/s]Loading weights:  97%|█████████▋| 246/254 [00:02<00:00, 156.36it/s]Loading weights: 100%|██████████| 254/254 [00:02<00:00, 120.85it/s]
+[transformers] The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench ===
+  narrativeqa [5/20]  qa_f1=0.1325
+  narrativeqa [10/20]  qa_f1=0.1920
+  narrativeqa [15/20]  qa_f1=0.2697
+  narrativeqa [20/20]  qa_f1=0.2402
+  narrativeqa  FINAL qa_f1=0.2402  (n=20)
+  qasper [5/20]  qa_f1=0.2566
+  qasper [10/20]  qa_f1=0.3060
+  qasper [15/20]  qa_f1=0.3311
+  qasper [20/20]  qa_f1=0.3540
+  qasper  FINAL qa_f1=0.3540  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5076
+  multifieldqa_en [10/20]  qa_f1=0.5462
+  multifieldqa_en [15/20]  qa_f1=0.5599
+  multifieldqa_en [20/20]  qa_f1=0.4619
+  multifieldqa_en  FINAL qa_f1=0.4619  (n=20)
+  hotpotqa [5/20]  qa_f1=0.1467
+  hotpotqa [10/20]  qa_f1=0.2213
+  hotpotqa [15/20]  qa_f1=0.2587
+  hotpotqa [20/20]  qa_f1=0.3607
+  hotpotqa  FINAL qa_f1=0.3607  (n=20)
+  2wikimqa [5/20]  qa_f1=0.2364
+  2wikimqa [10/20]  qa_f1=0.3182
+  2wikimqa [15/20]  qa_f1=0.4988
+  2wikimqa [20/20]  qa_f1=0.4741
+  2wikimqa  FINAL qa_f1=0.4741  (n=20)
+  gov_report [5/20]  rouge_l=0.4600
+  gov_report [10/20]  rouge_l=0.4012
+  gov_report [15/20]  rouge_l=0.3763
+  gov_report [20/20]  rouge_l=0.3633
+  gov_report  FINAL rouge_l=0.3633  (n=20)
+  multi_news [5/20]  rouge_l=0.2286
+  multi_news [10/20]  rouge_l=0.2474
+  multi_news [15/20]  rouge_l=0.2545
+  multi_news [20/20]  rouge_l=0.2582
+  multi_news  FINAL rouge_l=0.2582  (n=20)
+  qmsum [5/20]  rouge_l=0.2476
+  qmsum [10/20]  rouge_l=0.2672
+  qmsum [15/20]  rouge_l=0.2517
+  qmsum [20/20]  rouge_l=0.2483
+  qmsum  FINAL rouge_l=0.2483  (n=20)
+  passage_count [5/20]  count=0.2000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.0500
+  passage_count  FINAL count=0.0500  (n=20)
+  trec [5/20]  classification=0.6000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9667
+  triviaqa [15/20]  qa_f1=0.9778
+  triviaqa [20/20]  qa_f1=0.9733
+  triviaqa  FINAL qa_f1=0.9733  (n=20)
+
+Saved → runs/C0/llama32_3b/results.json
+{
+  "config": "C0",
+  "method": "none (FP16 full KV cache)",
+  "model": "llama32_3b",
+  "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+  "ttft_ms": 833.37,
+  "tpot_ms": 45.4,
+  "tokens_per_sec": 22.03,
+  "peak_vram_mb": 8847.3,
+  "kv_cache_mb": 820.31,
+  "kv_compression_ratio": 1.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 9.5731,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4031
+}
+--- RUN C1/llama32_3b (scripts/benchmark_c1_tailorkv.py) 2026-07-15 20:34:58
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C1 (hybrid aggressive eviction — SnapKV-style top-(64+128) on all layers + 1-bit quant of layer [0] survivors; TailorKV-inspired)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C1/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<00:57,  4.43it/s]Loading weights:  17%|█▋        | 44/254 [00:00<00:01, 169.29it/s]Loading weights:  33%|███▎      | 84/254 [00:00<00:00, 251.27it/s]Loading weights:  51%|█████     | 129/254 [00:00<00:00, 310.73it/s]Loading weights:  69%|██████▊   | 174/254 [00:00<00:00, 343.90it/s]Loading weights:  86%|████████▌ | 219/254 [00:00<00:00, 366.02it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 309.21it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (C1 hybrid aggressive eviction) ===
+  narrativeqa [5/20]  qa_f1=0.2474
+  narrativeqa [10/20]  qa_f1=0.2470
+  narrativeqa [15/20]  qa_f1=0.2518
+  narrativeqa [20/20]  qa_f1=0.2510
+  narrativeqa  FINAL qa_f1=0.2510  (n=20)
+  qasper [5/20]  qa_f1=0.2055
+  qasper [10/20]  qa_f1=0.2391
+  qasper [15/20]  qa_f1=0.1952
+  qasper [20/20]  qa_f1=0.2311
+  qasper  FINAL qa_f1=0.2311  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5488
+  multifieldqa_en [10/20]  qa_f1=0.6010
+  multifieldqa_en [15/20]  qa_f1=0.5706
+  multifieldqa_en [20/20]  qa_f1=0.4689
+  multifieldqa_en  FINAL qa_f1=0.4689  (n=20)
+  hotpotqa [5/20]  qa_f1=0.1467
+  hotpotqa [10/20]  qa_f1=0.1467
+  hotpotqa [15/20]  qa_f1=0.2089
+  hotpotqa [20/20]  qa_f1=0.3233
+  hotpotqa  FINAL qa_f1=0.3233  (n=20)
+  2wikimqa [5/20]  qa_f1=0.2000
+  2wikimqa [10/20]  qa_f1=0.2000
+  2wikimqa [15/20]  qa_f1=0.3533
+  2wikimqa [20/20]  qa_f1=0.3317
+  2wikimqa  FINAL qa_f1=0.3317  (n=20)
+  gov_report [5/20]  rouge_l=0.1546
+  gov_report [10/20]  rouge_l=0.1720
+  gov_report [15/20]  rouge_l=0.1742
+  gov_report [20/20]  rouge_l=0.1908
+  gov_report  FINAL rouge_l=0.1908  (n=20)
+  multi_news [5/20]  rouge_l=0.1605
+  multi_news [10/20]  rouge_l=0.1697
+  multi_news [15/20]  rouge_l=0.1765
+  multi_news [20/20]  rouge_l=0.1756
+  multi_news  FINAL rouge_l=0.1756  (n=20)
+  qmsum [5/20]  rouge_l=0.2321
+  qmsum [10/20]  rouge_l=0.2415
+  qmsum [15/20]  rouge_l=0.2301
+  qmsum [20/20]  rouge_l=0.2254
+  qmsum  FINAL rouge_l=0.2254  (n=20)
+  passage_count [5/20]  count=0.2000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.0500
+  passage_count  FINAL count=0.0500  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.5000
+  trec [15/20]  classification=0.4667
+  trec [20/20]  classification=0.5500
+  trec  FINAL classification=0.5500  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.8001
+  triviaqa [15/20]  qa_f1=0.8667
+  triviaqa [20/20]  qa_f1=0.8900
+  triviaqa  FINAL qa_f1=0.8900  (n=20)
+
+  LongBench compression: full 677.7 MB → compressed 20.3 MB (33.35×, avg seq 6196 → 192 avg kept/layer)
+
+Saved → runs/C1/llama32_3b/results.json
+{
+  "config": "C1",
+  "method": "Hybrid aggressive eviction: SnapKV-style top-(64+128) retention on all layers + 1-bit quantization of layer-0 survivors (TailorKV-inspired)",
+  "model": "llama32_3b",
+  "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+  "q_layers": [
+    0
+  ],
+  "bits": 1,
+  "group_size": 64,
+  "n_local": 64,
+  "n_topk": 128,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1053.58,
+  "tpot_ms": 27.266,
+  "tokens_per_sec": 36.68,
+  "peak_vram_mb": 8833.2,
+  "kv_cache_mb_full": 820.31,
+  "kv_cache_mb": 20.32,
+  "kv_compression_ratio": 40.369,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 9.5731,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.3353,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 192.0,
+  "longbench_avg_kv_cache_mb_full": 677.68,
+  "longbench_avg_kv_cache_mb": 20.32,
+  "longbench_avg_compression_ratio": 33.35,
+  "longbench_avg_per_prompt_compression": 27.738
+}
+--- RUN C2/llama32_3b (scripts/benchmark_c2_qaq.py) 2026-07-15 20:50:25
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<00:50,  4.96it/s]Loading weights:  18%|█▊        | 46/254 [00:00<00:01, 187.71it/s]Loading weights:  33%|███▎      | 84/254 [00:00<00:00, 255.84it/s]Loading weights:  51%|█████     | 129/254 [00:00<00:00, 313.05it/s]Loading weights:  67%|██████▋   | 171/254 [00:00<00:00, 346.53it/s]Loading weights:  83%|████████▎ | 210/254 [00:00<00:00, 353.33it/s]Loading weights:  98%|█████████▊| 248/254 [00:00<00:00, 355.83it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 306.29it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+Calibrating q_norm from SPEED_TEXT (skip-speed-ppl mode)...
+  q_norm = 295.2
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  narrativeqa [5/20]  qa_f1=0.1552
+  narrativeqa [10/20]  qa_f1=0.2133
+  narrativeqa [15/20]  qa_f1=0.2844
+  narrativeqa [20/20]  qa_f1=0.2508
+  narrativeqa  FINAL qa_f1=0.2508  (n=20)
+  qasper [5/20]  qa_f1=0.2526
+  qasper [10/20]  qa_f1=0.2928
+  qasper [15/20]  qa_f1=0.3115
+  qasper [20/20]  qa_f1=0.3434
+  qasper  FINAL qa_f1=0.3434  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5214
+  multifieldqa_en [10/20]  qa_f1=0.5418
+  multifieldqa_en [15/20]  qa_f1=0.5329
+  multifieldqa_en [20/20]  qa_f1=0.4480
+  multifieldqa_en  FINAL qa_f1=0.4480  (n=20)
+  hotpotqa [5/20]  qa_f1=0.2667
+  hotpotqa [10/20]  qa_f1=0.2833
+  hotpotqa [15/20]  qa_f1=0.3000
+  hotpotqa [20/20]  qa_f1=0.3917
+  hotpotqa  FINAL qa_f1=0.3917  (n=20)
+  2wikimqa [5/20]  qa_f1=0.2364
+  2wikimqa [10/20]  qa_f1=0.3182
+  2wikimqa [15/20]  qa_f1=0.4988
+  2wikimqa [20/20]  qa_f1=0.4741
+  2wikimqa  FINAL qa_f1=0.4741  (n=20)
+  gov_report [5/20]  rouge_l=0.3823
+  gov_report [10/20]  rouge_l=0.3692
+  gov_report [15/20]  rouge_l=0.3455
+  gov_report [20/20]  rouge_l=0.3397
+  gov_report  FINAL rouge_l=0.3397  (n=20)
+  multi_news [5/20]  rouge_l=0.2441
+  multi_news [10/20]  rouge_l=0.2565
+  multi_news [15/20]  rouge_l=0.2704
+  multi_news [20/20]  rouge_l=0.2732
+  multi_news  FINAL rouge_l=0.2732  (n=20)
+  qmsum [5/20]  rouge_l=0.2446
+  qmsum [10/20]  rouge_l=0.2704
+  qmsum [15/20]  rouge_l=0.2521
+  qmsum [20/20]  rouge_l=0.2466
+  qmsum  FINAL rouge_l=0.2466  (n=20)
+  passage_count [5/20]  count=0.2000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.0500
+  passage_count  FINAL count=0.0500  (n=20)
+  trec [5/20]  classification=0.6000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9667
+  triviaqa [15/20]  qa_f1=0.9778
+  triviaqa [20/20]  qa_f1=0.9833
+  triviaqa  FINAL qa_f1=0.9833  (n=20)
+
+  LongBench QAQ avg bits (incl. metadata): 3.443  (4.65× compression, n=220 prompts)
+
+Saved → runs/C2/llama32_3b/results.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
+  "model": "llama32_3b",
+  "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+  "ttft_ms": 1338.38,
+  "tpot_ms": 179.016,
+  "tokens_per_sec": 5.59,
+  "peak_vram_mb": 8847.2,
+  "kv_cache_mb": 154.74,
+  "kv_compression_ratio": 5.337,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 295.18,
+  "qaq_avg_bits": 2.998,
+  "ppl_wikitext2": 9.5731,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4046,
+  "longbench_avg_bits": 3.443,
+  "longbench_avg_compression_ratio": 4.652
+}
+--- RUN C3/llama32_3b (scripts/benchmark_c3_kvquant.py) 2026-07-15 21:55:35
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C3 (KVQuant — 4-bit per-channel K + per-token V, 1.0% FP16 outliers)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C3/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<00:46,  5.46it/s]Loading weights:  19%|█▉        | 48/254 [00:00<00:01, 203.46it/s]Loading weights:  37%|███▋      | 93/254 [00:00<00:00, 287.57it/s]Loading weights:  54%|█████▍    | 138/254 [00:00<00:00, 330.14it/s]Loading weights:  69%|██████▉   | 175/254 [00:00<00:00, 341.36it/s]Loading weights:  86%|████████▌ | 219/254 [00:00<00:00, 360.12it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 321.74it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (KVQuant) ===
+  narrativeqa [5/20]  qa_f1=0.1658
+  narrativeqa [10/20]  qa_f1=0.2087
+  narrativeqa [15/20]  qa_f1=0.2808
+  narrativeqa [20/20]  qa_f1=0.2565
+  narrativeqa  FINAL qa_f1=0.2565  (n=20)
+  qasper [5/20]  qa_f1=0.2577
+  qasper [10/20]  qa_f1=0.3065
+  qasper [15/20]  qa_f1=0.3146
+  qasper [20/20]  qa_f1=0.3438
+  qasper  FINAL qa_f1=0.3438  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.4955
+  multifieldqa_en [10/20]  qa_f1=0.5401
+  multifieldqa_en [15/20]  qa_f1=0.5558
+  multifieldqa_en [20/20]  qa_f1=0.4588
+  multifieldqa_en  FINAL qa_f1=0.4588  (n=20)
+  hotpotqa [5/20]  qa_f1=0.1467
+  hotpotqa [10/20]  qa_f1=0.2213
+  hotpotqa [15/20]  qa_f1=0.2587
+  hotpotqa [20/20]  qa_f1=0.3607
+  hotpotqa  FINAL qa_f1=0.3607  (n=20)
+  2wikimqa [5/20]  qa_f1=0.2364
+  2wikimqa [10/20]  qa_f1=0.3182
+  2wikimqa [15/20]  qa_f1=0.4988
+  2wikimqa [20/20]  qa_f1=0.4741
+  2wikimqa  FINAL qa_f1=0.4741  (n=20)
+  gov_report [5/20]  rouge_l=0.3826
+  gov_report [10/20]  rouge_l=0.3670
+  gov_report [15/20]  rouge_l=0.3506
+  gov_report [20/20]  rouge_l=0.3484
+  gov_report  FINAL rouge_l=0.3484  (n=20)
+  multi_news [5/20]  rouge_l=0.2332
+  multi_news [10/20]  rouge_l=0.2395
+  multi_news [15/20]  rouge_l=0.2437
+  multi_news [20/20]  rouge_l=0.2514
+  multi_news  FINAL rouge_l=0.2514  (n=20)
+  qmsum [5/20]  rouge_l=0.2404
+  qmsum [10/20]  rouge_l=0.2561
+  qmsum [15/20]  rouge_l=0.2494
+  qmsum [20/20]  rouge_l=0.2477
+  qmsum  FINAL rouge_l=0.2477  (n=20)
+  passage_count [5/20]  count=0.2000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.0500
+  passage_count  FINAL count=0.0500  (n=20)
+  trec [5/20]  classification=0.6000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9667
+  triviaqa [15/20]  qa_f1=0.9778
+  triviaqa [20/20]  qa_f1=0.9733
+  triviaqa  FINAL qa_f1=0.9733  (n=20)
+
+  LongBench compression: full 688.9 MB → compressed 210.0 MB (3.28×, avg seq 6196)
+
+Saved → runs/C3/llama32_3b/results.json
+{
+  "config": "C3",
+  "method": "KVQuant (4-bit per-channel K + per-token V, 1.0% FP16 outliers)",
+  "model": "llama32_3b",
+  "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+  "bits": 4,
+  "group_size": 128,
+  "outlier_frac": 0.01,
+  "ttft_ms": 1013.73,
+  "tpot_ms": 25.483,
+  "tokens_per_sec": 39.24,
+  "peak_vram_mb": 9767.1,
+  "kv_cache_mb_full": 820.31,
+  "kv_cache_mb": 240.45,
+  "kv_compression_ratio": 3.412,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 9.5731,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4013,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kv_cache_mb_full": 688.94,
+  "longbench_avg_kv_cache_mb": 209.96,
+  "longbench_avg_compression_ratio": 3.281
+}
+--- RUN C4/llama32_3b (scripts/benchmark_c4_dynamickv.py) 2026-07-15 22:10:42
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C4 (DynamicKV, mean per-layer budget=1024, window=32, kernel=7, ratio_max=10)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C4/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<00:52,  4.82it/s]Loading weights:  19%|█▉        | 48/254 [00:00<00:01, 182.51it/s]Loading weights:  37%|███▋      | 93/254 [00:00<00:00, 274.00it/s]Loading weights:  54%|█████▍    | 138/254 [00:00<00:00, 327.33it/s]Loading weights:  72%|███████▏  | 183/254 [00:00<00:00, 352.84it/s]Loading weights:  90%|████████▉ | 228/254 [00:00<00:00, 369.19it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 316.68it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (DynamicKV) ===
+  narrativeqa [5/20]  qa_f1=0.2599
+  narrativeqa [10/20]  qa_f1=0.2571
+  narrativeqa [15/20]  qa_f1=0.3122
+  narrativeqa [20/20]  qa_f1=0.2717
+  narrativeqa  FINAL qa_f1=0.2717  (n=20)
+  qasper [5/20]  qa_f1=0.2419
+  qasper [10/20]  qa_f1=0.2834
+  qasper [15/20]  qa_f1=0.3054
+  qasper [20/20]  qa_f1=0.3450
+  qasper  FINAL qa_f1=0.3450  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5283
+  multifieldqa_en [10/20]  qa_f1=0.5667
+  multifieldqa_en [15/20]  qa_f1=0.5481
+  multifieldqa_en [20/20]  qa_f1=0.4689
+  multifieldqa_en  FINAL qa_f1=0.4689  (n=20)
+  hotpotqa [5/20]  qa_f1=0.1467
+  hotpotqa [10/20]  qa_f1=0.2207
+  hotpotqa [15/20]  qa_f1=0.2583
+  hotpotqa [20/20]  qa_f1=0.3604
+  hotpotqa  FINAL qa_f1=0.3604  (n=20)
+  2wikimqa [5/20]  qa_f1=0.2364
+  2wikimqa [10/20]  qa_f1=0.3182
+  2wikimqa [15/20]  qa_f1=0.4988
+  2wikimqa [20/20]  qa_f1=0.4741
+  2wikimqa  FINAL qa_f1=0.4741  (n=20)
+  gov_report [5/20]  rouge_l=0.2775
+  gov_report [10/20]  rouge_l=0.2666
+  gov_report [15/20]  rouge_l=0.2610
+  gov_report [20/20]  rouge_l=0.2593
+  gov_report  FINAL rouge_l=0.2593  (n=20)
+  multi_news [5/20]  rouge_l=0.2335
+  multi_news [10/20]  rouge_l=0.2474
+  multi_news [15/20]  rouge_l=0.2558
+  multi_news [20/20]  rouge_l=0.2551
+  multi_news  FINAL rouge_l=0.2551  (n=20)
+  qmsum [5/20]  rouge_l=0.2412
+  qmsum [10/20]  rouge_l=0.2652
+  qmsum [15/20]  rouge_l=0.2547
+  qmsum [20/20]  rouge_l=0.2480
+  qmsum  FINAL rouge_l=0.2480  (n=20)
+  passage_count [5/20]  count=0.2000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.0500
+  passage_count  FINAL count=0.0500  (n=20)
+  trec [5/20]  classification=0.6000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9667
+  triviaqa [15/20]  qa_f1=0.9778
+  triviaqa [20/20]  qa_f1=0.9733
+  triviaqa  FINAL qa_f1=0.9733  (n=20)
+
+  LongBench compression: full 677.7 MB → compressed 111.9 MB (6.06×, avg seq 6196 → 1023 kept)
+
+Saved → runs/C4/llama32_3b/results.json
+{
+  "config": "C4",
+  "method": "DynamicKV (cross-layer adaptive budget reallocation, shared index set per layer; Zhou et al. 2024)",
+  "model": "llama32_3b",
+  "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+  "max_capacity": 1024,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1045.6,
+  "tpot_ms": 16.89,
+  "tokens_per_sec": 59.21,
+  "peak_vram_mb": 8833.2,
+  "kv_cache_mb_full": 820.31,
+  "kv_cache_mb": 112.0,
+  "kv_compression_ratio": 7.324,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 9.5731,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.396,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 1022.8,
+  "longbench_avg_kv_cache_mb_full": 677.68,
+  "longbench_avg_kv_cache_mb": 111.87,
+  "longbench_avg_compression_ratio": 6.058,
+  "ratio_max": 10
+}
+--- RUN C5/llama32_3b (scripts/benchmark_c5_adakv.py) 2026-07-15 22:24:10
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C5 (head-vote top-k eviction, Ada-KV-inspired weighting, per-head=1024, window=32, kernel=7)
+Model  : meta-llama/Llama-3.2-3B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C5/llama32_3b/results.json
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:   0%|          | 1/254 [00:00<00:49,  5.16it/s]Loading weights:  19%|█▉        | 48/254 [00:00<00:01, 191.81it/s]Loading weights:  37%|███▋      | 93/254 [00:00<00:00, 272.52it/s]Loading weights:  54%|█████▍    | 138/254 [00:00<00:00, 318.81it/s]Loading weights:  72%|███████▏  | 183/254 [00:00<00:00, 346.66it/s]Loading weights:  90%|█████████ | 229/254 [00:00<00:00, 373.66it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 318.80it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (head-vote eviction) ===
+  narrativeqa [5/20]  qa_f1=0.2284
+  narrativeqa [10/20]  qa_f1=0.2309
+  narrativeqa [15/20]  qa_f1=0.2956
+  narrativeqa [20/20]  qa_f1=0.2578
+  narrativeqa  FINAL qa_f1=0.2578  (n=20)
+  qasper [5/20]  qa_f1=0.2516
+  qasper [10/20]  qa_f1=0.2748
+  qasper [15/20]  qa_f1=0.2880
+  qasper [20/20]  qa_f1=0.3262
+  qasper  FINAL qa_f1=0.3262  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.5283
+  multifieldqa_en [10/20]  qa_f1=0.5787
+  multifieldqa_en [15/20]  qa_f1=0.5748
+  multifieldqa_en [20/20]  qa_f1=0.4786
+  multifieldqa_en  FINAL qa_f1=0.4786  (n=20)
+  hotpotqa [5/20]  qa_f1=0.1467
+  hotpotqa [10/20]  qa_f1=0.2207
+  hotpotqa [15/20]  qa_f1=0.2583
+  hotpotqa [20/20]  qa_f1=0.3770
+  hotpotqa  FINAL qa_f1=0.3770  (n=20)
+  2wikimqa [5/20]  qa_f1=0.2364
+  2wikimqa [10/20]  qa_f1=0.3182
+  2wikimqa [15/20]  qa_f1=0.4988
+  2wikimqa [20/20]  qa_f1=0.4741
+  2wikimqa  FINAL qa_f1=0.4741  (n=20)
+  gov_report [5/20]  rouge_l=0.2858
+  gov_report [10/20]  rouge_l=0.2744
+  gov_report [15/20]  rouge_l=0.2623
+  gov_report [20/20]  rouge_l=0.2676
+  gov_report  FINAL rouge_l=0.2676  (n=20)
+  multi_news [5/20]  rouge_l=0.2342
+  multi_news [10/20]  rouge_l=0.2411
+  multi_news [15/20]  rouge_l=0.2518
+  multi_news [20/20]  rouge_l=0.2557
+  multi_news  FINAL rouge_l=0.2557  (n=20)
+  qmsum [5/20]  rouge_l=0.2626
+  qmsum [10/20]  rouge_l=0.2651
+  qmsum [15/20]  rouge_l=0.2575
+  qmsum [20/20]  rouge_l=0.2466
+  qmsum  FINAL rouge_l=0.2466  (n=20)
+  passage_count [5/20]  count=0.2000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.0500
+  passage_count  FINAL count=0.0500  (n=20)
+  trec [5/20]  classification=0.6000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6500
+  trec  FINAL classification=0.6500  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9667
+  triviaqa [15/20]  qa_f1=0.9778
+  triviaqa [20/20]  qa_f1=0.9733
+  triviaqa  FINAL qa_f1=0.9733  (n=20)
+
+  LongBench compression: full 677.7 MB → compressed 111.9 MB (6.06×, avg seq 6196 → 1023 kept)
+
+Saved → runs/C5/llama32_3b/results.json
+{
+  "config": "C5",
+  "method": "Head-vote top-k eviction (Ada-KV-inspired budget weighting, shared index set)",
+  "model": "llama32_3b",
+  "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+  "budget_per_head": 1024,
+  "n_kv_heads": 8,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1061.26,
+  "tpot_ms": 14.749,
+  "tokens_per_sec": 67.8,
+  "peak_vram_mb": 8833.2,
+  "kv_cache_mb_full": 820.31,
+  "kv_cache_mb": 112.0,
+  "kv_compression_ratio": 7.324,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 9.5731,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.3961,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 1022.8,
+  "longbench_avg_kv_cache_mb_full": 677.68,
+  "longbench_avg_kv_cache_mb": 111.87,
+  "longbench_avg_compression_ratio": 6.058
+}
+--- RUN C0/llama3 (scripts/benchmark_c0_baseline.py) 2026-07-15 22:38:08
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Config : C0 (FP16 full KV cache, no compression)
+Model  : meta-llama/Meta-Llama-3-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C0/llama3/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<04:14,  1.14it/s]Loading weights:   7%|▋         | 19/291 [00:01<00:10, 25.29it/s]Loading weights:  11%|█         | 31/291 [00:01<00:06, 37.73it/s]Loading weights:  16%|█▋        | 48/291 [00:01<00:03, 61.11it/s]Loading weights:  21%|██        | 60/291 [00:01<00:03, 62.35it/s]Loading weights:  24%|██▍       | 70/291 [00:01<00:03, 66.45it/s]Loading weights:  27%|██▋       | 80/291 [00:01<00:02, 71.23it/s]Loading weights:  31%|███       | 90/291 [00:01<00:02, 70.06it/s]Loading weights:  34%|███▍      | 99/291 [00:01<00:02, 74.27it/s]Loading weights:  37%|███▋      | 108/291 [00:02<00:02, 76.00it/s]Loading weights:  42%|████▏     | 121/291 [00:02<00:02, 73.44it/s]Loading weights:  45%|████▌     | 131/291 [00:02<00:02, 77.62it/s]Loading weights:  48%|████▊     | 140/291 [00:02<00:01, 77.72it/s]Loading weights:  51%|█████     | 149/291 [00:02<00:01, 76.95it/s]Loading weights:  54%|█████▍    | 158/291 [00:02<00:01, 76.03it/s]Loading weights:  60%|██████    | 175/291 [00:02<00:01, 77.89it/s]Loading weights:  63%|██████▎   | 184/291 [00:03<00:01, 80.03it/s]Loading weights:  66%|██████▋   | 193/291 [00:03<00:01, 78.85it/s]Loading weights:  70%|██████▉   | 203/291 [00:03<00:01, 78.71it/s]Loading weights:  76%|███████▌  | 220/291 [00:03<00:00, 83.82it/s]Loading weights:  79%|███████▊  | 229/291 [00:03<00:00, 85.01it/s]Loading weights:  82%|████████▏ | 238/291 [00:03<00:00, 83.06it/s]Loading weights:  85%|████████▍ | 247/291 [00:03<00:00, 82.46it/s]Loading weights:  88%|████████▊ | 256/291 [00:03<00:00, 81.97it/s]Loading weights:  91%|█████████ | 265/291 [00:04<00:00, 74.73it/s]Loading weights:  94%|█████████▍| 274/291 [00:04<00:00, 76.88it/s]Loading weights:  97%|█████████▋| 283/291 [00:04<00:00, 77.87it/s]Loading weights: 100%|██████████| 291/291 [00:04<00:00, 68.27it/s]
+[transformers] The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench ===
+  narrativeqa [5/20]  qa_f1=0.1143
+  narrativeqa [10/20]  qa_f1=0.1892
+  narrativeqa [15/20]  qa_f1=0.2595
+  narrativeqa [20/20]  qa_f1=0.2567
+  narrativeqa  FINAL qa_f1=0.2567  (n=20)
+  qasper [5/20]  qa_f1=0.1695
+  qasper [10/20]  qa_f1=0.4021
+  qasper [15/20]  qa_f1=0.3516
+  qasper [20/20]  qa_f1=0.3684
+  qasper  FINAL qa_f1=0.3684  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8000
+  multifieldqa_en [10/20]  qa_f1=0.7274
+  multifieldqa_en [15/20]  qa_f1=0.6158
+  multifieldqa_en [20/20]  qa_f1=0.5483
+  multifieldqa_en  FINAL qa_f1=0.5483  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4467
+  hotpotqa [10/20]  qa_f1=0.4733
+  hotpotqa [15/20]  qa_f1=0.4933
+  hotpotqa [20/20]  qa_f1=0.4533
+  hotpotqa  FINAL qa_f1=0.4533  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1333
+  2wikimqa [10/20]  qa_f1=0.4667
+  2wikimqa [15/20]  qa_f1=0.4683
+  2wikimqa [20/20]  qa_f1=0.4012
+  2wikimqa  FINAL qa_f1=0.4012  (n=20)
+  gov_report [5/20]  rouge_l=0.3501
+  gov_report [10/20]  rouge_l=0.3265
+  gov_report [15/20]  rouge_l=0.3184
+  gov_report [20/20]  rouge_l=0.3201
+  gov_report  FINAL rouge_l=0.3201  (n=20)
+  multi_news [5/20]  rouge_l=0.2506
+  multi_news [10/20]  rouge_l=0.2641
+  multi_news [15/20]  rouge_l=0.2672
+  multi_news [20/20]  rouge_l=0.2744
+  multi_news  FINAL rouge_l=0.2744  (n=20)
+  qmsum [5/20]  rouge_l=0.2419
+  qmsum [10/20]  rouge_l=0.2498
+  qmsum [15/20]  rouge_l=0.2499
+  qmsum [20/20]  rouge_l=0.2439
+  qmsum  FINAL rouge_l=0.2439  (n=20)
+  passage_count [5/20]  count=0.4000
+  passage_count [10/20]  count=0.3000
+  passage_count [15/20]  count=0.2000
+  passage_count [20/20]  count=0.2000
+  passage_count  FINAL count=0.2000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.7000
+  trec  FINAL classification=0.7000  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9111
+  triviaqa [15/20]  qa_f1=0.9407
+  triviaqa [20/20]  qa_f1=0.9556
+  triviaqa  FINAL qa_f1=0.9556  (n=20)
+
+Saved → runs/C0/llama3/results.json
+{
+  "config": "C0",
+  "method": "none (FP16 full KV cache)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "ttft_ms": 1801.91,
+  "tpot_ms": 27.841,
+  "tokens_per_sec": 35.92,
+  "peak_vram_mb": 18169.5,
+  "kv_cache_mb": 937.5,
+  "kv_compression_ratio": 1.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4293
+}
+--- RUN C1/llama3 (scripts/benchmark_c1_tailorkv.py) 2026-07-15 22:55:56
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C1 (hybrid aggressive eviction — SnapKV-style top-(64+128) on all layers + 1-bit quant of layer [0] survivors; TailorKV-inspired)
+Model  : meta-llama/Meta-Llama-3-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C1/llama3/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:08,  2.25it/s]Loading weights:   4%|▍         | 13/291 [00:00<00:09, 29.95it/s]Loading weights:  11%|█         | 31/291 [00:00<00:03, 66.07it/s]Loading weights:  17%|█▋        | 49/291 [00:00<00:02, 94.41it/s]Loading weights:  23%|██▎       | 67/291 [00:00<00:01, 115.66it/s]Loading weights:  31%|███▏      | 91/291 [00:00<00:01, 143.51it/s]Loading weights:  38%|███▊      | 112/291 [00:01<00:01, 155.15it/s]Loading weights:  45%|████▍     | 130/291 [00:01<00:01, 160.58it/s]Loading weights:  51%|█████     | 148/291 [00:01<00:00, 164.85it/s]Loading weights:  57%|█████▋    | 167/291 [00:01<00:00, 167.96it/s]Loading weights:  64%|██████▎   | 185/291 [00:01<00:00, 166.39it/s]Loading weights:  70%|██████▉   | 203/291 [00:01<00:00, 166.24it/s]Loading weights:  76%|███████▌  | 220/291 [00:01<00:00, 164.84it/s]Loading weights:  82%|████████▏ | 238/291 [00:01<00:00, 168.10it/s]Loading weights:  88%|████████▊ | 256/291 [00:01<00:00, 171.26it/s]Loading weights:  95%|█████████▍| 275/291 [00:02<00:00, 174.79it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 137.64it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (C1 hybrid aggressive eviction) ===
+  narrativeqa [5/20]  qa_f1=0.1187
+  narrativeqa [10/20]  qa_f1=0.1914
+  narrativeqa [15/20]  qa_f1=0.2276
+  narrativeqa [20/20]  qa_f1=0.2326
+  narrativeqa  FINAL qa_f1=0.2326  (n=20)
+  qasper [5/20]  qa_f1=0.1017
+  qasper [10/20]  qa_f1=0.3368
+  qasper [15/20]  qa_f1=0.2629
+  qasper [20/20]  qa_f1=0.2997
+  qasper  FINAL qa_f1=0.2997  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8500
+  multifieldqa_en [10/20]  qa_f1=0.7540
+  multifieldqa_en [15/20]  qa_f1=0.6429
+  multifieldqa_en [20/20]  qa_f1=0.5513
+  multifieldqa_en  FINAL qa_f1=0.5513  (n=20)
+  hotpotqa [5/20]  qa_f1=0.3800
+  hotpotqa [10/20]  qa_f1=0.4067
+  hotpotqa [15/20]  qa_f1=0.3822
+  hotpotqa [20/20]  qa_f1=0.3700
+  hotpotqa  FINAL qa_f1=0.3700  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1333
+  2wikimqa [10/20]  qa_f1=0.4667
+  2wikimqa [15/20]  qa_f1=0.4683
+  2wikimqa [20/20]  qa_f1=0.4012
+  2wikimqa  FINAL qa_f1=0.4012  (n=20)
+  gov_report [5/20]  rouge_l=0.1963
+  gov_report [10/20]  rouge_l=0.1882
+  gov_report [15/20]  rouge_l=0.1866
+  gov_report [20/20]  rouge_l=0.1979
+  gov_report  FINAL rouge_l=0.1979  (n=20)
+  multi_news [5/20]  rouge_l=0.1870
+  multi_news [10/20]  rouge_l=0.1932
+  multi_news [15/20]  rouge_l=0.2037
+  multi_news [20/20]  rouge_l=0.2036
+  multi_news  FINAL rouge_l=0.2036  (n=20)
+  qmsum [5/20]  rouge_l=0.2248
+  qmsum [10/20]  rouge_l=0.2218
+  qmsum [15/20]  rouge_l=0.2191
+  qmsum [20/20]  rouge_l=0.2112
+  qmsum  FINAL rouge_l=0.2112  (n=20)
+  passage_count [5/20]  count=0.4000
+  passage_count [10/20]  count=0.2000
+  passage_count [15/20]  count=0.1333
+  passage_count [20/20]  count=0.1500
+  passage_count  FINAL count=0.1500  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.5333
+  trec [20/20]  classification=0.5500
+  trec  FINAL classification=0.5500  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9000
+  triviaqa [15/20]  qa_f1=0.9333
+  triviaqa [20/20]  qa_f1=0.9500
+  triviaqa  FINAL qa_f1=0.9500  (n=20)
+
+  LongBench compression: full 773.3 MB → compressed 23.3 MB (33.16×, avg seq 6187 → 192 avg kept/layer)
+
+Saved → runs/C1/llama3/results.json
+{
+  "config": "C1",
+  "method": "Hybrid aggressive eviction: SnapKV-style top-(64+128) retention on all layers + 1-bit quantization of layer-0 survivors (TailorKV-inspired)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "q_layers": [
+    0
+  ],
+  "bits": 1,
+  "group_size": 64,
+  "n_local": 64,
+  "n_topk": 128,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1914.95,
+  "tpot_ms": 28.307,
+  "tokens_per_sec": 35.33,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 23.32,
+  "kv_compression_ratio": 40.201,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.3743,
+  "longbench_avg_seq_len": 6186.7,
+  "longbench_avg_kept_per_layer": 192.0,
+  "longbench_avg_kv_cache_mb_full": 773.34,
+  "longbench_avg_kv_cache_mb": 23.32,
+  "longbench_avg_compression_ratio": 33.161,
+  "longbench_avg_per_prompt_compression": 27.891
+}
+--- RUN C2/llama3 (scripts/benchmark_c2_qaq.py) 2026-07-15 23:13:55
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)
+Model  : meta-llama/Meta-Llama-3-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/llama3/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:01,  2.38it/s]Loading weights:   4%|▍         | 13/291 [00:00<00:08, 31.35it/s]Loading weights:  11%|█         | 31/291 [00:00<00:03, 65.87it/s]Loading weights:  17%|█▋        | 49/291 [00:00<00:02, 94.16it/s]Loading weights:  23%|██▎       | 67/291 [00:00<00:01, 115.61it/s]Loading weights:  30%|██▉       | 87/291 [00:00<00:01, 136.12it/s]Loading weights:  36%|███▌      | 104/291 [00:01<00:01, 143.97it/s]Loading weights:  45%|████▍     | 130/291 [00:01<00:01, 155.65it/s]Loading weights:  52%|█████▏    | 150/291 [00:01<00:00, 165.70it/s]Loading weights:  58%|█████▊    | 168/291 [00:01<00:00, 169.07it/s]Loading weights:  64%|██████▍   | 186/291 [00:01<00:00, 168.02it/s]Loading weights:  71%|███████▏  | 208/291 [00:01<00:00, 173.40it/s]Loading weights:  79%|███████▊  | 229/291 [00:01<00:00, 165.62it/s]Loading weights:  85%|████████▍ | 247/291 [00:01<00:00, 158.77it/s]Loading weights:  91%|█████████ | 265/291 [00:02<00:00, 149.86it/s]Loading weights:  97%|█████████▋| 283/291 [00:02<00:00, 156.91it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 134.35it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+Calibrating q_norm from SPEED_TEXT (skip-speed-ppl mode)...
+  q_norm = 248.8
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  narrativeqa [5/20]  qa_f1=0.1286
+  narrativeqa [10/20]  qa_f1=0.1963
+  narrativeqa [15/20]  qa_f1=0.2642
+  narrativeqa [20/20]  qa_f1=0.2701
+  narrativeqa  FINAL qa_f1=0.2701  (n=20)
+  qasper [5/20]  qa_f1=0.2321
+  qasper [10/20]  qa_f1=0.3680
+  qasper [15/20]  qa_f1=0.3265
+  qasper [20/20]  qa_f1=0.3580
+  qasper  FINAL qa_f1=0.3580  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8278
+  multifieldqa_en [10/20]  qa_f1=0.7398
+  multifieldqa_en [15/20]  qa_f1=0.6241
+  multifieldqa_en [20/20]  qa_f1=0.5386
+  multifieldqa_en  FINAL qa_f1=0.5386  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4133
+  hotpotqa [10/20]  qa_f1=0.4567
+  hotpotqa [15/20]  qa_f1=0.4822
+  hotpotqa [20/20]  qa_f1=0.4450
+  hotpotqa  FINAL qa_f1=0.4450  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1333
+  2wikimqa [10/20]  qa_f1=0.4467
+  2wikimqa [15/20]  qa_f1=0.4549
+  2wikimqa [20/20]  qa_f1=0.3912
+  2wikimqa  FINAL qa_f1=0.3912  (n=20)
+  gov_report [5/20]  rouge_l=0.3432
+  gov_report [10/20]  rouge_l=0.3300
+  gov_report [15/20]  rouge_l=0.3240
+  gov_report [20/20]  rouge_l=0.3234
+  gov_report  FINAL rouge_l=0.3234  (n=20)
+  multi_news [5/20]  rouge_l=0.2429
+  multi_news [10/20]  rouge_l=0.2634
+  multi_news [15/20]  rouge_l=0.2754
+  multi_news [20/20]  rouge_l=0.2806
+  multi_news  FINAL rouge_l=0.2806  (n=20)
+  qmsum [5/20]  rouge_l=0.2688
+  qmsum [10/20]  rouge_l=0.2667
+  qmsum [15/20]  rouge_l=0.2665
+  qmsum [20/20]  rouge_l=0.2516
+  qmsum  FINAL rouge_l=0.2516  (n=20)
+  passage_count [5/20]  count=0.4000
+  passage_count [10/20]  count=0.2000
+  passage_count [15/20]  count=0.1333
+  passage_count [20/20]  count=0.1500
+  passage_count  FINAL count=0.1500  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.7000
+  trec  FINAL classification=0.7000  (n=20)
+  triviaqa [5/20]  qa_f1=0.8800
+  triviaqa [10/20]  qa_f1=0.8900
+  triviaqa [15/20]  qa_f1=0.9267
+  triviaqa [20/20]  qa_f1=0.9450
+  triviaqa  FINAL qa_f1=0.9450  (n=20)
+
+  LongBench QAQ avg bits (incl. metadata): 3.473  (4.61× compression, n=220 prompts)
+
+Saved → runs/C2/llama3/results.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "ttft_ms": 2595.21,
+  "tpot_ms": 194.648,
+  "tokens_per_sec": 5.14,
+  "peak_vram_mb": 18168.3,
+  "kv_cache_mb": 176.83,
+  "kv_compression_ratio": 5.337,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 248.77,
+  "qaq_avg_bits": 2.998,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.423,
+  "longbench_avg_bits": 3.473,
+  "longbench_avg_compression_ratio": 4.614
+}
+--- RUN C3/llama3 (scripts/benchmark_c3_kvquant.py) 2026-07-16 00:17:45
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C3 (KVQuant — 4-bit per-channel K + per-token V, 1.0% FP16 outliers)
+Model  : meta-llama/Meta-Llama-3-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C3/llama3/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<03:27,  1.40it/s]Loading weights:   1%|          | 2/291 [00:01<02:44,  1.76it/s]Loading weights:   2%|▏         | 6/291 [00:01<00:43,  6.61it/s]Loading weights:   8%|▊         | 23/291 [00:01<00:08, 31.66it/s]Loading weights:  14%|█▎        | 40/291 [00:01<00:04, 55.74it/s]Loading weights:  20%|█▉        | 58/291 [00:01<00:02, 79.92it/s]Loading weights:  26%|██▋       | 77/291 [00:01<00:02, 104.09it/s]Loading weights:  34%|███▍      | 99/291 [00:01<00:01, 131.89it/s]Loading weights:  40%|████      | 117/291 [00:01<00:01, 143.58it/s]Loading weights:  47%|████▋     | 136/291 [00:02<00:01, 148.33it/s]Loading weights:  54%|█████▍    | 157/291 [00:02<00:00, 155.16it/s]Loading weights:  60%|██████    | 176/291 [00:02<00:00, 162.41it/s]Loading weights:  67%|██████▋   | 195/291 [00:02<00:00, 168.93it/s]Loading weights:  73%|███████▎  | 213/291 [00:02<00:00, 171.82it/s]Loading weights:  82%|████████▏ | 238/291 [00:02<00:00, 175.46it/s]Loading weights:  88%|████████▊ | 257/291 [00:02<00:00, 176.73it/s]Loading weights:  95%|█████████▍| 275/291 [00:02<00:00, 175.43it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 101.59it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (KVQuant) ===
+  narrativeqa [5/20]  qa_f1=0.1143
+  narrativeqa [10/20]  qa_f1=0.1892
+  narrativeqa [15/20]  qa_f1=0.2706
+  narrativeqa [20/20]  qa_f1=0.2686
+  narrativeqa  FINAL qa_f1=0.2686  (n=20)
+  qasper [5/20]  qa_f1=0.1695
+  qasper [10/20]  qa_f1=0.4021
+  qasper [15/20]  qa_f1=0.3475
+  qasper [20/20]  qa_f1=0.3653
+  qasper  FINAL qa_f1=0.3653  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8000
+  multifieldqa_en [10/20]  qa_f1=0.7274
+  multifieldqa_en [15/20]  qa_f1=0.6158
+  multifieldqa_en [20/20]  qa_f1=0.5497
+  multifieldqa_en  FINAL qa_f1=0.5497  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4467
+  hotpotqa [10/20]  qa_f1=0.4733
+  hotpotqa [15/20]  qa_f1=0.4933
+  hotpotqa [20/20]  qa_f1=0.4533
+  hotpotqa  FINAL qa_f1=0.4533  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1333
+  2wikimqa [10/20]  qa_f1=0.4667
+  2wikimqa [15/20]  qa_f1=0.4683
+  2wikimqa [20/20]  qa_f1=0.4012
+  2wikimqa  FINAL qa_f1=0.4012  (n=20)
+  gov_report [5/20]  rouge_l=0.3554
+  gov_report [10/20]  rouge_l=0.3405
+  gov_report [15/20]  rouge_l=0.3298
+  gov_report [20/20]  rouge_l=0.3284
+  gov_report  FINAL rouge_l=0.3284  (n=20)
+  multi_news [5/20]  rouge_l=0.2615
+  multi_news [10/20]  rouge_l=0.2764
+  multi_news [15/20]  rouge_l=0.2765
+  multi_news [20/20]  rouge_l=0.2786
+  multi_news  FINAL rouge_l=0.2786  (n=20)
+  qmsum [5/20]  rouge_l=0.2369
+  qmsum [10/20]  rouge_l=0.2517
+  qmsum [15/20]  rouge_l=0.2430
+  qmsum [20/20]  rouge_l=0.2373
+  qmsum  FINAL rouge_l=0.2373  (n=20)
+  passage_count [5/20]  count=0.4000
+  passage_count [10/20]  count=0.3000
+  passage_count [15/20]  count=0.2000
+  passage_count [20/20]  count=0.2000
+  passage_count  FINAL count=0.2000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.7000
+  trec  FINAL classification=0.7000  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9000
+  triviaqa [15/20]  qa_f1=0.9333
+  triviaqa [20/20]  qa_f1=0.9500
+  triviaqa  FINAL qa_f1=0.9500  (n=20)
+
+  LongBench compression: full 783.7 MB → compressed 237.1 MB (3.31×, avg seq 6187)
+
+Saved → runs/C3/llama3/results.json
+{
+  "config": "C3",
+  "method": "KVQuant (4-bit per-channel K + per-token V, 1.0% FP16 outliers)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "bits": 4,
+  "group_size": 128,
+  "outlier_frac": 0.01,
+  "ttft_ms": 1885.1,
+  "tpot_ms": 40.166,
+  "tokens_per_sec": 24.9,
+  "peak_vram_mb": 19183.6,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 274.8,
+  "kv_compression_ratio": 3.412,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4302,
+  "longbench_avg_seq_len": 6186.7,
+  "longbench_avg_kv_cache_mb_full": 783.72,
+  "longbench_avg_kv_cache_mb": 237.12,
+  "longbench_avg_compression_ratio": 3.305
+}
+--- RUN C4/llama3 (scripts/benchmark_c4_dynamickv.py) 2026-07-16 00:35:52
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C4 (DynamicKV, mean per-layer budget=1024, window=32, kernel=7, ratio_max=10)
+Model  : meta-llama/Meta-Llama-3-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C4/llama3/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:17,  2.11it/s]Loading weights:   7%|▋         | 19/291 [00:00<00:06, 43.15it/s]Loading weights:  14%|█▎        | 40/291 [00:00<00:03, 77.76it/s]Loading weights:  20%|█▉        | 58/291 [00:00<00:02, 101.38it/s]Loading weights:  26%|██▌       | 76/291 [00:00<00:01, 117.98it/s]Loading weights:  33%|███▎      | 95/291 [00:01<00:01, 135.62it/s]Loading weights:  39%|███▉      | 114/291 [00:01<00:01, 148.19it/s]Loading weights:  45%|████▌     | 131/291 [00:01<00:01, 153.42it/s]Loading weights:  52%|█████▏    | 150/291 [00:01<00:00, 152.11it/s]Loading weights:  60%|██████    | 175/291 [00:01<00:00, 171.49it/s]Loading weights:  67%|██████▋   | 194/291 [00:01<00:00, 173.15it/s]Loading weights:  73%|███████▎  | 212/291 [00:01<00:00, 168.95it/s]Loading weights:  79%|███████▉  | 230/291 [00:01<00:00, 168.02it/s]Loading weights:  88%|████████▊ | 256/291 [00:01<00:00, 180.94it/s]Loading weights:  95%|█████████▍| 275/291 [00:02<00:00, 176.41it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 138.44it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (DynamicKV) ===
+  narrativeqa [5/20]  qa_f1=0.2476
+  narrativeqa [10/20]  qa_f1=0.2559
+  narrativeqa [15/20]  qa_f1=0.3150
+  narrativeqa [20/20]  qa_f1=0.2984
+  narrativeqa  FINAL qa_f1=0.2984  (n=20)
+  qasper [5/20]  qa_f1=0.2473
+  qasper [10/20]  qa_f1=0.4147
+  qasper [15/20]  qa_f1=0.3483
+  qasper [20/20]  qa_f1=0.3638
+  qasper  FINAL qa_f1=0.3638  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8278
+  multifieldqa_en [10/20]  qa_f1=0.7690
+  multifieldqa_en [15/20]  qa_f1=0.6412
+  multifieldqa_en [20/20]  qa_f1=0.5433
+  multifieldqa_en  FINAL qa_f1=0.5433  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4800
+  hotpotqa [10/20]  qa_f1=0.4900
+  hotpotqa [15/20]  qa_f1=0.5044
+  hotpotqa [20/20]  qa_f1=0.4617
+  hotpotqa  FINAL qa_f1=0.4617  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1333
+  2wikimqa [10/20]  qa_f1=0.4667
+  2wikimqa [15/20]  qa_f1=0.4683
+  2wikimqa [20/20]  qa_f1=0.4012
+  2wikimqa  FINAL qa_f1=0.4012  (n=20)
+  gov_report [5/20]  rouge_l=0.2352
+  gov_report [10/20]  rouge_l=0.2308
+  gov_report [15/20]  rouge_l=0.2272
+  gov_report [20/20]  rouge_l=0.2380
+  gov_report  FINAL rouge_l=0.2380  (n=20)
+  multi_news [5/20]  rouge_l=0.2521
+  multi_news [10/20]  rouge_l=0.2614
+  multi_news [15/20]  rouge_l=0.2623
+  multi_news [20/20]  rouge_l=0.2685
+  multi_news  FINAL rouge_l=0.2685  (n=20)
+  qmsum [5/20]  rouge_l=0.2268
+  qmsum [10/20]  rouge_l=0.2368
+  qmsum [15/20]  rouge_l=0.2326
+  qmsum [20/20]  rouge_l=0.2285
+  qmsum  FINAL rouge_l=0.2285  (n=20)
+  passage_count [5/20]  count=0.4000
+  passage_count [10/20]  count=0.3000
+  passage_count [15/20]  count=0.2000
+  passage_count [20/20]  count=0.2000
+  passage_count  FINAL count=0.2000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.7000
+  trec  FINAL classification=0.7000  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9067
+  triviaqa [15/20]  qa_f1=0.9378
+  triviaqa [20/20]  qa_f1=0.9533
+  triviaqa  FINAL qa_f1=0.9533  (n=20)
+
+  LongBench compression: full 773.3 MB → compressed 127.8 MB (6.05×, avg seq 6187 → 1023 kept)
+
+Saved → runs/C4/llama3/results.json
+{
+  "config": "C4",
+  "method": "DynamicKV (cross-layer adaptive budget reallocation, shared index set per layer; Zhou et al. 2024)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "max_capacity": 1024,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1825.21,
+  "tpot_ms": 38.274,
+  "tokens_per_sec": 26.13,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 128.0,
+  "kv_compression_ratio": 7.324,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4233,
+  "longbench_avg_seq_len": 6186.7,
+  "longbench_avg_kept_per_layer": 1022.6,
+  "longbench_avg_kv_cache_mb_full": 773.34,
+  "longbench_avg_kv_cache_mb": 127.82,
+  "longbench_avg_compression_ratio": 6.05,
+  "ratio_max": 10
+}
+--- RUN C5/llama3 (scripts/benchmark_c5_adakv.py) 2026-07-16 00:54:06
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C5 (head-vote top-k eviction, Ada-KV-inspired weighting, per-head=1024, window=32, kernel=7)
+Model  : meta-llama/Meta-Llama-3-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C5/llama3/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:01<08:13,  1.70s/it]Loading weights:   8%|▊         | 22/291 [00:01<00:16, 16.40it/s]Loading weights:  14%|█▍        | 42/291 [00:01<00:07, 34.27it/s]Loading weights:  20%|██        | 59/291 [00:02<00:04, 50.66it/s]Loading weights:  29%|██▉       | 85/291 [00:02<00:02, 77.32it/s]Loading weights:  35%|███▌      | 103/291 [00:02<00:01, 94.39it/s]Loading weights:  42%|████▏     | 122/291 [00:02<00:01, 111.36it/s]Loading weights:  48%|████▊     | 141/291 [00:02<00:01, 126.56it/s]Loading weights:  55%|█████▍    | 159/291 [00:02<00:00, 137.94it/s]Loading weights:  63%|██████▎   | 184/291 [00:02<00:00, 153.51it/s]Loading weights:  70%|██████▉   | 203/291 [00:02<00:00, 160.00it/s]Loading weights:  76%|███████▋  | 222/291 [00:02<00:00, 164.88it/s]Loading weights:  82%|████████▏ | 240/291 [00:03<00:00, 165.00it/s]Loading weights:  91%|█████████ | 265/291 [00:03<00:00, 170.34it/s]Loading weights:  97%|█████████▋| 283/291 [00:03<00:00, 170.87it/s]Loading weights: 100%|██████████| 291/291 [00:03<00:00, 88.21it/s] 
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (head-vote eviction) ===
+  narrativeqa [5/20]  qa_f1=0.3183
+  narrativeqa [10/20]  qa_f1=0.2912
+  narrativeqa [15/20]  qa_f1=0.3386
+  narrativeqa [20/20]  qa_f1=0.3102
+  narrativeqa  FINAL qa_f1=0.3102  (n=20)
+  qasper [5/20]  qa_f1=0.2231
+  qasper [10/20]  qa_f1=0.4028
+  qasper [15/20]  qa_f1=0.3566
+  qasper [20/20]  qa_f1=0.3665
+  qasper  FINAL qa_f1=0.3665  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8500
+  multifieldqa_en [10/20]  qa_f1=0.7802
+  multifieldqa_en [15/20]  qa_f1=0.6486
+  multifieldqa_en [20/20]  qa_f1=0.5681
+  multifieldqa_en  FINAL qa_f1=0.5681  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4800
+  hotpotqa [10/20]  qa_f1=0.4900
+  hotpotqa [15/20]  qa_f1=0.5044
+  hotpotqa [20/20]  qa_f1=0.4617
+  hotpotqa  FINAL qa_f1=0.4617  (n=20)
+  2wikimqa [5/20]  qa_f1=0.1333
+  2wikimqa [10/20]  qa_f1=0.4667
+  2wikimqa [15/20]  qa_f1=0.4683
+  2wikimqa [20/20]  qa_f1=0.4012
+  2wikimqa  FINAL qa_f1=0.4012  (n=20)
+  gov_report [5/20]  rouge_l=0.2601
+  gov_report [10/20]  rouge_l=0.2499
+  gov_report [15/20]  rouge_l=0.2445
+  gov_report [20/20]  rouge_l=0.2521
+  gov_report  FINAL rouge_l=0.2521  (n=20)
+  multi_news [5/20]  rouge_l=0.2372
+  multi_news [10/20]  rouge_l=0.2503
+  multi_news [15/20]  rouge_l=0.2533
+  multi_news [20/20]  rouge_l=0.2592
+  multi_news  FINAL rouge_l=0.2592  (n=20)
+  qmsum [5/20]  rouge_l=0.2497
+  qmsum [10/20]  rouge_l=0.2528
+  qmsum [15/20]  rouge_l=0.2496
+  qmsum [20/20]  rouge_l=0.2329
+  qmsum  FINAL rouge_l=0.2329  (n=20)
+  passage_count [5/20]  count=0.4000
+  passage_count [10/20]  count=0.3000
+  passage_count [15/20]  count=0.2000
+  passage_count [20/20]  count=0.2000
+  passage_count  FINAL count=0.2000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.7000
+  trec  FINAL classification=0.7000  (n=20)
+  triviaqa [5/20]  qa_f1=0.9333
+  triviaqa [10/20]  qa_f1=0.9111
+  triviaqa [15/20]  qa_f1=0.9407
+  triviaqa [20/20]  qa_f1=0.9556
+  triviaqa  FINAL qa_f1=0.9556  (n=20)
+
+  LongBench compression: full 773.3 MB → compressed 127.8 MB (6.05×, avg seq 6187 → 1023 kept)
+
+Saved → runs/C5/llama3/results.json
+{
+  "config": "C5",
+  "method": "Head-vote top-k eviction (Ada-KV-inspired budget weighting, shared index set)",
+  "model": "llama3",
+  "model_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "budget_per_head": 1024,
+  "n_kv_heads": 8,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1943.07,
+  "tpot_ms": 61.004,
+  "tokens_per_sec": 16.39,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 128.0,
+  "kv_compression_ratio": 7.324,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 7.4601,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.428,
+  "longbench_avg_seq_len": 6186.7,
+  "longbench_avg_kept_per_layer": 1022.6,
+  "longbench_avg_kv_cache_mb_full": 773.34,
+  "longbench_avg_kv_cache_mb": 127.82,
+  "longbench_avg_compression_ratio": 6.05
+}
+--- RUN C0/llama31_8b (scripts/benchmark_c0_baseline.py) 2026-07-16 01:12:21
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Config : C0 (FP16 full KV cache, no compression)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C0/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<04:35,  1.05it/s]Loading weights:   1%|          | 2/291 [00:01<03:15,  1.48it/s]Loading weights:   6%|▌         | 18/291 [00:01<00:14, 18.65it/s]Loading weights:  11%|█         | 31/291 [00:01<00:07, 32.61it/s]Loading weights:  14%|█▍        | 41/291 [00:01<00:05, 42.68it/s]Loading weights:  19%|█▉        | 56/291 [00:01<00:03, 62.14it/s]Loading weights:  23%|██▎       | 67/291 [00:02<00:03, 59.42it/s]Loading weights:  26%|██▋       | 77/291 [00:02<00:03, 64.87it/s]Loading weights:  30%|██▉       | 86/291 [00:02<00:03, 66.29it/s]Loading weights:  33%|███▎      | 96/291 [00:02<00:02, 71.98it/s]Loading weights:  36%|███▌      | 105/291 [00:02<00:02, 75.18it/s]Loading weights:  39%|███▉      | 114/291 [00:02<00:02, 74.10it/s]Loading weights:  42%|████▏     | 123/291 [00:02<00:02, 76.99it/s]Loading weights:  45%|████▌     | 132/291 [00:02<00:02, 73.67it/s]Loading weights:  51%|█████     | 148/291 [00:03<00:02, 70.93it/s]Loading weights:  54%|█████▍    | 158/291 [00:03<00:01, 75.93it/s]Loading weights:  57%|█████▋    | 167/291 [00:03<00:01, 75.60it/s]Loading weights:  60%|██████    | 176/291 [00:03<00:01, 75.40it/s]Loading weights:  63%|██████▎   | 184/291 [00:03<00:01, 70.37it/s]Loading weights:  66%|██████▋   | 193/291 [00:03<00:01, 75.03it/s]Loading weights:  69%|██████▉   | 202/291 [00:03<00:01, 74.80it/s]Loading weights:  73%|███████▎  | 211/291 [00:03<00:01, 75.40it/s]Loading weights:  76%|███████▌  | 221/291 [00:04<00:01, 69.37it/s]Loading weights:  82%|████████▏ | 238/291 [00:04<00:00, 78.38it/s]Loading weights:  85%|████████▍ | 247/291 [00:04<00:00, 69.72it/s]Loading weights:  88%|████████▊ | 256/291 [00:04<00:00, 71.75it/s]Loading weights:  91%|█████████ | 265/291 [00:04<00:00, 69.13it/s]Loading weights:  94%|█████████▍| 274/291 [00:04<00:00, 70.61it/s]Loading weights:  97%|█████████▋| 283/291 [00:04<00:00, 73.01it/s]Loading weights: 100%|██████████| 291/291 [00:05<00:00, 58.17it/s]
+[transformers] The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench ===
+  narrativeqa [5/20]  qa_f1=0.1513
+  narrativeqa [10/20]  qa_f1=0.2041
+  narrativeqa [15/20]  qa_f1=0.2027
+  narrativeqa [20/20]  qa_f1=0.2146
+  narrativeqa  FINAL qa_f1=0.2146  (n=20)
+  qasper [5/20]  qa_f1=0.3020
+  qasper [10/20]  qa_f1=0.3633
+  qasper [15/20]  qa_f1=0.3826
+  qasper [20/20]  qa_f1=0.3973
+  qasper  FINAL qa_f1=0.3973  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.7633
+  multifieldqa_en [10/20]  qa_f1=0.6948
+  multifieldqa_en [15/20]  qa_f1=0.6171
+  multifieldqa_en [20/20]  qa_f1=0.5012
+  multifieldqa_en  FINAL qa_f1=0.5012  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4000
+  hotpotqa [10/20]  qa_f1=0.3900
+  hotpotqa [15/20]  qa_f1=0.4378
+  hotpotqa [20/20]  qa_f1=0.4450
+  hotpotqa  FINAL qa_f1=0.4450  (n=20)
+  2wikimqa [5/20]  qa_f1=0.4133
+  2wikimqa [10/20]  qa_f1=0.6067
+  2wikimqa [15/20]  qa_f1=0.5911
+  2wikimqa [20/20]  qa_f1=0.5433
+  2wikimqa  FINAL qa_f1=0.5433  (n=20)
+  gov_report [5/20]  rouge_l=0.3568
+  gov_report [10/20]  rouge_l=0.3561
+  gov_report [15/20]  rouge_l=0.3381
+  gov_report [20/20]  rouge_l=0.3343
+  gov_report  FINAL rouge_l=0.3343  (n=20)
+  multi_news [5/20]  rouge_l=0.2630
+  multi_news [10/20]  rouge_l=0.2697
+  multi_news [15/20]  rouge_l=0.2760
+  multi_news [20/20]  rouge_l=0.2781
+  multi_news  FINAL rouge_l=0.2781  (n=20)
+  qmsum [5/20]  rouge_l=0.2478
+  qmsum [10/20]  rouge_l=0.2562
+  qmsum [15/20]  rouge_l=0.2454
+  qmsum [20/20]  rouge_l=0.2297
+  qmsum  FINAL rouge_l=0.2297  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.1000
+  passage_count  FINAL count=0.1000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.7000
+  trec [15/20]  classification=0.7333
+  trec [20/20]  classification=0.8000
+  trec  FINAL classification=0.8000  (n=20)
+  triviaqa [5/20]  qa_f1=1.0000
+  triviaqa [10/20]  qa_f1=0.9000
+  triviaqa [15/20]  qa_f1=0.9333
+  triviaqa [20/20]  qa_f1=0.9500
+  triviaqa  FINAL qa_f1=0.9500  (n=20)
+
+Saved → runs/C0/llama31_8b/results.json
+{
+  "config": "C0",
+  "method": "none (FP16 full KV cache)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "ttft_ms": 1745.51,
+  "tpot_ms": 40.661,
+  "tokens_per_sec": 24.59,
+  "peak_vram_mb": 18169.5,
+  "kv_cache_mb": 937.5,
+  "kv_compression_ratio": 1.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4358
+}
+--- RUN C1/llama31_8b (scripts/benchmark_c1_tailorkv.py) 2026-07-16 01:35:15
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C1 (hybrid aggressive eviction — SnapKV-style top-(64+128) on all layers + 1-bit quant of layer [0] survivors; TailorKV-inspired)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C1/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:26,  1.98it/s]Loading weights:   7%|▋         | 19/291 [00:00<00:06, 40.78it/s]Loading weights:  13%|█▎        | 37/291 [00:00<00:03, 71.54it/s]Loading weights:  20%|█▉        | 58/291 [00:00<00:02, 96.43it/s]Loading weights:  26%|██▌       | 76/291 [00:00<00:01, 112.46it/s]Loading weights:  32%|███▏      | 94/291 [00:01<00:01, 125.30it/s]Loading weights:  38%|███▊      | 112/291 [00:01<00:01, 138.94it/s]Loading weights:  45%|████▍     | 130/291 [00:01<00:01, 146.29it/s]Loading weights:  51%|█████     | 148/291 [00:01<00:00, 154.74it/s]Loading weights:  57%|█████▋    | 166/291 [00:01<00:00, 148.41it/s]Loading weights:  64%|██████▍   | 186/291 [00:01<00:00, 159.55it/s]Loading weights:  72%|███████▏  | 210/291 [00:01<00:00, 181.53it/s]Loading weights:  79%|███████▊  | 229/291 [00:01<00:00, 157.48it/s]Loading weights:  85%|████████▍ | 247/291 [00:02<00:00, 162.72it/s]Loading weights:  92%|█████████▏| 267/291 [00:02<00:00, 171.21it/s]Loading weights:  98%|█████████▊| 285/291 [00:02<00:00, 170.67it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 131.38it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (C1 hybrid aggressive eviction) ===
+  narrativeqa [5/20]  qa_f1=0.1124
+  narrativeqa [10/20]  qa_f1=0.1840
+  narrativeqa [15/20]  qa_f1=0.1671
+  narrativeqa [20/20]  qa_f1=0.1709
+  narrativeqa  FINAL qa_f1=0.1709  (n=20)
+  qasper [5/20]  qa_f1=0.2263
+  qasper [10/20]  qa_f1=0.3015
+  qasper [15/20]  qa_f1=0.2344
+  qasper [20/20]  qa_f1=0.2222
+  qasper  FINAL qa_f1=0.2222  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8278
+  multifieldqa_en [10/20]  qa_f1=0.7070
+  multifieldqa_en [15/20]  qa_f1=0.6071
+  multifieldqa_en [20/20]  qa_f1=0.5162
+  multifieldqa_en  FINAL qa_f1=0.5162  (n=20)
+  hotpotqa [5/20]  qa_f1=0.3333
+  hotpotqa [10/20]  qa_f1=0.3567
+  hotpotqa [15/20]  qa_f1=0.3769
+  hotpotqa [20/20]  qa_f1=0.3993
+  hotpotqa  FINAL qa_f1=0.3993  (n=20)
+  2wikimqa [5/20]  qa_f1=0.5333
+  2wikimqa [10/20]  qa_f1=0.6467
+  2wikimqa [15/20]  qa_f1=0.6178
+  2wikimqa [20/20]  qa_f1=0.5050
+  2wikimqa  FINAL qa_f1=0.5050  (n=20)
+  gov_report [5/20]  rouge_l=0.1796
+  gov_report [10/20]  rouge_l=0.1827
+  gov_report [15/20]  rouge_l=0.1884
+  gov_report [20/20]  rouge_l=0.1958
+  gov_report  FINAL rouge_l=0.1958  (n=20)
+  multi_news [5/20]  rouge_l=0.2259
+  multi_news [10/20]  rouge_l=0.2060
+  multi_news [15/20]  rouge_l=0.2126
+  multi_news [20/20]  rouge_l=0.2100
+  multi_news  FINAL rouge_l=0.2100  (n=20)
+  qmsum [5/20]  rouge_l=0.2619
+  qmsum [10/20]  rouge_l=0.2765
+  qmsum [15/20]  rouge_l=0.2598
+  qmsum [20/20]  rouge_l=0.2505
+  qmsum  FINAL rouge_l=0.2505  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.1000
+  passage_count  FINAL count=0.1000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.6000
+  trec [15/20]  classification=0.6000
+  trec [20/20]  classification=0.6000
+  trec  FINAL classification=0.6000  (n=20)
+  triviaqa [5/20]  qa_f1=1.0000
+  triviaqa [10/20]  qa_f1=0.8174
+  triviaqa [15/20]  qa_f1=0.8116
+  triviaqa [20/20]  qa_f1=0.8587
+  triviaqa  FINAL qa_f1=0.8587  (n=20)
+
+  LongBench compression: full 774.5 MB → compressed 23.3 MB (33.21×, avg seq 6196 → 192 avg kept/layer)
+
+Saved → runs/C1/llama31_8b/results.json
+{
+  "config": "C1",
+  "method": "Hybrid aggressive eviction: SnapKV-style top-(64+128) retention on all layers + 1-bit quantization of layer-0 survivors (TailorKV-inspired)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "q_layers": [
+    0
+  ],
+  "bits": 1,
+  "group_size": 64,
+  "n_local": 64,
+  "n_topk": 128,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1895.36,
+  "tpot_ms": 39.937,
+  "tokens_per_sec": 25.04,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 23.32,
+  "kv_compression_ratio": 40.201,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.3662,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 192.0,
+  "longbench_avg_kv_cache_mb_full": 774.49,
+  "longbench_avg_kv_cache_mb": 23.32,
+  "longbench_avg_compression_ratio": 33.211,
+  "longbench_avg_per_prompt_compression": 27.187
+}
+--- RUN C2/llama31_8b (scripts/benchmark_c2_qaq.py) 2026-07-16 01:58:25
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C2 (Full QAQ — variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C2/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:12,  2.18it/s]Loading weights:   8%|▊         | 22/291 [00:00<00:05, 51.30it/s]Loading weights:  14%|█▎        | 40/291 [00:00<00:03, 77.46it/s]Loading weights:  20%|██        | 59/291 [00:00<00:02, 105.05it/s]Loading weights:  26%|██▋       | 77/291 [00:00<00:01, 123.86it/s]Loading weights:  33%|███▎      | 95/291 [00:01<00:01, 135.18it/s]Loading weights:  39%|███▉      | 113/291 [00:01<00:01, 145.50it/s]Loading weights:  45%|████▍     | 130/291 [00:01<00:01, 151.64it/s]Loading weights:  51%|█████     | 149/291 [00:01<00:00, 159.39it/s]Loading weights:  57%|█████▋    | 166/291 [00:01<00:00, 162.23it/s]Loading weights:  63%|██████▎   | 184/291 [00:01<00:00, 162.66it/s]Loading weights:  73%|███████▎  | 211/291 [00:01<00:00, 172.74it/s]Loading weights:  79%|███████▊  | 229/291 [00:01<00:00, 170.48it/s]Loading weights:  85%|████████▍ | 247/291 [00:01<00:00, 169.33it/s]Loading weights:  92%|█████████▏| 267/291 [00:01<00:00, 177.33it/s]Loading weights:  98%|█████████▊| 285/291 [00:02<00:00, 174.23it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 138.45it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+Calibrating q_norm from SPEED_TEXT (skip-speed-ppl mode)...
+  q_norm = 247.4
+
+=== LongBench (Full QAQ, attention-aware variable-bit generation) ===
+  narrativeqa [5/20]  qa_f1=0.1536
+  narrativeqa [10/20]  qa_f1=0.2145
+  narrativeqa [15/20]  qa_f1=0.2097
+  narrativeqa [20/20]  qa_f1=0.2144
+  narrativeqa  FINAL qa_f1=0.2144  (n=20)
+  qasper [5/20]  qa_f1=0.2785
+  qasper [10/20]  qa_f1=0.3297
+  qasper [15/20]  qa_f1=0.3538
+  qasper [20/20]  qa_f1=0.3812
+  qasper  FINAL qa_f1=0.3812  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.7421
+  multifieldqa_en [10/20]  qa_f1=0.6715
+  multifieldqa_en [15/20]  qa_f1=0.6189
+  multifieldqa_en [20/20]  qa_f1=0.5173
+  multifieldqa_en  FINAL qa_f1=0.5173  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4000
+  hotpotqa [10/20]  qa_f1=0.3900
+  hotpotqa [15/20]  qa_f1=0.3933
+  hotpotqa [20/20]  qa_f1=0.4117
+  hotpotqa  FINAL qa_f1=0.4117  (n=20)
+  2wikimqa [5/20]  qa_f1=0.5333
+  2wikimqa [10/20]  qa_f1=0.6667
+  2wikimqa [15/20]  qa_f1=0.6311
+  2wikimqa [20/20]  qa_f1=0.5733
+  2wikimqa  FINAL qa_f1=0.5733  (n=20)
+  gov_report [5/20]  rouge_l=0.3323
+  gov_report [10/20]  rouge_l=0.3341
+  gov_report [15/20]  rouge_l=0.3246
+  gov_report [20/20]  rouge_l=0.3218
+  gov_report  FINAL rouge_l=0.3218  (n=20)
+  multi_news [5/20]  rouge_l=0.2683
+  multi_news [10/20]  rouge_l=0.2689
+  multi_news [15/20]  rouge_l=0.2670
+  multi_news [20/20]  rouge_l=0.2724
+  multi_news  FINAL rouge_l=0.2724  (n=20)
+  qmsum [5/20]  rouge_l=0.2487
+  qmsum [10/20]  rouge_l=0.2531
+  qmsum [15/20]  rouge_l=0.2453
+  qmsum [20/20]  rouge_l=0.2372
+  qmsum  FINAL rouge_l=0.2372  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0708
+  passage_count [20/20]  count=0.1031
+  passage_count  FINAL count=0.1031  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.7000
+  trec [15/20]  classification=0.7333
+  trec [20/20]  classification=0.8000
+  trec  FINAL classification=0.8000  (n=20)
+  triviaqa [5/20]  qa_f1=1.0000
+  triviaqa [10/20]  qa_f1=0.9000
+  triviaqa [15/20]  qa_f1=0.9333
+  triviaqa [20/20]  qa_f1=0.9500
+  triviaqa  FINAL qa_f1=0.9500  (n=20)
+
+  LongBench QAQ avg bits (incl. metadata): 3.477  (4.61× compression, n=220 prompts)
+
+Saved → runs/C2/llama31_8b/results.json
+{
+  "config": "C2",
+  "method": "QAQ full (variable-bit [2,16], 1% outliers, window=5, decode=attention-aware)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "ttft_ms": 2519.47,
+  "tpot_ms": 230.225,
+  "tokens_per_sec": 4.34,
+  "peak_vram_mb": 18164.6,
+  "kv_cache_mb": 178.34,
+  "kv_compression_ratio": 5.292,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "qaq_n_bits_min": 2,
+  "qaq_n_bits_max": 16,
+  "qaq_outlier_ratio": 0.01,
+  "qaq_target_error": 1.0,
+  "qaq_window": 5,
+  "qaq_q_norm": 247.36,
+  "qaq_avg_bits": 3.023,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4348,
+  "longbench_avg_bits": 3.477,
+  "longbench_avg_compression_ratio": 4.609
+}
+--- RUN C3/llama31_8b (scripts/benchmark_c3_kvquant.py) 2026-07-16 03:23:46
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C3 (KVQuant — 4-bit per-channel K + per-token V, 1.0% FP16 outliers)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C3/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<04:22,  1.11it/s]Loading weights:   1%|          | 2/291 [00:01<03:33,  1.35it/s]Loading weights:   2%|▏         | 5/291 [00:01<01:08,  4.20it/s]Loading weights:   4%|▍         | 13/291 [00:01<00:20, 13.69it/s]Loading weights:  11%|█         | 31/291 [00:01<00:06, 38.84it/s]Loading weights:  17%|█▋        | 50/291 [00:01<00:03, 64.42it/s]Loading weights:  24%|██▎       | 69/291 [00:02<00:02, 88.79it/s]Loading weights:  30%|██▉       | 86/291 [00:02<00:01, 104.38it/s]Loading weights:  35%|███▌      | 103/291 [00:02<00:01, 119.70it/s]Loading weights:  42%|████▏     | 122/291 [00:02<00:01, 136.05it/s]Loading weights:  48%|████▊     | 141/291 [00:02<00:01, 149.15it/s]Loading weights:  54%|█████▍    | 158/291 [00:02<00:00, 154.79it/s]Loading weights:  63%|██████▎   | 184/291 [00:02<00:00, 166.01it/s]Loading weights:  70%|███████   | 204/291 [00:02<00:00, 172.47it/s]Loading weights:  78%|███████▊  | 228/291 [00:02<00:00, 190.78it/s]Loading weights:  85%|████████▌ | 248/291 [00:03<00:00, 166.65it/s]Loading weights:  91%|█████████▏| 266/291 [00:03<00:00, 163.28it/s]Loading weights:  98%|█████████▊| 285/291 [00:03<00:00, 169.74it/s]Loading weights: 100%|██████████| 291/291 [00:03<00:00, 88.12it/s] 
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (KVQuant) ===
+  narrativeqa [5/20]  qa_f1=0.1513
+  narrativeqa [10/20]  qa_f1=0.2034
+  narrativeqa [15/20]  qa_f1=0.2023
+  narrativeqa [20/20]  qa_f1=0.2143
+  narrativeqa  FINAL qa_f1=0.2143  (n=20)
+  qasper [5/20]  qa_f1=0.2766
+  qasper [10/20]  qa_f1=0.3506
+  qasper [15/20]  qa_f1=0.3742
+  qasper [20/20]  qa_f1=0.3883
+  qasper  FINAL qa_f1=0.3883  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.7633
+  multifieldqa_en [10/20]  qa_f1=0.6748
+  multifieldqa_en [15/20]  qa_f1=0.6056
+  multifieldqa_en [20/20]  qa_f1=0.4940
+  multifieldqa_en  FINAL qa_f1=0.4940  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4000
+  hotpotqa [10/20]  qa_f1=0.3900
+  hotpotqa [15/20]  qa_f1=0.4378
+  hotpotqa [20/20]  qa_f1=0.4450
+  hotpotqa  FINAL qa_f1=0.4450  (n=20)
+  2wikimqa [5/20]  qa_f1=0.4133
+  2wikimqa [10/20]  qa_f1=0.6067
+  2wikimqa [15/20]  qa_f1=0.5911
+  2wikimqa [20/20]  qa_f1=0.5433
+  2wikimqa  FINAL qa_f1=0.5433  (n=20)
+  gov_report [5/20]  rouge_l=0.3567
+  gov_report [10/20]  rouge_l=0.3619
+  gov_report [15/20]  rouge_l=0.3466
+  gov_report [20/20]  rouge_l=0.3428
+  gov_report  FINAL rouge_l=0.3428  (n=20)
+  multi_news [5/20]  rouge_l=0.2669
+  multi_news [10/20]  rouge_l=0.2737
+  multi_news [15/20]  rouge_l=0.2798
+  multi_news [20/20]  rouge_l=0.2748
+  multi_news  FINAL rouge_l=0.2748  (n=20)
+  qmsum [5/20]  rouge_l=0.2441
+  qmsum [10/20]  rouge_l=0.2555
+  qmsum [15/20]  rouge_l=0.2491
+  qmsum [20/20]  rouge_l=0.2352
+  qmsum  FINAL rouge_l=0.2352  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.1000
+  passage_count  FINAL count=0.1000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.7000
+  trec [15/20]  classification=0.7333
+  trec [20/20]  classification=0.8000
+  trec  FINAL classification=0.8000  (n=20)
+  triviaqa [5/20]  qa_f1=1.0000
+  triviaqa [10/20]  qa_f1=0.9000
+  triviaqa [15/20]  qa_f1=0.9333
+  triviaqa [20/20]  qa_f1=0.9500
+  triviaqa  FINAL qa_f1=0.9500  (n=20)
+
+  LongBench compression: full 788.5 MB → compressed 241.1 MB (3.27×, avg seq 6196)
+
+Saved → runs/C3/llama31_8b/results.json
+{
+  "config": "C3",
+  "method": "KVQuant (4-bit per-channel K + per-token V, 1.0% FP16 outliers)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "bits": 4,
+  "group_size": 128,
+  "outlier_frac": 0.01,
+  "ttft_ms": 1879.56,
+  "tpot_ms": 45.07,
+  "tokens_per_sec": 22.19,
+  "peak_vram_mb": 19183.6,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 274.8,
+  "kv_compression_ratio": 3.412,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4352,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kv_cache_mb_full": 788.55,
+  "longbench_avg_kv_cache_mb": 241.14,
+  "longbench_avg_compression_ratio": 3.27
+}
+--- RUN C4/llama31_8b (scripts/benchmark_c4_dynamickv.py) 2026-07-16 03:46:04
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C4 (DynamicKV, mean per-layer budget=1024, window=32, kernel=7, ratio_max=10)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C4/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<03:31,  1.37it/s]Loading weights:   1%|          | 2/291 [00:01<04:18,  1.12it/s]Loading weights:   2%|▏         | 6/291 [00:01<01:04,  4.44it/s]Loading weights:   8%|▊         | 23/291 [00:01<00:11, 22.42it/s]Loading weights:  14%|█▍        | 41/291 [00:02<00:05, 43.20it/s]Loading weights:  20%|█▉        | 58/291 [00:02<00:03, 63.06it/s]Loading weights:  26%|██▌       | 76/291 [00:02<00:02, 82.94it/s]Loading weights:  32%|███▏      | 94/291 [00:02<00:01, 101.39it/s]Loading weights:  38%|███▊      | 112/291 [00:02<00:01, 116.82it/s]Loading weights:  45%|████▌     | 131/291 [00:02<00:01, 133.29it/s]Loading weights:  54%|█████▍    | 157/291 [00:02<00:00, 147.36it/s]Loading weights:  62%|██████▏   | 181/291 [00:02<00:00, 169.92it/s]Loading weights:  69%|██████▊   | 200/291 [00:02<00:00, 164.57it/s]Loading weights:  76%|███████▌  | 220/291 [00:03<00:00, 164.58it/s]Loading weights:  82%|████████▏ | 240/291 [00:03<00:00, 172.85it/s]Loading weights:  89%|████████▉ | 259/291 [00:03<00:00, 175.42it/s]Loading weights:  97%|█████████▋| 283/291 [00:03<00:00, 178.94it/s]Loading weights: 100%|██████████| 291/291 [00:03<00:00, 84.75it/s] 
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (DynamicKV) ===
+  narrativeqa [5/20]  qa_f1=0.2000
+  narrativeqa [10/20]  qa_f1=0.2284
+  narrativeqa [15/20]  qa_f1=0.2190
+  narrativeqa [20/20]  qa_f1=0.2229
+  narrativeqa  FINAL qa_f1=0.2229  (n=20)
+  qasper [5/20]  qa_f1=0.2786
+  qasper [10/20]  qa_f1=0.3360
+  qasper [15/20]  qa_f1=0.3327
+  qasper [20/20]  qa_f1=0.3607
+  qasper  FINAL qa_f1=0.3607  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8500
+  multifieldqa_en [10/20]  qa_f1=0.7181
+  multifieldqa_en [15/20]  qa_f1=0.6439
+  multifieldqa_en [20/20]  qa_f1=0.5356
+  multifieldqa_en  FINAL qa_f1=0.5356  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4000
+  hotpotqa [10/20]  qa_f1=0.3900
+  hotpotqa [15/20]  qa_f1=0.4378
+  hotpotqa [20/20]  qa_f1=0.4450
+  hotpotqa  FINAL qa_f1=0.4450  (n=20)
+  2wikimqa [5/20]  qa_f1=0.4133
+  2wikimqa [10/20]  qa_f1=0.6067
+  2wikimqa [15/20]  qa_f1=0.5911
+  2wikimqa [20/20]  qa_f1=0.5433
+  2wikimqa  FINAL qa_f1=0.5433  (n=20)
+  gov_report [5/20]  rouge_l=0.2843
+  gov_report [10/20]  rouge_l=0.2733
+  gov_report [15/20]  rouge_l=0.2669
+  gov_report [20/20]  rouge_l=0.2708
+  gov_report  FINAL rouge_l=0.2708  (n=20)
+  multi_news [5/20]  rouge_l=0.2581
+  multi_news [10/20]  rouge_l=0.2512
+  multi_news [15/20]  rouge_l=0.2543
+  multi_news [20/20]  rouge_l=0.2565
+  multi_news  FINAL rouge_l=0.2565  (n=20)
+  qmsum [5/20]  rouge_l=0.2621
+  qmsum [10/20]  rouge_l=0.2583
+  qmsum [15/20]  rouge_l=0.2452
+  qmsum [20/20]  rouge_l=0.2416
+  qmsum  FINAL rouge_l=0.2416  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.1000
+  passage_count  FINAL count=0.1000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.7000
+  trec [15/20]  classification=0.7333
+  trec [20/20]  classification=0.8000
+  trec  FINAL classification=0.8000  (n=20)
+  triviaqa [5/20]  qa_f1=1.0000
+  triviaqa [10/20]  qa_f1=0.9000
+  triviaqa [15/20]  qa_f1=0.9333
+  triviaqa [20/20]  qa_f1=0.9500
+  triviaqa  FINAL qa_f1=0.9500  (n=20)
+
+  LongBench compression: full 774.5 MB → compressed 127.9 MB (6.06×, avg seq 6196 → 1023 kept)
+
+Saved → runs/C4/llama31_8b/results.json
+{
+  "config": "C4",
+  "method": "DynamicKV (cross-layer adaptive budget reallocation, shared index set per layer; Zhou et al. 2024)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "max_capacity": 1024,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1837.04,
+  "tpot_ms": 36.786,
+  "tokens_per_sec": 27.18,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 128.0,
+  "kv_compression_ratio": 7.324,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4297,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 1022.8,
+  "longbench_avg_kv_cache_mb_full": 774.49,
+  "longbench_avg_kv_cache_mb": 127.85,
+  "longbench_avg_compression_ratio": 6.058,
+  "ratio_max": 10
+}
+--- RUN C5/llama31_8b (scripts/benchmark_c5_adakv.py) 2026-07-16 04:07:10
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+Config : C5 (head-vote top-k eviction, Ada-KV-inspired weighting, per-head=1024, window=32, kernel=7)
+Model  : meta-llama/Llama-3.1-8B-Instruct
+Device : NVIDIA GeForce RTX 3090 Ti  (25.8 GB)
+Output : runs/C5/llama31_8b/results.json
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:   0%|          | 1/291 [00:00<02:36,  1.85it/s]Loading weights:   1%|          | 2/291 [00:00<02:21,  2.04it/s]Loading weights:   8%|▊         | 22/291 [00:01<00:08, 30.64it/s]Loading weights:  14%|█▎        | 40/291 [00:01<00:04, 55.91it/s]Loading weights:  20%|█▉        | 58/291 [00:01<00:02, 78.66it/s]Loading weights:  26%|██▌       | 76/291 [00:01<00:02, 99.26it/s]Loading weights:  33%|███▎      | 95/291 [00:01<00:01, 118.52it/s]Loading weights:  38%|███▊      | 112/291 [00:01<00:01, 130.50it/s]Loading weights:  45%|████▌     | 132/291 [00:01<00:01, 145.96it/s]Loading weights:  51%|█████     | 149/291 [00:01<00:00, 152.34it/s]Loading weights:  57%|█████▋    | 166/291 [00:01<00:00, 153.19it/s]Loading weights:  64%|██████▎   | 185/291 [00:02<00:00, 159.99it/s]Loading weights:  70%|██████▉   | 203/291 [00:02<00:00, 163.15it/s]Loading weights:  76%|███████▌  | 220/291 [00:02<00:00, 156.79it/s]Loading weights:  85%|████████▍ | 247/291 [00:02<00:00, 166.14it/s]Loading weights:  91%|█████████▏| 266/291 [00:02<00:00, 167.79it/s]Loading weights:  97%|█████████▋| 283/291 [00:02<00:00, 166.72it/s]Loading weights: 100%|██████████| 291/291 [00:02<00:00, 109.83it/s]
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+=== LongBench (head-vote eviction) ===
+  narrativeqa [5/20]  qa_f1=0.1964
+  narrativeqa [10/20]  qa_f1=0.2266
+  narrativeqa [15/20]  qa_f1=0.2178
+  narrativeqa [20/20]  qa_f1=0.2221
+  narrativeqa  FINAL qa_f1=0.2221  (n=20)
+  qasper [5/20]  qa_f1=0.2723
+  qasper [10/20]  qa_f1=0.3272
+  qasper [15/20]  qa_f1=0.3297
+  qasper [20/20]  qa_f1=0.3584
+  qasper  FINAL qa_f1=0.3584  (n=20)
+  multifieldqa_en [5/20]  qa_f1=0.8500
+  multifieldqa_en [10/20]  qa_f1=0.7054
+  multifieldqa_en [15/20]  qa_f1=0.6357
+  multifieldqa_en [20/20]  qa_f1=0.5300
+  multifieldqa_en  FINAL qa_f1=0.5300  (n=20)
+  hotpotqa [5/20]  qa_f1=0.4000
+  hotpotqa [10/20]  qa_f1=0.3900
+  hotpotqa [15/20]  qa_f1=0.4378
+  hotpotqa [20/20]  qa_f1=0.4450
+  hotpotqa  FINAL qa_f1=0.4450  (n=20)
+  2wikimqa [5/20]  qa_f1=0.4133
+  2wikimqa [10/20]  qa_f1=0.6067
+  2wikimqa [15/20]  qa_f1=0.5911
+  2wikimqa [20/20]  qa_f1=0.5433
+  2wikimqa  FINAL qa_f1=0.5433  (n=20)
+  gov_report [5/20]  rouge_l=0.3345
+  gov_report [10/20]  rouge_l=0.2959
+  gov_report [15/20]  rouge_l=0.2829
+  gov_report [20/20]  rouge_l=0.2814
+  gov_report  FINAL rouge_l=0.2814  (n=20)
+  multi_news [5/20]  rouge_l=0.2568
+  multi_news [10/20]  rouge_l=0.2454
+  multi_news [15/20]  rouge_l=0.2514
+  multi_news [20/20]  rouge_l=0.2544
+  multi_news  FINAL rouge_l=0.2544  (n=20)
+  qmsum [5/20]  rouge_l=0.2891
+  qmsum [10/20]  rouge_l=0.2701
+  qmsum [15/20]  rouge_l=0.2678
+  qmsum [20/20]  rouge_l=0.2616
+  qmsum  FINAL rouge_l=0.2616  (n=20)
+  passage_count [5/20]  count=0.0000
+  passage_count [10/20]  count=0.1000
+  passage_count [15/20]  count=0.0667
+  passage_count [20/20]  count=0.1000
+  passage_count  FINAL count=0.1000  (n=20)
+  trec [5/20]  classification=0.4000
+  trec [10/20]  classification=0.7000
+  trec [15/20]  classification=0.7333
+  trec [20/20]  classification=0.8000
+  trec  FINAL classification=0.8000  (n=20)
+  triviaqa [5/20]  qa_f1=1.0000
+  triviaqa [10/20]  qa_f1=0.9000
+  triviaqa [15/20]  qa_f1=0.9333
+  triviaqa [20/20]  qa_f1=0.9500
+  triviaqa  FINAL qa_f1=0.9500  (n=20)
+
+  LongBench compression: full 774.5 MB → compressed 127.9 MB (6.06×, avg seq 6196 → 1023 kept)
+
+Saved → runs/C5/llama31_8b/results.json
+{
+  "config": "C5",
+  "method": "Head-vote top-k eviction (Ada-KV-inspired budget weighting, shared index set)",
+  "model": "llama31_8b",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "budget_per_head": 1024,
+  "n_kv_heads": 8,
+  "window_size": 32,
+  "kernel_size": 7,
+  "ttft_ms": 1909.04,
+  "tpot_ms": 52.802,
+  "tokens_per_sec": 18.94,
+  "peak_vram_mb": 18151.3,
+  "kv_cache_mb_full": 937.5,
+  "kv_cache_mb": 128.0,
+  "kv_compression_ratio": 7.324,
+  "avg_kept_per_layer": 1024.0,
+  "speed_prompt_tokens": 7500,
+  "speed_n_decode": 50,
+  "ppl_wikitext2": 6.4974,
+  "ppl_n_chunks": 35,
+  "longbench_avg": 0.4315,
+  "longbench_avg_seq_len": 6195.9,
+  "longbench_avg_kept_per_layer": 1022.8,
+  "longbench_avg_kv_cache_mb_full": 774.49,
+  "longbench_avg_kv_cache_mb": 127.85,
+  "longbench_avg_compression_ratio": 6.058
+}
+--- build_dataset phi3 04:29:10
+wrote 220 rows → /home/youssef/projects/research/AdaptiveServe/runs/dataset/phi3.jsonl  (skipped 0 incomplete)
+
+features per prompt (7): ['gzip_ratio', 'newline_density', 'question_position', 'seq_len_chars', 'seq_len_tokens', 'token_entropy', 'unique_token_ratio']
+per-prompt compression (harmonic mean): C0=1.00x  C1=6.80x  C2=4.62x  C3=2.88x  C4=3.24x  C5=3.21x
+per-prompt compression (min .. max):   C0=1.00..1.00x  C1=2.19..10.85x  C2=4.59..4.65x  C3=1.83..3.37x  C4=1.55..3.98x  C5=1.54..3.98x
+
+per-config quality on training data (mean over all prompts):
+  always-C0: q=0.3033  cr_hmean=1.00x
+  always-C1: q=0.2934  cr_hmean=6.80x
+  always-C2: q=0.3175  cr_hmean=4.62x
+  always-C3: q=0.3050  cr_hmean=2.88x
+  always-C4: q=0.2950  cr_hmean=3.24x
+  always-C5: q=0.3000  cr_hmean=3.21x
+
+per-prompt oracle (upper bound the classifier targets):
+  oracle@tau=0.99: q=0.3294  cr=4.89x
+  oracle@tau=0.95: q=0.3276  cr=5.54x
+  oracle@tau=0.90: q=0.3262  cr=6.21x
+
+label distribution (which config wins):
+  best_quality            C0=142  C1=19  C2=20  C3=17  C4=12  C5=10
+  best_iso_quality_99     C0=14  C1=162  C2=24  C3=12  C4=4  C5=4
+  best_iso_quality_95     C0=9  C1=166  C2=30  C3=12  C4=1  C5=2
+  best_iso_quality_90     C0=5  C1=167  C2=37  C3=8  C4=0  C5=3
+--- build_dataset llama32_3b 04:29:10
+wrote 220 rows → /home/youssef/projects/research/AdaptiveServe/runs/dataset/llama32_3b.jsonl  (skipped 0 incomplete)
+
+features per prompt (7): ['gzip_ratio', 'newline_density', 'question_position', 'seq_len_chars', 'seq_len_tokens', 'token_entropy', 'unique_token_ratio']
+per-prompt compression (harmonic mean): C0=1.00x  C1=17.51x  C2=4.65x  C3=3.21x  C4=4.65x  C5=4.66x
+per-prompt compression (min .. max):   C0=1.00..1.00x  C1=2.38..40.16x  C2=4.54..4.68x  C3=1.95..3.41x  C4=1.00..7.32x  C5=1.00..7.32x
+
+per-config quality on training data (mean over all prompts):
+  always-C0: q=0.4031  cr_hmean=1.00x
+  always-C1: q=0.3353  cr_hmean=17.51x
+  always-C2: q=0.4046  cr_hmean=4.65x
+  always-C3: q=0.4013  cr_hmean=3.21x
+  always-C4: q=0.3960  cr_hmean=4.65x
+  always-C5: q=0.3961  cr_hmean=4.66x
+
+per-prompt oracle (upper bound the classifier targets):
+  oracle@tau=0.99: q=0.4238  cr=6.31x
+  oracle@tau=0.95: q=0.4222  cr=7.07x
+  oracle@tau=0.90: q=0.4183  cr=8.80x
+
+label distribution (which config wins):
+  best_quality            C0=144  C1=12  C2=29  C3=13  C4=14  C5=8
+  best_iso_quality_99     C0=13  C1=134  C2=26  C3=16  C4=23  C5=8
+  best_iso_quality_95     C0=10  C1=136  C2=31  C3=14  C4=23  C5=6
+  best_iso_quality_90     C0=4  C1=143  C2=36  C3=10  C4=22  C5=5
+--- build_dataset llama3 04:29:10
+wrote 220 rows → /home/youssef/projects/research/AdaptiveServe/runs/dataset/llama3.jsonl  (skipped 0 incomplete)
+
+features per prompt (7): ['gzip_ratio', 'newline_density', 'question_position', 'seq_len_chars', 'seq_len_tokens', 'token_entropy', 'unique_token_ratio']
+per-prompt compression (harmonic mean): C0=1.00x  C1=18.33x  C2=4.61x  C3=3.24x  C4=4.70x  C5=4.70x
+per-prompt compression (min .. max):   C0=1.00..1.00x  C1=2.24..39.99x  C2=4.49..4.65x  C3=1.97..3.41x  C4=1.00..7.32x  C5=1.00..7.32x
+
+per-config quality on training data (mean over all prompts):
+  always-C0: q=0.4293  cr_hmean=1.00x
+  always-C1: q=0.3743  cr_hmean=18.33x
+  always-C2: q=0.4231  cr_hmean=4.61x
+  always-C3: q=0.4302  cr_hmean=3.24x
+  always-C4: q=0.4233  cr_hmean=4.70x
+  always-C5: q=0.4280  cr_hmean=4.70x
+
+per-prompt oracle (upper bound the classifier targets):
+  oracle@tau=0.99: q=0.4426  cr=8.12x
+  oracle@tau=0.95: q=0.4414  cr=9.27x
+  oracle@tau=0.90: q=0.4391  cr=9.90x
+
+label distribution (which config wins):
+  best_quality            C0=143  C1=5  C2=36  C3=18  C4=9  C5=9
+  best_iso_quality_99     C0=6  C1=140  C2=33  C3=13  C4=17  C5=11
+  best_iso_quality_95     C0=3  C1=143  C2=35  C3=9  C4=18  C5=12
+  best_iso_quality_90     C0=3  C1=148  C2=30  C3=4  C4=19  C5=16
+--- build_dataset llama31_8b 04:29:10
+wrote 220 rows → /home/youssef/projects/research/AdaptiveServe/runs/dataset/llama31_8b.jsonl  (skipped 0 incomplete)
+
+features per prompt (7): ['gzip_ratio', 'newline_density', 'question_position', 'seq_len_chars', 'seq_len_tokens', 'token_entropy', 'unique_token_ratio']
+per-prompt compression (harmonic mean): C0=1.00x  C1=16.14x  C2=4.60x  C3=3.20x  C4=4.63x  C5=4.63x
+per-prompt compression (min .. max):   C0=1.00..1.00x  C1=2.00..39.99x  C2=4.49..4.64x  C3=1.82..3.41x  C4=1.00..7.32x  C5=1.00..7.32x
+
+per-config quality on training data (mean over all prompts):
+  always-C0: q=0.4358  cr_hmean=1.00x
+  always-C1: q=0.3662  cr_hmean=16.14x
+  always-C2: q=0.4348  cr_hmean=4.60x
+  always-C3: q=0.4352  cr_hmean=3.20x
+  always-C4: q=0.4297  cr_hmean=4.63x
+  always-C5: q=0.4315  cr_hmean=4.63x
+
+per-prompt oracle (upper bound the classifier targets):
+  oracle@tau=0.99: q=0.4527  cr=7.16x
+  oracle@tau=0.95: q=0.4509  cr=9.00x
+  oracle@tau=0.90: q=0.4480  cr=9.99x
+
+label distribution (which config wins):
+  best_quality            C0=151  C1=15  C2=20  C3=19  C4=7  C5=8
+  best_iso_quality_99     C0=11  C1=141  C2=30  C3=13  C4=22  C5=3
+  best_iso_quality_95     C0=4  C1=146  C2=32  C3=12  C4=19  C5=7
+  best_iso_quality_90     C0=2  C1=150  C2=33  C3=9  C4=20  C5=6
+--- cv_router_220 tau=0.99 04:29:10
+
+=== CV router (tau=0.99, 10-fold stratified by task) ===
+
+phi3
+  Router (10-fold CV, all 220 prompts): q=0.3108, cr=4.520x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.3033, cr=1.000x   vs router: router_dominates
+    C1: q=0.2934, cr=6.803x   vs router: non_dominated
+    C2: q=0.3175, cr=4.622x   vs router: router_dominated
+    C3: q=0.3050, cr=2.880x   vs router: router_dominates
+    C4: q=0.2950, cr=3.242x   vs router: router_dominates
+    C5: q=0.3000, cr=3.215x   vs router: router_dominates
+  Router vs FP16 (paired, fair): Δq = +0.0075 (+2.5%), compression: 4.52x vs 1.00x
+
+llama3
+  Router (10-fold CV, all 220 prompts): q=0.4274, cr=5.247x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4293, cr=1.000x   vs router: non_dominated
+    C1: q=0.3743, cr=18.329x   vs router: non_dominated
+    C2: q=0.4231, cr=4.607x   vs router: router_dominates
+    C3: q=0.4302, cr=3.240x   vs router: non_dominated
+    C4: q=0.4233, cr=4.697x   vs router: router_dominates
+    C5: q=0.4280, cr=4.705x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0019 (-0.4%), compression: 5.25x vs 1.00x
+
+llama32_3b
+  Router (10-fold CV, all 220 prompts): q=0.3907, cr=4.785x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4031, cr=1.000x   vs router: non_dominated
+    C1: q=0.3353, cr=17.506x   vs router: non_dominated
+    C2: q=0.4046, cr=4.647x   vs router: non_dominated
+    C3: q=0.4013, cr=3.215x   vs router: non_dominated
+    C4: q=0.3960, cr=4.647x   vs router: non_dominated
+    C5: q=0.3961, cr=4.660x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0124 (-3.1%), compression: 4.79x vs 1.00x
+
+llama31_8b
+  Router (10-fold CV, all 220 prompts): q=0.4239, cr=5.017x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4358, cr=1.000x   vs router: non_dominated
+    C1: q=0.3662, cr=16.144x   vs router: non_dominated
+    C2: q=0.4348, cr=4.602x   vs router: non_dominated
+    C3: q=0.4352, cr=3.196x   vs router: non_dominated
+    C4: q=0.4297, cr=4.632x   vs router: non_dominated
+    C5: q=0.4315, cr=4.633x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0119 (-2.7%), compression: 5.02x vs 1.00x
+
+Wrote /home/youssef/projects/research/AdaptiveServe/runs/cv_router_220_tau0.99.json
+
+--- cv_router_220 tau=0.95 04:29:34
+
+=== CV router (tau=0.95, 10-fold stratified by task) ===
+
+phi3
+  Router (10-fold CV, all 220 prompts): q=0.3041, cr=4.650x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.3033, cr=1.000x   vs router: router_dominates
+    C1: q=0.2934, cr=6.803x   vs router: non_dominated
+    C2: q=0.3175, cr=4.622x   vs router: non_dominated
+    C3: q=0.3050, cr=2.880x   vs router: non_dominated
+    C4: q=0.2950, cr=3.242x   vs router: router_dominates
+    C5: q=0.3000, cr=3.215x   vs router: router_dominates
+  Router vs FP16 (paired, fair): Δq = +0.0008 (+0.3%), compression: 4.65x vs 1.00x
+
+llama3
+  Router (10-fold CV, all 220 prompts): q=0.4211, cr=5.542x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4293, cr=1.000x   vs router: non_dominated
+    C1: q=0.3743, cr=18.329x   vs router: non_dominated
+    C2: q=0.4231, cr=4.607x   vs router: non_dominated
+    C3: q=0.4302, cr=3.240x   vs router: non_dominated
+    C4: q=0.4233, cr=4.697x   vs router: non_dominated
+    C5: q=0.4280, cr=4.705x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0082 (-1.9%), compression: 5.54x vs 1.00x
+
+llama32_3b
+  Router (10-fold CV, all 220 prompts): q=0.3869, cr=4.988x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4031, cr=1.000x   vs router: non_dominated
+    C1: q=0.3353, cr=17.506x   vs router: non_dominated
+    C2: q=0.4046, cr=4.647x   vs router: non_dominated
+    C3: q=0.4013, cr=3.215x   vs router: non_dominated
+    C4: q=0.3960, cr=4.647x   vs router: non_dominated
+    C5: q=0.3961, cr=4.660x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0162 (-4.0%), compression: 4.99x vs 1.00x
+
+llama31_8b
+  Router (10-fold CV, all 220 prompts): q=0.4229, cr=5.238x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4358, cr=1.000x   vs router: non_dominated
+    C1: q=0.3662, cr=16.144x   vs router: non_dominated
+    C2: q=0.4348, cr=4.602x   vs router: non_dominated
+    C3: q=0.4352, cr=3.196x   vs router: non_dominated
+    C4: q=0.4297, cr=4.632x   vs router: non_dominated
+    C5: q=0.4315, cr=4.633x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0129 (-3.0%), compression: 5.24x vs 1.00x
+
+Wrote /home/youssef/projects/research/AdaptiveServe/runs/cv_router_220_tau0.95.json
+
+--- cv_router_220 tau=0.90 04:29:57
+
+=== CV router (tau=0.9, 10-fold stratified by task) ===
+
+phi3
+  Router (10-fold CV, all 220 prompts): q=0.3040, cr=4.810x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.3033, cr=1.000x   vs router: router_dominates
+    C1: q=0.2934, cr=6.803x   vs router: non_dominated
+    C2: q=0.3175, cr=4.622x   vs router: non_dominated
+    C3: q=0.3050, cr=2.880x   vs router: non_dominated
+    C4: q=0.2950, cr=3.242x   vs router: router_dominates
+    C5: q=0.3000, cr=3.215x   vs router: router_dominates
+  Router vs FP16 (paired, fair): Δq = +0.0007 (+0.2%), compression: 4.81x vs 1.00x
+
+llama3
+  Router (10-fold CV, all 220 prompts): q=0.4189, cr=5.993x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4293, cr=1.000x   vs router: non_dominated
+    C1: q=0.3743, cr=18.329x   vs router: non_dominated
+    C2: q=0.4231, cr=4.607x   vs router: non_dominated
+    C3: q=0.4302, cr=3.240x   vs router: non_dominated
+    C4: q=0.4233, cr=4.697x   vs router: non_dominated
+    C5: q=0.4280, cr=4.705x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0104 (-2.4%), compression: 5.99x vs 1.00x
+
+llama32_3b
+  Router (10-fold CV, all 220 prompts): q=0.3779, cr=5.409x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4031, cr=1.000x   vs router: non_dominated
+    C1: q=0.3353, cr=17.506x   vs router: non_dominated
+    C2: q=0.4046, cr=4.647x   vs router: non_dominated
+    C3: q=0.4013, cr=3.215x   vs router: non_dominated
+    C4: q=0.3960, cr=4.647x   vs router: non_dominated
+    C5: q=0.3961, cr=4.660x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0252 (-6.3%), compression: 5.41x vs 1.00x
+
+llama31_8b
+  Router (10-fold CV, all 220 prompts): q=0.4227, cr=5.415x
+  Fixed methods on full 220 (apples-to-apples):
+    C0: q=0.4358, cr=1.000x   vs router: non_dominated
+    C1: q=0.3662, cr=16.144x   vs router: non_dominated
+    C2: q=0.4348, cr=4.602x   vs router: non_dominated
+    C3: q=0.4352, cr=3.196x   vs router: non_dominated
+    C4: q=0.4297, cr=4.632x   vs router: non_dominated
+    C5: q=0.4315, cr=4.633x   vs router: non_dominated
+  Router vs FP16 (paired, fair): Δq = -0.0131 (-3.0%), compression: 5.42x vs 1.00x
+
+Wrote /home/youssef/projects/research/AdaptiveServe/runs/cv_router_220_tau0.9.json
+
+--- c6 headline/LOTO phi3 tau=0.99 04:30:20
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35533 > 4096). Running this sequence through the model will result in indexing errors
+
+=== C6 router  model=phi3  tau=0.99  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3135  cr=4.82x  picks={'C1': 88, 'C2': 76, 'C3': 20, 'C4': 18, 'C5': 18}
+Split-tr : q=0.3365  cr=4.59x  (n_train=154)
+Split-te : q=0.3280  cr=4.14x  picks={'C5': 6, 'C1': 17, 'C2': 23, 'C3': 11, 'C4': 9}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.840 test=-0.077  MAE train=0.100 test=0.234
+  C0: R2 tr=+0.839 te=-0.155  MAE tr=0.102 te=0.242
+  C1: R2 tr=+0.831 te=+0.018  MAE tr=0.101 te=0.222
+  C2: R2 tr=+0.838 te=-0.174  MAE tr=0.103 te=0.262
+  C3: R2 tr=+0.829 te=-0.068  MAE tr=0.102 te=0.227
+  C4: R2 tr=+0.852 te=-0.021  MAE tr=0.096 te=0.218
+  C5: R2 tr=+0.853 te=-0.064  MAE tr=0.096 te=0.235
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 22.73 ms, p95 40.64 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/results_tau0.99.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/per_prompt_tau0.99.jsonl
+--- c6 headline/LOTO phi3 tau=0.95 04:30:33
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35533 > 4096). Running this sequence through the model will result in indexing errors
+
+=== C6 router  model=phi3  tau=0.95  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3092  cr=4.96x  picks={'C1': 98, 'C2': 69, 'C4': 18, 'C3': 16, 'C5': 19}
+Split-tr : q=0.3353  cr=4.84x  (n_train=154)
+Split-te : q=0.3285  cr=4.44x  picks={'C5': 4, 'C1': 26, 'C2': 18, 'C3': 11, 'C4': 7}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.840 test=-0.077  MAE train=0.100 test=0.234
+  C0: R2 tr=+0.839 te=-0.155  MAE tr=0.102 te=0.242
+  C1: R2 tr=+0.831 te=+0.018  MAE tr=0.101 te=0.222
+  C2: R2 tr=+0.838 te=-0.174  MAE tr=0.103 te=0.262
+  C3: R2 tr=+0.829 te=-0.068  MAE tr=0.102 te=0.227
+  C4: R2 tr=+0.852 te=-0.021  MAE tr=0.096 te=0.218
+  C5: R2 tr=+0.853 te=-0.064  MAE tr=0.096 te=0.235
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 21.65 ms, p95 41.58 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/results_tau0.95.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/per_prompt_tau0.95.jsonl
+--- c6 headline/LOTO phi3 tau=0.90 04:30:46
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (35533 > 4096). Running this sequence through the model will result in indexing errors
+
+=== C6 router  model=phi3  tau=0.9  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3071  cr=5.12x  picks={'C1': 102, 'C2': 69, 'C4': 15, 'C3': 15, 'C5': 19}
+Split-tr : q=0.3322  cr=5.05x  (n_train=154)
+Split-te : q=0.3285  cr=4.50x  picks={'C5': 4, 'C1': 28, 'C2': 16, 'C3': 11, 'C4': 7}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.840 test=-0.077  MAE train=0.100 test=0.234
+  C0: R2 tr=+0.839 te=-0.155  MAE tr=0.102 te=0.242
+  C1: R2 tr=+0.831 te=+0.018  MAE tr=0.101 te=0.222
+  C2: R2 tr=+0.838 te=-0.174  MAE tr=0.103 te=0.262
+  C3: R2 tr=+0.829 te=-0.068  MAE tr=0.102 te=0.227
+  C4: R2 tr=+0.852 te=-0.021  MAE tr=0.096 te=0.218
+  C5: R2 tr=+0.853 te=-0.064  MAE tr=0.096 te=0.235
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 22.39 ms, p95 42.48 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/results_tau0.9.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/phi3/per_prompt_tau0.9.jsonl
+--- c6 headline/LOTO llama32_3b tau=0.99 04:30:59
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama32_3b  tau=0.99  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3773  cr=4.87x  picks={'C2': 77, 'C1': 51, 'C3': 34, 'C5': 35, 'C4': 23}
+Split-tr : q=0.4190  cr=5.06x  (n_train=154)
+Split-te : q=0.3817  cr=4.48x  picks={'C4': 10, 'C1': 13, 'C5': 17, 'C3': 11, 'C2': 15}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.756 test=0.138  MAE train=0.142 test=0.255
+  C0: R2 tr=+0.759 te=+0.108  MAE tr=0.140 te=0.254
+  C1: R2 tr=+0.767 te=+0.120  MAE tr=0.139 te=0.249
+  C2: R2 tr=+0.757 te=+0.127  MAE tr=0.139 te=0.269
+  C3: R2 tr=+0.756 te=+0.157  MAE tr=0.141 te=0.252
+  C4: R2 tr=+0.748 te=+0.160  MAE tr=0.146 te=0.251
+  C5: R2 tr=+0.751 te=+0.158  MAE tr=0.144 te=0.251
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 24.69 ms, p95 48.83 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/results_tau0.99.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/per_prompt_tau0.99.jsonl
+--- c6 headline/LOTO llama32_3b tau=0.95 04:31:13
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama32_3b  tau=0.95  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3737  cr=4.99x  picks={'C2': 79, 'C1': 59, 'C5': 33, 'C4': 20, 'C3': 29}
+Split-tr : q=0.4132  cr=5.50x  (n_train=154)
+Split-te : q=0.3779  cr=5.02x  picks={'C4': 7, 'C1': 17, 'C3': 9, 'C5': 19, 'C2': 14}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.756 test=0.138  MAE train=0.142 test=0.255
+  C0: R2 tr=+0.759 te=+0.108  MAE tr=0.140 te=0.254
+  C1: R2 tr=+0.767 te=+0.120  MAE tr=0.139 te=0.249
+  C2: R2 tr=+0.757 te=+0.127  MAE tr=0.139 te=0.269
+  C3: R2 tr=+0.756 te=+0.157  MAE tr=0.141 te=0.252
+  C4: R2 tr=+0.748 te=+0.160  MAE tr=0.146 te=0.251
+  C5: R2 tr=+0.751 te=+0.158  MAE tr=0.144 te=0.251
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 23.96 ms, p95 45.95 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/results_tau0.95.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/per_prompt_tau0.95.jsonl
+--- c6 headline/LOTO llama32_3b tau=0.90 04:31:26
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama32_3b  tau=0.9  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.3670  cr=5.30x  picks={'C2': 71, 'C1': 73, 'C4': 14, 'C3': 24, 'C5': 38}
+Split-tr : q=0.4126  cr=5.82x  (n_train=154)
+Split-te : q=0.3779  cr=5.11x  picks={'C5': 20, 'C1': 18, 'C3': 8, 'C4': 6, 'C2': 14}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.756 test=0.138  MAE train=0.142 test=0.255
+  C0: R2 tr=+0.759 te=+0.108  MAE tr=0.140 te=0.254
+  C1: R2 tr=+0.767 te=+0.120  MAE tr=0.139 te=0.249
+  C2: R2 tr=+0.757 te=+0.127  MAE tr=0.139 te=0.269
+  C3: R2 tr=+0.756 te=+0.157  MAE tr=0.141 te=0.252
+  C4: R2 tr=+0.748 te=+0.160  MAE tr=0.146 te=0.251
+  C5: R2 tr=+0.751 te=+0.158  MAE tr=0.144 te=0.251
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 23.05 ms, p95 46.91 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/results_tau0.9.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama32_3b/per_prompt_tau0.9.jsonl
+--- c6 headline/LOTO llama3 tau=0.99 04:31:39
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama3  tau=0.99  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4152  cr=5.17x  picks={'C1': 59, 'C4': 21, 'C3': 36, 'C2': 59, 'C5': 45}
+Split-tr : q=0.4382  cr=5.77x  (n_train=154)
+Split-te : q=0.4077  cr=6.39x  picks={'C4': 10, 'C2': 18, 'C5': 11, 'C1': 19, 'C3': 8}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.777 test=-0.066  MAE train=0.139 test=0.283
+  C0: R2 tr=+0.771 te=-0.093  MAE tr=0.139 te=0.287
+  C1: R2 tr=+0.764 te=+0.011  MAE tr=0.143 te=0.274
+  C2: R2 tr=+0.780 te=-0.045  MAE tr=0.135 te=0.271
+  C3: R2 tr=+0.779 te=-0.127  MAE tr=0.137 te=0.293
+  C4: R2 tr=+0.782 te=-0.074  MAE tr=0.140 te=0.288
+  C5: R2 tr=+0.783 te=-0.069  MAE tr=0.140 te=0.285
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 23.57 ms, p95 50.24 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/results_tau0.99.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/per_prompt_tau0.99.jsonl
+--- c6 headline/LOTO llama3 tau=0.95 04:31:53
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama3  tau=0.95  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4136  cr=5.64x  picks={'C1': 75, 'C4': 14, 'C3': 31, 'C2': 55, 'C5': 45}
+Split-tr : q=0.4382  cr=6.26x  (n_train=154)
+Split-te : q=0.4087  cr=6.49x  picks={'C4': 7, 'C2': 18, 'C5': 15, 'C1': 19, 'C3': 7}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.777 test=-0.066  MAE train=0.139 test=0.283
+  C0: R2 tr=+0.771 te=-0.093  MAE tr=0.139 te=0.287
+  C1: R2 tr=+0.764 te=+0.011  MAE tr=0.143 te=0.274
+  C2: R2 tr=+0.780 te=-0.045  MAE tr=0.135 te=0.271
+  C3: R2 tr=+0.779 te=-0.127  MAE tr=0.137 te=0.293
+  C4: R2 tr=+0.782 te=-0.074  MAE tr=0.140 te=0.288
+  C5: R2 tr=+0.783 te=-0.069  MAE tr=0.140 te=0.285
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 24.86 ms, p95 47.10 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/results_tau0.95.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/per_prompt_tau0.95.jsonl
+--- c6 headline/LOTO llama3 tau=0.90 04:32:06
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama3  tau=0.9  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4106  cr=6.34x  picks={'C1': 95, 'C4': 13, 'C3': 22, 'C2': 54, 'C5': 36}
+Split-tr : q=0.4352  cr=6.61x  (n_train=154)
+Split-te : q=0.4082  cr=7.02x  picks={'C5': 16, 'C2': 17, 'C1': 23, 'C4': 5, 'C3': 5}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.777 test=-0.066  MAE train=0.139 test=0.283
+  C0: R2 tr=+0.771 te=-0.093  MAE tr=0.139 te=0.287
+  C1: R2 tr=+0.764 te=+0.011  MAE tr=0.143 te=0.274
+  C2: R2 tr=+0.780 te=-0.045  MAE tr=0.135 te=0.271
+  C3: R2 tr=+0.779 te=-0.127  MAE tr=0.137 te=0.293
+  C4: R2 tr=+0.782 te=-0.074  MAE tr=0.140 te=0.288
+  C5: R2 tr=+0.783 te=-0.069  MAE tr=0.140 te=0.285
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 23.64 ms, p95 45.25 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/results_tau0.9.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama3/per_prompt_tau0.9.jsonl
+--- c6 headline/LOTO llama31_8b tau=0.99 04:32:19
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama31_8b  tau=0.99  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4042  cr=5.25x  picks={'C1': 68, 'C2': 36, 'C4': 29, 'C5': 36, 'C3': 51}
+Split-tr : q=0.4607  cr=5.14x  (n_train=154)
+Split-te : q=0.3837  cr=4.26x  picks={'C5': 19, 'C1': 10, 'C3': 15, 'C2': 10, 'C4': 12}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.788 test=0.197  MAE train=0.133 test=0.229
+  C0: R2 tr=+0.791 te=+0.175  MAE tr=0.133 te=0.228
+  C1: R2 tr=+0.792 te=+0.170  MAE tr=0.133 te=0.242
+  C2: R2 tr=+0.788 te=+0.274  MAE tr=0.136 te=0.218
+  C3: R2 tr=+0.792 te=+0.189  MAE tr=0.132 te=0.226
+  C4: R2 tr=+0.785 te=+0.185  MAE tr=0.132 te=0.230
+  C5: R2 tr=+0.781 te=+0.188  MAE tr=0.133 te=0.232
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 24.72 ms, p95 45.25 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/results_tau0.99.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/per_prompt_tau0.99.jsonl
+--- c6 headline/LOTO llama31_8b tau=0.95 04:32:33
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama31_8b  tau=0.95  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4033  cr=5.31x  picks={'C1': 74, 'C2': 46, 'C4': 20, 'C5': 40, 'C3': 40}
+Split-tr : q=0.4603  cr=5.51x  (n_train=154)
+Split-te : q=0.3839  cr=4.36x  picks={'C5': 25, 'C1': 11, 'C3': 14, 'C2': 9, 'C4': 7}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.788 test=0.197  MAE train=0.133 test=0.229
+  C0: R2 tr=+0.791 te=+0.175  MAE tr=0.133 te=0.228
+  C1: R2 tr=+0.792 te=+0.170  MAE tr=0.133 te=0.242
+  C2: R2 tr=+0.788 te=+0.274  MAE tr=0.136 te=0.218
+  C3: R2 tr=+0.792 te=+0.189  MAE tr=0.132 te=0.226
+  C4: R2 tr=+0.785 te=+0.185  MAE tr=0.132 te=0.230
+  C5: R2 tr=+0.781 te=+0.188  MAE tr=0.133 te=0.232
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 23.85 ms, p95 52.27 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/results_tau0.95.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/per_prompt_tau0.95.jsonl
+--- c6 headline/LOTO llama31_8b tau=0.90 04:32:46
+/home/youssef/miniconda3/lib/python3.13/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (2.6.1) or chardet (7.4.3)/charset_normalizer (3.4.4) doesn't match a supported version!
+  warnings.warn(
+
+=== C6 router  model=llama31_8b  tau=0.9  use_floor=True  features=7  n=220 ===
+
+LOTO (OOD): q=0.4026  cr=5.55x  picks={'C1': 85, 'C2': 50, 'C5': 34, 'C4': 14, 'C3': 37}
+Split-tr : q=0.4572  cr=5.80x  (n_train=154)
+Split-te : q=0.3858  cr=4.56x  picks={'C5': 25, 'C1': 14, 'C3': 12, 'C2': 9, 'C4': 6}  (n_test=66)
+Regressor fit (mean over 6 configs): R2 train=0.788 test=0.197  MAE train=0.133 test=0.229
+  C0: R2 tr=+0.791 te=+0.175  MAE tr=0.133 te=0.228
+  C1: R2 tr=+0.792 te=+0.170  MAE tr=0.133 te=0.242
+  C2: R2 tr=+0.788 te=+0.274  MAE tr=0.136 te=0.218
+  C3: R2 tr=+0.792 te=+0.189  MAE tr=0.132 te=0.226
+  C4: R2 tr=+0.785 te=+0.185  MAE tr=0.132 te=0.230
+  C5: R2 tr=+0.781 te=+0.188  MAE tr=0.133 te=0.232
+Routing overhead (single request: feature extraction + scaling + 6 predicts): median 23.84 ms, p95 48.40 ms (n=50 prompts)
+
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/results_tau0.9.json
+wrote /home/youssef/projects/research/AdaptiveServe/runs/C6/llama31_8b/per_prompt_tau0.9.jsonl
+--- fair_comparison_66 04:33:00
+
+=== Fair comparison: fixed methods on the same 66 test prompts (seed=0) ===
+
+  phi3: 220 rows, 66 test prompts
+  llama3: 220 rows, 66 test prompts
+  llama32_3b: 220 rows, 66 test prompts
+  llama31_8b: 220 rows, 66 test prompts
+
+
+phi3
+  config   q@test66 / cr@test66    q@full220 / cr@full220        Δq
+  C0      0.3285 /     1.000x      0.3033 /     1.000x   +0.0252
+  C1      0.3057 /     6.048x      0.2934 /     6.803x   +0.0123
+  C2      0.3465 /     4.619x      0.3175 /     4.622x   +0.0290
+  C3      0.3283 /     2.765x      0.3050 /     2.880x   +0.0233
+  C4      0.3072 /     3.049x      0.2950 /     3.242x   +0.0122
+  C5      0.3138 /     2.992x      0.3000 /     3.215x   +0.0138
+
+llama3
+  config   q@test66 / cr@test66    q@full220 / cr@full220        Δq
+  C0      0.4440 /     1.000x      0.4293 /     1.000x   +0.0147
+  C1      0.3700 /    15.466x      0.3743 /    18.329x   -0.0043
+  C2      0.4234 /     4.607x      0.4231 /     4.607x   +0.0003
+  C3      0.4431 /     3.176x      0.4302 /     3.240x   +0.0129
+  C4      0.4327 /     4.419x      0.4233 /     4.697x   +0.0094
+  C5      0.4368 /     4.426x      0.4280 /     4.705x   +0.0088
+
+llama32_3b
+  config   q@test66 / cr@test66    q@full220 / cr@full220        Δq
+  C0      0.4230 /     1.000x      0.4031 /     1.000x   +0.0199
+  C1      0.3402 /    14.703x      0.3353 /    17.506x   +0.0049
+  C2      0.4227 /     4.645x      0.4046 /     4.647x   +0.0181
+  C3      0.4200 /     3.140x      0.4013 /     3.215x   +0.0187
+  C4      0.4135 /     4.374x      0.3960 /     4.647x   +0.0175
+  C5      0.4087 /     4.391x      0.3961 /     4.660x   +0.0126
+
+llama31_8b
+  config   q@test66 / cr@test66    q@full220 / cr@full220        Δq
+  C0      0.4249 /     1.000x      0.4358 /     1.000x   -0.0109
+  C1      0.3522 /    13.470x      0.3662 /    16.144x   -0.0140
+  C2      0.4095 /     4.602x      0.4348 /     4.602x   -0.0253
+  C3      0.4264 /     3.111x      0.4352 /     3.196x   -0.0088
+  C4      0.4081 /     4.350x      0.4297 /     4.632x   -0.0216
+  C5      0.4062 /     4.338x      0.4315 /     4.633x   -0.0253
+
+Wrote /home/youssef/projects/research/AdaptiveServe/runs/fair_comparison_66.json
+--- figures 04:33:00
+
+=== phi3 ===
+  phi3 CV tau=0.99: q=0.3108, cr=4.520x
+  phi3 CV tau=0.95: q=0.3041, cr=4.650x
+  phi3 CV tau=0.9: q=0.3040, cr=4.810x
+  wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_cv_phi3.png
+
+=== llama3 ===
+  llama3 CV tau=0.99: q=0.4274, cr=5.247x
+  llama3 CV tau=0.95: q=0.4211, cr=5.542x
+  llama3 CV tau=0.9: q=0.4189, cr=5.993x
+  wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_cv_llama3.png
+
+=== llama32_3b ===
+  llama32_3b CV tau=0.99: q=0.3907, cr=4.785x
+  llama32_3b CV tau=0.95: q=0.3869, cr=4.988x
+  llama32_3b CV tau=0.9: q=0.3779, cr=5.409x
+  wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_cv_llama32_3b.png
+
+=== llama31_8b ===
+  llama31_8b CV tau=0.99: q=0.4239, cr=5.017x
+  llama31_8b CV tau=0.95: q=0.4229, cr=5.238x
+  llama31_8b CV tau=0.9: q=0.4227, cr=5.415x
+  wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_cv_llama31_8b.png
+wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_split_phi3.png
+wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_split_llama32_3b.png
+wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_split_llama3.png
+wrote /home/youssef/projects/research/AdaptiveServe/runs/figs/pareto_split_llama31_8b.png
+=== P0 re-run COMPLETE Thu Jul 16 04:34:13 EEST 2026 ===

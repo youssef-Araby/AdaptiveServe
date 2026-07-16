@@ -22,66 +22,66 @@
   "ppl_n_chunks": 35,
   "longbench": {
     "narrativeqa": {
-      "metric": "f1",
-      "score": 0.2931,
+      "metric": "qa_f1",
+      "score": 0.2701,
       "n": 20
     },
     "qasper": {
-      "metric": "f1",
-      "score": 0.3563,
+      "metric": "qa_f1",
+      "score": 0.358,
       "n": 20
     },
     "multifieldqa_en": {
-      "metric": "f1",
-      "score": 0.5282,
+      "metric": "qa_f1",
+      "score": 0.5386,
       "n": 20
     },
     "hotpotqa": {
-      "metric": "f1",
-      "score": 0.4433,
+      "metric": "qa_f1",
+      "score": 0.445,
       "n": 20
     },
     "2wikimqa": {
-      "metric": "f1",
+      "metric": "qa_f1",
       "score": 0.3912,
       "n": 20
     },
     "gov_report": {
-      "metric": "rouge1",
-      "score": 0.363,
+      "metric": "rouge_l",
+      "score": 0.3234,
       "n": 20
     },
     "multi_news": {
-      "metric": "rouge1",
-      "score": 0.3534,
+      "metric": "rouge_l",
+      "score": 0.2806,
       "n": 20
     },
     "qmsum": {
-      "metric": "rouge1",
-      "score": 0.2695,
+      "metric": "rouge_l",
+      "score": 0.2516,
       "n": 20
     },
     "passage_count": {
-      "metric": "count_em",
-      "score": 0.1,
+      "metric": "count",
+      "score": 0.15,
       "n": 20
     },
     "trec": {
-      "metric": "accuracy",
+      "metric": "classification",
       "score": 0.7,
       "n": 20
     },
     "triviaqa": {
-      "metric": "f1",
-      "score": 0.925,
+      "metric": "qa_f1",
+      "score": 0.945,
       "n": 20
     },
     "_compression": {
-      "avg_bits": 2.971,
-      "avg_compression_ratio": 5.386
+      "avg_bits": 3.473,
+      "avg_compression_ratio": 4.614
     }
   },
-  "longbench_avg": 0.4294,
-  "longbench_avg_bits": 2.971,
-  "longbench_avg_compression_ratio": 5.386
+  "longbench_avg": 0.423,
+  "longbench_avg_bits": 3.473,
+  "longbench_avg_compression_ratio": 4.614
 }
