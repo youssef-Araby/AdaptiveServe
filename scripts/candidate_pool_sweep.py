@@ -324,6 +324,7 @@ def write_markdown_summary(path: Path, summary: dict[str, Any]) -> None:
         f"- Generated: `{summary['generated_at_utc']}`",
         "- Protocol: 10-fold task-stratified CV; fold regressors and predictions are cached once, then reused for every pool/tau pair.",
         "- This is an evaluation artifact. `best_by_quality` is a transparent ranking, not a deployment recommendation without a chosen quality/compression objective.",
+        "- Pool/tau selection uses the same CV aggregate shown here; use a separate calibration workload or nested CV for an unbiased post-selection generalization estimate.",
         "",
         "## Results",
         "",
@@ -550,6 +551,10 @@ def main() -> None:
             "candidate_pools": [list(pool) for pool in pools],
             "n_operating_points_per_model": len(pools) * len(taus),
             "ranking": "highest quality, then compression, then smaller pool",
+            "selection_scope": (
+                "Pool/tau ranking uses this same cross-validation aggregate; it is not "
+                "a nested-CV post-selection generalization estimate."
+            ),
         },
         "models": {},
     }
