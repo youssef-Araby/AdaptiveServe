@@ -82,7 +82,7 @@ def main() -> None:
                 if line.strip()]
         per_path = OUT_PER_MODEL / f"{model}.csv"
         with per_path.open("w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys(), lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
         print(f"  wrote {per_path.relative_to(ROOT)}  ({len(rows)} rows)")
@@ -96,7 +96,7 @@ def main() -> None:
 
     master = SRC / "adaptiveserve_kv_dataset.csv"
     with master.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=all_rows[0].keys())
+        writer = csv.DictWriter(f, fieldnames=all_rows[0].keys(), lineterminator="\n")
         writer.writeheader()
         writer.writerows(all_rows)
     print(f"  wrote {master.relative_to(ROOT)}  ({len(all_rows)} rows)")
