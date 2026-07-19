@@ -38,7 +38,7 @@ Measures:
   Quality: WikiText-2 perplexity (teacher-forcing, unaffected by prefix-only
            compression), LongBench accuracy (with compressed prefill)
 
-Output: runs/C1/{model}/results.json
+Output: runs/p0/C1/{model}/results.json
 
 Usage:
     python scripts/benchmark_c1_tailorkv.py --model phi3
@@ -67,6 +67,7 @@ from _common import (
     SPEED_TEXT,
     PerPromptLogger,
     apply_chat_template,
+    assert_not_p0_output_path,
     compute_score,
     extract_prompt_features,
     fp16_decode_growth_bytes,
@@ -568,7 +569,7 @@ def run_longbench(model, tokenizer, model_key: str, q_layers: set[int],
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--model",     required=True, choices=list(MODELS.keys()))
-    p.add_argument("--output",    default="runs/C1")
+    p.add_argument("--output",    default="runs/p0/C1")
     p.add_argument("--q-layers",  type=str, default=None,
                    help="comma-separated layer indices to quantize "
                         "(default: paper preset per model)")
@@ -583,6 +584,7 @@ def main():
     args     = parse_args()
     model_id = MODELS[args.model]
     out_dir  = Path(args.output) / args.model
+    assert_not_p0_output_path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if args.q_layers is not None:
@@ -653,6 +655,7 @@ def main():
     if out_path.exists():
         old = json.loads(out_path.read_text())
         results = {**old, **results}
+    assert_not_p0_output_path(out_path)
     out_path.write_text(json.dumps(results, indent=2))
     print(f"\nSaved → {out_path}")
     print(json.dumps({k: v for k, v in results.items() if k != "longbench"}, indent=2))

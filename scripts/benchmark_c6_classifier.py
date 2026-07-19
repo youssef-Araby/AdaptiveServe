@@ -23,8 +23,9 @@ benchmark_c{0..5} so plotting tools can treat C6 as just another config. Aggrega
 LOTO predictions; the random-split summary is included under ``eval_split``.
 
 Output (per tau, so runs at different taus never overwrite each other):
-  runs/C6/{model}/results_tau{tau}.json
-  runs/C6/{model}/per_prompt_tau{tau}.jsonl  (one row per prompt with chosen config)
+  runs/p0/C6/{model}/results_tau{tau}.json
+  runs/p0/C6/{model}/per_prompt_tau{tau}.jsonl
+    (one row per prompt with chosen config)
 
 Usage:
   python scripts/benchmark_c6_classifier.py --model llama3 --tau 0.99
@@ -43,7 +44,10 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler
 
-REPO     = Path(__file__).resolve().parents[1]
+from _common import assert_not_p0_output_path
+
+REPO        = Path(__file__).resolve().parents[1]
+P0_RUNS     = REPO / "runs" / "p0"
 CONFIGS     = ["C0", "C1", "C2", "C3", "C4", "C5"]
 CANDIDATES  = ["C1", "C2", "C3", "C4", "C5"]  # configs the router may CHOOSE
 REFERENCE   = "C0"                            # quality yardstick only — never chosen
@@ -59,7 +63,7 @@ FEATURE_KEYS = [
 # ---------------------------------------------------------------------------
 
 def load_dataset(model: str) -> list[dict]:
-    path = REPO / "runs" / "dataset" / f"{model}.jsonl"
+    path = P0_RUNS / "dataset" / f"{model}.jsonl"
     if not path.exists():
         raise SystemExit(f"missing dataset: {path}\n  run scripts/build_dataset.py first")
     return [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
@@ -364,10 +368,12 @@ def main() -> None:
                          "models at tau=0.99.")
     ap.add_argument("--tau-sweep", type=str, default=None,
                     help="comma-separated tau values to evaluate; writes a summary "
-                         "to runs/C6/{model}/tau_sweep[_nofloor][_filtered].json "
+                         "to runs/p0/C6/{model}/tau_sweep[_nofloor][_filtered].json "
                          "(suffix encodes --no-floor/--filter-candidates) and skips "
                          "the headline run")
     args = ap.parse_args()
+    protected_out_dir = P0_RUNS / "C6" / args.model
+    assert_not_p0_output_path(protected_out_dir)
     use_floor       = not args.no_floor
     filter_cands    = args.filter_candidates
 
@@ -425,12 +431,15 @@ def main() -> None:
                   f"Split-te q={entry['split_test']['q']:.3f} cr={entry['split_test']['cr']:.2f}x "
                   f"viol={entry['split_test']['violation_rate']:.0%}  "
                   f"picks={entry['split_test']['picks']}")
-        out_dir = REPO / "runs" / "C6" / args.model
+        out_dir = protected_out_dir
+        assert_not_p0_output_path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         # Filename encodes BOTH ablation flags so sweeps never overwrite each other.
         suffix = ("_nofloor" if not use_floor else "") + \
                  ("_filtered" if filter_cands else "")
-        (out_dir / f"tau_sweep{suffix}.json").write_text(json.dumps({
+        sweep_path = out_dir / f"tau_sweep{suffix}.json"
+        assert_not_p0_output_path(sweep_path)
+        sweep_path.write_text(json.dumps({
             "model": args.model, "use_floor": use_floor,
             "filter_candidates": filter_cands, "sweep": sweep,
         }, indent=2))
@@ -526,14 +535,17 @@ def main() -> None:
     results["filter_candidates"] = filter_cands
     suffix = "_filtered" if filter_cands else ""
 
-    out_dir = REPO / "runs" / "C6" / args.model
+    out_dir = protected_out_dir
+    assert_not_p0_output_path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     # Tau-specific filename ONLY: a plain results.json would silently be
     # overwritten by whichever tau ran last.
     res_path = out_dir / f"results_tau{args.tau}{suffix}.json"
+    assert_not_p0_output_path(res_path)
     res_path.write_text(json.dumps(results, indent=2))
 
     pp_path = out_dir / f"per_prompt_tau{args.tau}{suffix}.jsonl"
+    assert_not_p0_output_path(pp_path)
     with pp_path.open("w") as f:
         for r, c in zip(rows, picks_loto):
             f.write(json.dumps({

@@ -8,6 +8,7 @@ __pycache__/
 dist/
 build/
 .eggs/
+*.pid
 
 # Conda / venv
 .env/
@@ -25,11 +26,9 @@ env/
 .DS_Store
 Thumbs.db
 
-# Secrets & local cost-tracking caches (MT-Bench harness)
+# Secrets
 .env
 *.env
-runs/mtbench/judge_cache/
-runs/mtbench/budget.log
 *.pdf
 
 # Paper source (local-only; not part of the code repo)
@@ -37,3 +36,10 @@ overleaf/
 
 # Claude Code agent state (local-only)
 .claude/
+
+# Codex agent state (local-only)
+.agents/
+.codex/
+
+# Local research notes and audits
+docs/

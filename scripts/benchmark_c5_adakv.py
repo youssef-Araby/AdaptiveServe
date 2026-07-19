@@ -45,7 +45,7 @@ Measures:
   Quality: WikiText-2 perplexity (teacher-forcing, unaffected by compression),
            LongBench accuracy (7 tasks, with compressed prefill)
 
-Output: runs/C5/{model}/results.json
+Output: runs/p0/C5/{model}/results.json
 
 Usage:
     python scripts/benchmark_c5_adakv.py --model phi3
@@ -73,6 +73,7 @@ from _common import (
     SPEED_TEXT,
     PerPromptLogger,
     apply_chat_template,
+    assert_not_p0_output_path,
     compute_score,
     extract_prompt_features,
     fp16_decode_growth_bytes,
@@ -548,7 +549,7 @@ def run_longbench(model, tokenizer, model_key: str, n_kv_heads: int,
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--model",  required=True, choices=list(MODELS.keys()))
-    p.add_argument("--output", default="runs/C5")
+    p.add_argument("--output", default="runs/p0/C5")
     p.add_argument("--budget", type=int, default=None,
                    help="override per-head budget (default: 512 phi3 / 1024 llama3)")
     p.add_argument("--skip-speed-ppl", action="store_true",
@@ -560,6 +561,7 @@ def main():
     args     = parse_args()
     model_id = MODELS[args.model]
     out_dir  = Path(args.output) / args.model
+    assert_not_p0_output_path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if args.budget is not None:
@@ -628,6 +630,7 @@ def main():
     if out_path.exists():
         old = json.loads(out_path.read_text())
         results = {**old, **results}
+    assert_not_p0_output_path(out_path)
     out_path.write_text(json.dumps(results, indent=2))
     print(f"\nSaved → {out_path}")
     summary = {k: v for k, v in results.items() if k != "longbench"}

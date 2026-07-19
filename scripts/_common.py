@@ -20,15 +20,42 @@ import torch
 from datasets import load_dataset
 
 # ---------------------------------------------------------------------------
+# Output safety
+# ---------------------------------------------------------------------------
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_P0_ARCHIVE_ROOT = (_REPO_ROOT / "runs" / "p0").resolve()
+
+
+def assert_not_p0_output_path(path: Path | str) -> None:
+    """Reject writes to the immutable corrected-P0 evidence archive.
+
+    Existing path components and symlinks are resolved so a caller cannot
+    accidentally bypass the guard with ``..`` segments or an alias pointing
+    into ``runs/p0``.
+    """
+    candidate = Path(path).expanduser()
+    if not candidate.is_absolute():
+        candidate = Path.cwd() / candidate
+    resolved = candidate.resolve(strict=False)
+    try:
+        resolved.relative_to(_P0_ARCHIVE_ROOT)
+    except ValueError:
+        return
+    raise PermissionError(
+        "Refusing to write to the immutable corrected-P0 archive: "
+        f"{resolved}. Choose a fresh output path outside {_P0_ARCHIVE_ROOT}."
+    )
+
+
+# ---------------------------------------------------------------------------
 # Models & per-model limits
 # ---------------------------------------------------------------------------
 
 MODELS: dict[str, str] = {
     "phi3":       "microsoft/Phi-3-mini-4k-instruct",
     "llama3":     "meta-llama/Meta-Llama-3-8B-Instruct",
-    # Llama-3.1/3.2 same-recipe distill pair — used for the "real routing" experiment.
-    # Llama-3.2-3B is the official compressed/distilled child of Llama-3.1-8B, so
-    # the quality gap is purely a function of capacity, not training recipe.
+    # Both checkpoints were evaluated in the corrected P0 experiment.
     "llama31_8b": "meta-llama/Llama-3.1-8B-Instruct",
     "llama32_3b": "meta-llama/Llama-3.2-3B-Instruct",
 }
@@ -191,58 +218,6 @@ def load_longbench_task(task: str) -> list[dict]:
     records = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
     step = max(1, len(records) // LB_N_SAMPLES)
     return records[::step][:LB_N_SAMPLES]
-
-
-# ---------------------------------------------------------------------------
-# MT-Bench (chat / open-ended quality)
-# ---------------------------------------------------------------------------
-#
-# Official 80-prompt evaluation from FastChat (Zheng et al., NeurIPS 2023).
-# We use it as a *short-prompt, open-ended* counterpart to LongBench, primarily
-# to evaluate model-routing policies (Phi-3 vs LLaMA-3) where KV-cache
-# compression is largely irrelevant (prompts are <300 tokens).
-#
-# Source file pinned to the FastChat commit that introduced MT-Bench.
-MTBENCH_CACHE          = Path("~/.cache/mtbench").expanduser()
-MTBENCH_QUESTION_FILE  = MTBENCH_CACHE / "question.jsonl"
-MTBENCH_QUESTION_URL   = (
-    "https://raw.githubusercontent.com/lm-sys/FastChat/main/"
-    "fastchat/llm_judge/data/mt_bench/question.jsonl"
-)
-MTBENCH_MAX_NEW_TOKENS = 1024
-
-
-def load_mtbench(turn: int = 1) -> list[dict]:
-    """Return the 80 official MT-Bench prompts for the requested turn (1 or 2).
-
-    Each record: {prompt_id, category, prompt, reference (optional)}.
-    Downloads to MTBENCH_QUESTION_FILE on first call.
-    """
-    if turn not in (1, 2):
-        raise ValueError(f"turn must be 1 or 2, got {turn}")
-
-    if not MTBENCH_QUESTION_FILE.exists():
-        import urllib.request
-        MTBENCH_CACHE.mkdir(parents=True, exist_ok=True)
-        print(f"  Downloading MT-Bench questions → {MTBENCH_QUESTION_FILE}")
-        urllib.request.urlretrieve(MTBENCH_QUESTION_URL, MTBENCH_QUESTION_FILE)
-
-    out = []
-    for line in MTBENCH_QUESTION_FILE.read_text().splitlines():
-        if not line.strip():
-            continue
-        rec = json.loads(line)
-        turns = rec.get("turns", [])
-        if len(turns) < turn:
-            continue
-        ref = rec.get("reference", None)
-        out.append({
-            "prompt_id": rec["question_id"],
-            "category":  rec.get("category", "unknown"),
-            "prompt":    turns[turn - 1],
-            "reference": ref[turn - 1] if ref and len(ref) >= turn else None,
-        })
-    return out
 
 
 def apply_chat_template(tokenizer, prompt: str) -> str:
@@ -534,6 +509,7 @@ class PerPromptLogger:
         self.path   = Path(path)
         self.config = config
         self.model  = model
+        assert_not_p0_output_path(self.path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         # Truncate at start of run so reruns don't accumulate stale rows.
         self.path.write_text("")
@@ -563,5 +539,6 @@ class PerPromptLogger:
             rec["kv_bytes_fp16"] = round(float(kv_bytes_fp16), 1)
         if extra:
             rec.update(extra)
+        assert_not_p0_output_path(self.path)
         with self.path.open("a") as f:
             f.write(json.dumps(rec) + "\n")

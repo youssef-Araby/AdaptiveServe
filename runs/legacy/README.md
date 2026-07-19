@@ -10,6 +10,7 @@ current AdaptiveServe-KV evidence.
 | `pre_p0_2026-05/figs/` | May Pareto and candidate-pool figures | Corrected pool/tau figures or paper tables |
 | `pre_p0_2026-05/logs/` | Historical pipeline and smoke logs | Current execution status |
 | `pre_p0_2026-07-15/` | Snapshot immediately before P0, including June CSV/ZIP exports | Corrected rerun evidence |
+| `orphaned_bytecode_2026-07-17/` | Three source-less Python 3.12 bytecode files preserved during cleanup | Executable source or current experimental evidence |
 
-See [docs/provenance.md](../../docs/provenance.md) for the complete current vs
-historical source-of-truth map.
+See the parent [`runs/README.md`](../README.md) for the current run namespace
+map.

@@ -9,7 +9,7 @@
 #             -> C6 LOTO/split (3 taus) -> fair comparison -> Pareto figures.
 #
 # Resume-safe: each completed unit drops a .p0_done marker and is skipped on
-# re-invocation. Logs to runs/rerun_p0.log (tee'd by the caller).
+# re-invocation. Logs to runs/p0/rerun_p0.log (tee'd by the caller).
 set -u
 cd "$(dirname "$0")/.."
 unset ADAPTIVESERVE_LB_N   # full 20 prompts/task — never inherit a smoke value
@@ -23,7 +23,7 @@ echo "=== P0 re-run started $(date) ==="
 # ---- GPU phase -------------------------------------------------------------
 for m in $MODELS; do
   for n in 0 1 2 3 4 5; do
-    marker="runs/C${n}/${m}/.p0_done"
+    marker="runs/p0/C${n}/${m}/.p0_done"
     if [ -f "$marker" ]; then
       echo "--- SKIP C${n}/${m} (marker present)"
       continue

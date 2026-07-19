@@ -3,11 +3,11 @@
 Export the routing dataset to CSV files for submission.
 
 Produces corrected-P0 exports:
-    runs/dataset/adaptiveserve_kv_dataset.csv   — master file (all 880 rows, 4 models)
-    runs/dataset/per_model/<model>.csv          — 4 split files (220 rows each)
-    runs/dataset/manifest.json                  — source hashes and export provenance
-    runs/dataset/README.md                      — column reference
-    runs/dataset/AdaptiveServe-KV-Dataset.zip   — portable export bundle
+    runs/p0/dataset/adaptiveserve_kv_dataset.csv — master file (all 880 rows, 4 models)
+    runs/p0/dataset/per_model/<model>.csv        — 4 split files (220 rows each)
+    runs/p0/dataset/manifest.json                — source hashes and export provenance
+    runs/p0/dataset/README.md                    — column reference
+    runs/p0/dataset/AdaptiveServe-KV-Dataset.zip — portable export bundle
 """
 import csv
 from datetime import datetime, timezone
@@ -17,9 +17,12 @@ from pathlib import Path
 import subprocess
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from _common import assert_not_p0_output_path
+
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "runs" / "dataset"
+SRC = ROOT / "runs" / "p0" / "dataset"
 OUT_PER_MODEL = SRC / "per_model"
+assert_not_p0_output_path(OUT_PER_MODEL)
 OUT_PER_MODEL.mkdir(exist_ok=True)
 
 MODELS = ["phi3", "llama3", "llama32_3b", "llama31_8b"]
@@ -81,6 +84,7 @@ def main() -> None:
                 for line in source_path.read_text().splitlines()
                 if line.strip()]
         per_path = OUT_PER_MODEL / f"{model}.csv"
+        assert_not_p0_output_path(per_path)
         with per_path.open("w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=rows[0].keys(), lineterminator="\n")
             writer.writeheader()
@@ -95,6 +99,7 @@ def main() -> None:
         })
 
     master = SRC / "adaptiveserve_kv_dataset.csv"
+    assert_not_p0_output_path(master)
     with master.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=all_rows[0].keys(), lineterminator="\n")
         writer.writeheader()
@@ -102,17 +107,19 @@ def main() -> None:
     print(f"  wrote {master.relative_to(ROOT)}  ({len(all_rows)} rows)")
 
     manifest = SRC / "manifest.json"
+    assert_not_p0_output_path(manifest)
     manifest.write_text(json.dumps({
         "schema_version": "adaptive-serve-p0-csv-export/v1",
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "source_commit": current_commit(),
-        "source_run": "corrected P0 rerun; see runs/rerun_p0.log",
+        "source_run": "corrected P0 rerun; see runs/p0/rerun_p0.log",
         "source_jsonl": source_files,
         "rows": len(all_rows),
     }, indent=2, sort_keys=True) + "\n")
     print(f"  wrote {manifest.relative_to(ROOT)}")
 
     readme = SRC / "README.md"
+    assert_not_p0_output_path(readme)
     readme.write_text("""# AdaptiveServe-KV Routing Dataset (Corrected P0)
 
 A dataset of 880 (model, prompt, configuration) labelled rows from 220 LongBench
@@ -181,6 +188,7 @@ README at the repository root.
     print(f"  wrote {readme.relative_to(ROOT)}")
 
     archive = SRC / "AdaptiveServe-KV-Dataset.zip"
+    assert_not_p0_output_path(archive)
     bundle_paths = [master, manifest, readme]
     bundle_paths.extend(SRC / f"{model}.jsonl" for model in MODELS)
     bundle_paths.extend(OUT_PER_MODEL / f"{model}.csv" for model in MODELS)

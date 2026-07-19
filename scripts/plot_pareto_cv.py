@@ -10,7 +10,7 @@ thresholds, then plots:
   - Router (LOTO) curve in red dashed (held-out task; loaded from existing
     C6 results JSON since LOTO already covers all 220)
 
-Saves to runs/figs/pareto_cv_{model}.png.
+Saves to runs/p0/figs/pareto_cv_{model}.png.
 
 Usage:
   python scripts/plot_pareto_cv.py --model llama3
@@ -32,8 +32,9 @@ from benchmark_c6_classifier import (
     load_dataset, featurize, aggregate,
 )
 from cv_router_220 import cv_picks, fixed_on_full
+from _common import assert_not_p0_output_path
 
-RUNS = ROOT / "runs"
+RUNS = ROOT / "runs" / "p0"
 CONFIGS = ["C0", "C1", "C2", "C3", "C4", "C5"]
 LABELS = {
     "C0": "FP16", "C1": "TailorKV", "C2": "QAQ",
@@ -82,6 +83,7 @@ def compute_cv_curve(model: str):
 
 
 def plot_one(model: str, out_path: Path):
+    assert_not_p0_output_path(out_path)
     print(f"\n=== {model} ===")
     rows = load_dataset(model)
     fixed = fixed_on_full(rows)
@@ -133,8 +135,10 @@ def plot_one(model: str, out_path: Path):
     ax.grid(True, which="both", alpha=0.3)
     ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
 
+    assert_not_p0_output_path(out_path.parent)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
+    assert_not_p0_output_path(out_path)
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
     print(f"  wrote {out_path}")

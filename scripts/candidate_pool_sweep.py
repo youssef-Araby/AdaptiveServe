@@ -26,6 +26,7 @@ from typing import Any
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
+from _common import assert_not_p0_output_path
 from benchmark_c6_classifier import (
     CANDIDATES,
     CONFIGS,
@@ -41,6 +42,7 @@ from benchmark_c6_classifier import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+P0_RUNS = ROOT / "runs" / "p0"
 MODELS = ["phi3", "llama3", "llama32_3b", "llama31_8b"]
 DEFAULT_TAUS = (0.99, 0.95, 0.90, 0.85, 0.80)
 DEFAULT_RUN_ID = "p0_corrected_2026-07-16"
@@ -271,7 +273,7 @@ def existing_cv_check(
     if tuple(entry["pool"]) != tuple(CANDIDATES):
         return None
     tau = float(entry["tau"])
-    path = ROOT / "runs" / f"cv_router_220_tau{tau}.json"
+    path = P0_RUNS / f"cv_router_220_tau{tau}.json"
     if not path.exists():
         return {
             "tau": tau,
@@ -295,6 +297,7 @@ def existing_cv_check(
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
+    assert_not_p0_output_path(path)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
@@ -351,6 +354,7 @@ def write_markdown_summary(path: Path, summary: dict[str, Any]) -> None:
             "The historical May candidate-pool figures remain separate pre-P0 artifacts and must not be used as corrected P0 evidence.",
         ]
     )
+    assert_not_p0_output_path(path)
     path.write_text("\n".join(lines) + "\n")
 
 
@@ -466,6 +470,7 @@ def plot_model(
     axis.set_xlabel("Measured KV compression ratio (harmonic mean, higher is better)")
     axis.set_ylabel("LongBench mean score (higher is better)")
     axis.grid(alpha=0.24, linewidth=0.6)
+    assert_not_p0_output_path(path)
     figure.savefig(path, dpi=180)
     plt.close(figure)
 
@@ -510,7 +515,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        help="versioned output directory (default: runs/candidate_pool_sweeps/<run-id>)",
+        help="versioned output directory (default: runs/p0/candidate_pool_sweeps/<run-id>)",
     )
     parser.add_argument("--no-figures", action="store_true")
     parser.add_argument(
@@ -529,11 +534,13 @@ def main() -> None:
         args.min_pool_size, args.max_pool_size
     )
     output_dir = args.output_dir or (
-        ROOT / "runs" / "candidate_pool_sweeps" / args.run_id
+        P0_RUNS / "candidate_pool_sweeps" / args.run_id
     )
     figure_dir = output_dir / "figs"
+    assert_not_p0_output_path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     if not args.no_figures:
+        assert_not_p0_output_path(figure_dir)
         figure_dir.mkdir(parents=True, exist_ok=True)
 
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -563,7 +570,7 @@ def main() -> None:
 
     for model in selected_models:
         rows = load_dataset(model)
-        dataset_path = ROOT / "runs" / "dataset" / f"{model}.jsonl"
+        dataset_path = P0_RUNS / "dataset" / f"{model}.jsonl"
         features = featurize(rows)
         print(
             f"[{model}] caching {args.n_splits} folds for {len(rows)} prompts; "

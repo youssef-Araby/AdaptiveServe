@@ -3,7 +3,7 @@
 This report consolidates the completed **P0 corrected rerun**. It uses only
 the artifacts produced by the full rerun, which started on 2026-07-15 at
 17:20 EEST and completed on 2026-07-16 at 04:34 EEST. The full execution log
-is available in [runs/rerun_p0.log](runs/rerun_p0.log).
+is available in [runs/p0/rerun_p0.log](runs/p0/rerun_p0.log).
 
 ## Scope and Reading Guide
 
@@ -19,9 +19,9 @@ is available in [runs/rerun_p0.log](runs/rerun_p0.log).
 | Compression metric | Harmonic mean of measured per-prompt KV-cache compression ratios; higher is better |
 
 The primary evidence is the fair 10-fold CV evaluation in
-[runs/cv_router_220_tau0.99.json](runs/cv_router_220_tau0.99.json),
-[runs/cv_router_220_tau0.95.json](runs/cv_router_220_tau0.95.json), and
-[runs/cv_router_220_tau0.9.json](runs/cv_router_220_tau0.9.json). It routes
+[runs/p0/cv_router_220_tau0.99.json](runs/p0/cv_router_220_tau0.99.json),
+[runs/p0/cv_router_220_tau0.95.json](runs/p0/cv_router_220_tau0.95.json), and
+[runs/p0/cv_router_220_tau0.9.json](runs/p0/cv_router_220_tau0.9.json). It routes
 each prompt with a model that did not train on that prompt, then compares the
 result against fixed methods on the same full 220-prompt set.
 
@@ -183,7 +183,7 @@ then evaluates every pool/tau combination without retraining.
 
 The full machine-readable evidence, source JSONL hashes, all-five consistency
 checks, and regenerated figures are in
-[runs/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/candidate_pool_sweeps/p0_corrected_2026-07-16).
+[runs/p0/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/p0/candidate_pool_sweeps/p0_corrected_2026-07-16).
 The all-five entries at $\tau \in \{0.99, 0.95, 0.90\}$ exactly match the
 primary `cv_router_220` outputs.
 
@@ -279,15 +279,15 @@ classification accuracy.
 
 These numbers come from the one seed-0 70/30 split used by C6: 154 training
 prompts and 66 held-out prompts per model. They are saved under
-`regressor_fit` in each `runs/C6/<model>/results_tau0.99.json` file. The
+`regressor_fit` in each `runs/p0/C6/<model>/results_tau0.99.json` file. The
 regressor fit is independent of $\tau$, because $\tau$ changes the routing
 rule after quality prediction rather than the regressor training; the same
 fit values are therefore repeated in the $\tau = 0.95$ and $0.90$ files.
 
 These tau-specific files are the post-fix P0 outputs: the pipeline first
 reran C0-C5, rebuilt each 220-prompt dataset, then retrained C6. Use these
-files rather than unversioned `results.json` files or `_filtered` ablation
-artifacts elsewhere under `runs/C6`.
+files rather than the superseded unversioned and filtered C6 artifacts retained
+under `runs/legacy/pre_p0_2026-05/c6/`.
 
 | Model | Train $R^2$ (mean C0-C5) | Held-out $R^2$ (mean C0-C5) | Train MAE (mean C0-C5) | Held-out MAE (mean C0-C5) |
 | --- | ---: | ---: | ---: | ---: |
@@ -347,12 +347,11 @@ evaluation. Each cell is `quality / compression`.
 | Artifact | Contents |
 | --- | --- |
 | [scripts/run_full_pipeline.sh](scripts/run_full_pipeline.sh) | P0 execution plan and corrected-rerun scope |
-| [runs/rerun_p0.log](runs/rerun_p0.log) | Complete P0 execution log and completion marker |
-| [runs/cv_router_220_tau0.99.json](runs/cv_router_220_tau0.99.json) | Primary CV results at $\tau = 0.99$ |
-| [runs/cv_router_220_tau0.95.json](runs/cv_router_220_tau0.95.json) | Primary CV results at $\tau = 0.95$ |
-| [runs/cv_router_220_tau0.9.json](runs/cv_router_220_tau0.9.json) | Primary CV results at $\tau = 0.90$ |
-| [runs/fair_comparison_66.json](runs/fair_comparison_66.json) | Fixed-method results on the exact split-test prompts |
-| [runs/C6](runs/C6) | Per-model C6 LOTO, split, overhead, and per-prompt outputs |
-| [runs/figs](runs/figs) | Updated quality/compression Pareto figures |
-| [runs/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/candidate_pool_sweeps/p0_corrected_2026-07-16) | Corrected P0 pool/tau sweep, manifests, and figures |
-| [docs/provenance.md](docs/provenance.md) | Current, historical, and independent-track artifact map |
+| [runs/p0/rerun_p0.log](runs/p0/rerun_p0.log) | Complete P0 execution log and completion marker |
+| [runs/p0/cv_router_220_tau0.99.json](runs/p0/cv_router_220_tau0.99.json) | Primary CV results at $\tau = 0.99$ |
+| [runs/p0/cv_router_220_tau0.95.json](runs/p0/cv_router_220_tau0.95.json) | Primary CV results at $\tau = 0.95$ |
+| [runs/p0/cv_router_220_tau0.9.json](runs/p0/cv_router_220_tau0.9.json) | Primary CV results at $\tau = 0.90$ |
+| [runs/p0/fair_comparison_66.json](runs/p0/fair_comparison_66.json) | Fixed-method results on the exact split-test prompts |
+| [runs/p0/C6](runs/p0/C6) | Per-model C6 LOTO, split, overhead, and per-prompt outputs |
+| [runs/p0/figs](runs/p0/figs) | Updated quality/compression Pareto figures |
+| [runs/p0/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/p0/candidate_pool_sweeps/p0_corrected_2026-07-16) | Corrected P0 pool/tau sweep, manifests, and figures |

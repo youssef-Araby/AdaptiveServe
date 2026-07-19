@@ -20,12 +20,14 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
 ROOT = Path(__file__).resolve().parents[1]
+P0_RUNS = ROOT / "runs" / "p0"
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from benchmark_c6_classifier import (
     CONFIGS, CANDIDATES, load_dataset, featurize, fit_regressors,
     predict_q, route, c0_floor_from_train, train_mean_compression, aggregate,
 )
+from _common import assert_not_p0_output_path
 
 MODELS = ["phi3", "llama3", "llama32_3b", "llama31_8b"]
 
@@ -67,6 +69,8 @@ def main():
     ap.add_argument("--n-splits", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
+    out = P0_RUNS / f"cv_router_220_tau{args.tau}.json"
+    assert_not_p0_output_path(out)
 
     print(f"\n=== CV router (tau={args.tau}, {args.n_splits}-fold stratified by task) ===\n")
 
@@ -109,7 +113,7 @@ def main():
               f"compression: {rcr:.2f}x vs 1.00x")
         print()
 
-    out = ROOT / "runs" / f"cv_router_220_tau{args.tau}.json"
+    assert_not_p0_output_path(out)
     out.write_text(json.dumps(summary, indent=2))
     print(f"Wrote {out}\n")
 

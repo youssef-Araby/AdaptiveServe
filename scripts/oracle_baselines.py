@@ -13,9 +13,10 @@ Answers the questions a routing-paper reviewer asks first:
      restricted to length features; shows how much the non-length
      features earn.
   5. Full-feature CV router reproduction, cross-checked against
-     runs/cv_router_220_tau{tau}.json when present.
+     runs/p0/cv_router_220_tau{tau}.json when present.
 
-Reads runs/dataset/{model}.jsonl; writes runs/oracle_baselines_tau{tau}.json.
+Reads runs/p0/dataset/{model}.jsonl; writes
+runs/p0/oracle_baselines_tau{tau}.json.
 
 Usage:
     python scripts/oracle_baselines.py            # tau=0.99
@@ -32,12 +33,14 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
+P0_RUNS = ROOT / "runs" / "p0"
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from benchmark_c6_classifier import (  # noqa: E402
     CANDIDATES, FEATURE_KEYS, aggregate, featurize, load_dataset,
 )
 from cv_router_220 import cv_picks, fixed_on_full  # noqa: E402
+from _common import assert_not_p0_output_path  # noqa: E402
 
 MODELS = ["phi3", "llama3", "llama32_3b", "llama31_8b"]
 
@@ -106,8 +109,10 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
     tau = args.tau
+    out_path = P0_RUNS / f"oracle_baselines_tau{tau}.json"
+    assert_not_p0_output_path(out_path)
 
-    cv_json = ROOT / "runs" / f"cv_router_220_tau{tau}.json"
+    cv_json = P0_RUNS / f"cv_router_220_tau{tau}.json"
     cv_ref = json.loads(cv_json.read_text()) if cv_json.exists() else None
 
     len_idx_both = [FEATURE_KEYS.index("seq_len_tokens"),
@@ -166,7 +171,7 @@ def main():
               f"random={rnd['q']:.4f}/{rnd['cr']:.2f}x  "
               f"len_only={q_len1:.4f}/{cr_len1:.2f}x")
 
-    out_path = ROOT / "runs" / f"oracle_baselines_tau{tau}.json"
+    assert_not_p0_output_path(out_path)
     out_path.write_text(json.dumps(out, indent=2))
     print(f"\nSaved → {out_path}")
 

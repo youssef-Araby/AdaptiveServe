@@ -2,16 +2,18 @@
 """
 Pareto plot: quality vs KV-cache compression for all configs.
 
-Reads runs/C{0..5}/{model}/results.json (single-method baselines) and
-runs/C6/{model}/results_tau{0.99,0.95,0.90}.json (router at 3 thresholds).
+Reads runs/p0/C{0..5}/{model}/results.json (single-method baselines) and
+runs/p0/C6/{model}/results_tau{0.99,0.95,0.90}.json
+(router at 3 thresholds).
 
 Plots:
   - C0..C5 as scatter points (one per fixed method)
   - C6 LOTO (OOD)         as a curve through the 3 tau points
   - C6 in-dist (random split) as a second curve
 
-Saves to runs/figs/pareto_split_{model}.png (split-based router evaluation; the
-headline CV-based figure pareto_cv_{model}.png comes from plot_pareto_cv.py).
+Saves to runs/p0/figs/pareto_split_{model}.png (split-based router evaluation;
+the headline CV-based figure pareto_cv_{model}.png comes from
+plot_pareto_cv.py).
 
 Usage:
   python scripts/plot_pareto.py --model llama3
@@ -24,8 +26,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
+from _common import assert_not_p0_output_path
+
 REPO    = Path(__file__).resolve().parents[1]
-RUNS    = REPO / "runs"
+RUNS    = REPO / "runs" / "p0"
 CONFIGS = ["C0", "C1", "C2", "C3", "C4", "C5"]
 LABELS  = {
     "C0": "FP16",      "C1": "TailorKV", "C2": "QAQ",
@@ -114,8 +118,10 @@ def main() -> None:
     ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
 
     out = Path(args.out) if args.out else RUNS / "figs" / f"pareto_split_{args.model}.png"
+    assert_not_p0_output_path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
+    assert_not_p0_output_path(out)
     fig.savefig(out, dpi=150)
     print(f"wrote {out}")
 

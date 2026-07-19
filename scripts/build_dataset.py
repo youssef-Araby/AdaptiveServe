@@ -1,5 +1,6 @@
 """
-Build a per-prompt routing dataset from runs/C{0..5}/{model}/per_prompt.jsonl.
+Build a per-prompt routing dataset from
+runs/p0/C{0..5}/{model}/per_prompt.jsonl.
 
 Joins the 6 configs by (task, sample_idx). Output rows:
 
@@ -24,7 +25,7 @@ unified CR basis in the benchmark scripts). There are no analytic fallbacks:
 a per_prompt.jsonl row without kv_bytes means the config was produced by an
 old script version and must be re-run.
 
-Saved to runs/dataset/{model}.jsonl.
+Saved to runs/p0/dataset/{model}.jsonl.
 
 Usage:
   python scripts/build_dataset.py --model llama3
@@ -36,8 +37,10 @@ import json
 import sys
 from pathlib import Path
 
+from _common import assert_not_p0_output_path
+
 ROOT    = Path(__file__).resolve().parent.parent
-RUNS    = ROOT / "runs"
+RUNS    = ROOT / "runs" / "p0"
 CONFIGS = ["C0", "C1", "C2", "C3", "C4", "C5"]
 TAUS    = [0.99, 0.95, 0.90]
 
@@ -108,7 +111,7 @@ def main() -> None:
             missing = [f for f in REQUIRED_CR_FIELDS if row.get(f) is None]
             if missing:
                 sys.exit(
-                    f"ERROR: runs/{c}/{args.model}/per_prompt.jsonl row "
+                    f"ERROR: {RUNS / c / args.model / 'per_prompt.jsonl'} row "
                     f"(task={task}, sample_idx={sidx}) lacks {'/'.join(missing)}. "
                     f"This log predates the measured-CR accounting — re-run config {c}."
                 )
@@ -143,6 +146,7 @@ def main() -> None:
         })
 
     out_path = Path(args.out) if args.out else RUNS / "dataset" / f"{args.model}.jsonl"
+    assert_not_p0_output_path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(json.dumps(r) for r in rows_out) + "\n")
     print(f"wrote {len(rows_out)} rows → {out_path}  (skipped {skipped} incomplete)")

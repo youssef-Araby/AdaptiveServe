@@ -19,13 +19,16 @@ from pathlib import Path
 
 import numpy as np
 
+from _common import assert_not_p0_output_path
+
 ROOT = Path(__file__).resolve().parents[1]
+P0_RUNS = ROOT / "runs" / "p0"
 CONFIGS = ["C0", "C1", "C2", "C3", "C4", "C5"]
 MODELS = ["phi3", "llama3", "llama32_3b", "llama31_8b"]
 
 
 def load_rows(model: str) -> list[dict]:
-    path = ROOT / "runs" / "dataset" / f"{model}.jsonl"
+    path = P0_RUNS / "dataset" / f"{model}.jsonl"
     with path.open() as f:
         return [json.loads(line) for line in f if line.strip()]
 
@@ -60,6 +63,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
+    out_path = P0_RUNS / "fair_comparison_66.json"
+    assert_not_p0_output_path(out_path)
 
     print(f"\n=== Fair comparison: fixed methods on the same 66 test prompts (seed={args.seed}) ===\n")
 
@@ -88,7 +93,7 @@ def main() -> None:
             print(f"  {c:<3}  {t['q']:>9.4f} / {t['cr']:>9.3f}x   "
                   f"{f['q']:>9.4f} / {f['cr']:>9.3f}x   {dq:>+6.4f}")
 
-    out_path = ROOT / "runs" / "fair_comparison_66.json"
+    assert_not_p0_output_path(out_path)
     out_path.write_text(json.dumps(summary, indent=2))
     print(f"\nWrote {out_path}")
 

@@ -12,8 +12,8 @@ Produces, per model:
      above FP16 on the same prompt, pooled and per metric — the headroom a
      per-prompt selector could exploit from scoring noise alone.
 
-Reads runs/dataset/{model}.jsonl (CV picks regenerated in-process with the
-exact cv_router_220 protocol); writes runs/significance_tau{tau}.json.
+Reads runs/p0/dataset/{model}.jsonl (CV picks regenerated in-process with the
+exact cv_router_220 protocol); writes runs/p0/significance_tau{tau}.json.
 
 Usage:
     python scripts/significance_tests.py            # tau=0.99
@@ -31,12 +31,14 @@ import numpy as np
 from scipy.stats import wilcoxon
 
 ROOT = Path(__file__).resolve().parents[1]
+P0_RUNS = ROOT / "runs" / "p0"
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from benchmark_c6_classifier import (  # noqa: E402
     CANDIDATES, CONFIGS, featurize, load_dataset,
 )
 from cv_router_220 import cv_picks  # noqa: E402
+from _common import assert_not_p0_output_path  # noqa: E402
 
 MODELS = ["phi3", "llama3", "llama32_3b", "llama31_8b"]
 NBOOT = 10_000
@@ -59,6 +61,8 @@ def main():
     ap.add_argument("--n-splits", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
+    out_path = P0_RUNS / f"significance_tau{args.tau}.json"
+    assert_not_p0_output_path(out_path)
 
     out = {}
     for model in MODELS:
@@ -143,7 +147,7 @@ def main():
               f"diff={rc0['mean_diff']:+.4f} CI[{rc0['ci95'][0]:+.4f},{rc0['ci95'][1]:+.4f}] "
               f"best_fixed={best_fixed}={means_fixed[best_fixed]:.4f}", flush=True)
 
-    out_path = ROOT / "runs" / f"significance_tau{args.tau}.json"
+    assert_not_p0_output_path(out_path)
     out_path.write_text(json.dumps(out, indent=2))
     print(f"\nSaved → {out_path}")
 

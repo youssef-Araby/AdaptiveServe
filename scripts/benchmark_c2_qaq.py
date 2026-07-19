@@ -27,7 +27,7 @@ Measures:
   Speed  : TTFT (ms), TPOT (ms), tokens/sec, peak VRAM (MB), theoretical KV MB
   Quality: WikiText-2 perplexity (teacher-forcing), LongBench (7 tasks, QAQ generation)
 
-Output: runs/C2/{model}/results.json
+Output: runs/p0/C2/{model}/results.json
 
 Usage:
     python scripts/benchmark_c2_qaq.py --model phi3
@@ -54,6 +54,7 @@ from _common import (
     SPEED_TEXT,
     PerPromptLogger,
     apply_chat_template,
+    assert_not_p0_output_path,
     compute_score,
     extract_prompt_features,
     fp16_decode_growth_bytes,
@@ -1002,7 +1003,7 @@ def run_longbench(
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--model",  required=True, choices=list(MODELS.keys()))
-    p.add_argument("--output", default="runs/C2")
+    p.add_argument("--output", default="runs/p0/C2")
     p.add_argument("--skip-speed-ppl", action="store_true",
                    help="skip speed + perplexity phases; q_norm is recomputed from "
                         "SPEED_TEXT at startup (never recycled from an old results.json)")
@@ -1019,6 +1020,7 @@ def main():
     attn_impl = mcfg["attn_impl"]
     attn_aware_decode = mcfg["attn_aware_decode"]
     out_dir   = Path(args.output) / args.model
+    assert_not_p0_output_path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1108,6 +1110,7 @@ def main():
     if not smoke and out_path.exists():
         old = json.loads(out_path.read_text())
         results = {**old, **results}
+    assert_not_p0_output_path(out_path)
     out_path.write_text(json.dumps(results, indent=2))
     print(f"\nSaved → {out_path}")
     print(json.dumps({k: v for k, v in results.items() if k != "longbench"}, indent=2))
