@@ -40,6 +40,7 @@ import argparse
 import json
 import math
 import time
+from collections.abc import Collection, Sequence
 from pathlib import Path
 
 import torch
@@ -361,7 +362,13 @@ class QAQState:
         return self.attn_max[layer_idx]
 
 
-def _precompute_q_norm(model, input_ids: torch.Tensor, device: str) -> float:
+def _precompute_q_norm(
+    model,
+    input_ids: torch.Tensor,
+    device: str,
+    *,
+    return_metadata: bool = False,
+) -> float | tuple[float, dict]:
     """
     Precompute the upper-10th-percentile of ||Q||^2 across all layers and heads.
     This requires a forward pass with output_attentions=True, then extracting Q
@@ -405,25 +412,43 @@ def _precompute_q_norm(model, input_ids: torch.Tensor, device: str) -> float:
                 q_norms.append(q_norm_sq.flatten().cpu())
         return hook
 
-    # Register hooks on each attention layer
-    for idx, layer in enumerate(model.model.layers):
+    # Register hooks on each attention layer.
+    layers = tuple(model.model.layers)
+    for idx, layer in enumerate(layers):
         h = layer.self_attn.register_forward_hook(make_hook(idx), with_kwargs=True)
         hooks.append(h)
 
     try:
         with torch.no_grad():
-            model(input_ids, use_cache=False, output_attentions=False)
+            model(
+                input_ids,
+                use_cache=False,
+                output_attentions=False,
+                logits_to_keep=1,
+            )
     finally:
         for h in hooks:
             h.remove()
 
-    if not q_norms:
-        return 300.0   # fallback (paper uses 300 as a grid-search value)
+    if len(q_norms) != len(layers):
+        raise RuntimeError(
+            "QAQ q-norm calibration did not capture every attention layer: "
+            f"captured {len(q_norms)} of {len(layers)}"
+        )
     all_norms = torch.cat(q_norms)
     pct_idx   = int(len(all_norms) * QAQ_Q_NORM_PERCENTILE / 100)
     pct_idx   = max(0, min(pct_idx, len(all_norms) - 1))
-    q_norm    = float(all_norms.sort().values[pct_idx].item())
-    return max(q_norm, 1.0)   # guard against zero
+    q_norm = max(
+        float(all_norms.sort().values[pct_idx].item()),
+        1.0,
+    )
+    if return_metadata:
+        return q_norm, {
+            "captured_layers": len(q_norms),
+            "expected_layers": len(layers),
+            "captured_q_norm_values": int(all_norms.numel()),
+        }
+    return q_norm
 
 
 def _prefill_with_window_attn(
@@ -452,12 +477,17 @@ def _prefill_with_window_attn(
         if seq_len <= w:
             # Tiny prompt: a single eager forward fits trivially.
             model.set_attn_implementation("eager")
-            out = model(ids_t, use_cache=True, output_attentions=True)
+            out = model(
+                ids_t,
+                use_cache=True,
+                output_attentions=True,
+                logits_to_keep=1,
+            )
             return out.past_key_values, out.logits[:, -1, :], list(out.attentions)
 
         # Build the prefix cache with SDPA (no attention stored).
         model.set_attn_implementation("sdpa")
-        prefix = model(ids_t[:, :-w], use_cache=True)
+        prefix = model(ids_t[:, :-w], use_cache=True, logits_to_keep=1)
         prefix_past = prefix.past_key_values
         del prefix
 
@@ -467,7 +497,8 @@ def _prefill_with_window_attn(
         model.set_attn_implementation("eager")
         pos = torch.arange(seq_len - w, seq_len, device=device).unsqueeze(0)
         out = model(ids_t[:, -w:], past_key_values=prefix_past, use_cache=True,
-                    output_attentions=True, position_ids=pos)
+                    output_attentions=True, position_ids=pos,
+                    logits_to_keep=1)
         return out.past_key_values, out.logits[:, -1, :], list(out.attentions)
     finally:
         model.set_attn_implementation(orig_impl)
@@ -708,7 +739,7 @@ def run_speed(model, tokenizer, model_key: str, device: str,
 
     # Warm-up
     with torch.no_grad():
-        _ = model(input_ids[:, :32], use_cache=False)
+        _ = model(input_ids[:, :32], use_cache=False, logits_to_keep=1)
     torch.cuda.synchronize()
     torch.cuda.reset_peak_memory_stats()
 
@@ -753,7 +784,7 @@ def run_speed(model, tokenizer, model_key: str, device: str,
             t0 = time.perf_counter()
             if attn_aware_decode:
                 step = model(next_tok, past_key_values=past, use_cache=True,
-                             output_attentions=True)
+                             output_attentions=True, logits_to_keep=1)
                 new_attns = list(step.attentions)
                 past, state = _qaq_quantize_new_token_aware(
                     step.past_key_values, new_attns, q_norm, state
@@ -761,7 +792,12 @@ def run_speed(model, tokenizer, model_key: str, device: str,
             else:
                 # No per-step decode quantization: decode tokens stay fp16 in
                 # the cache and are charged at fp16 in the accounting below.
-                step = model(next_tok, past_key_values=past, use_cache=True)
+                step = model(
+                    next_tok,
+                    past_key_values=past,
+                    use_cache=True,
+                    logits_to_keep=1,
+                )
                 past = step.past_key_values
             torch.cuda.synchronize()
             decode_times.append((time.perf_counter() - t0) * 1000)
@@ -809,12 +845,70 @@ def run_speed(model, tokenizer, model_key: str, device: str,
 # Phase 3: LongBench (QAQ generation)
 # ---------------------------------------------------------------------------
 
-def _generate_qaq(
-    model, tokenizer, prompt: str, max_new: int, max_input: int,
-    device: str, use_chat: bool, q_norm: float, attn_aware_decode: bool = True,
-) -> tuple[str, dict]:
+def _prepared_input_tensor(
+    input_ids: Sequence[int] | torch.Tensor, device: str,
+) -> torch.Tensor:
+    """Convert finalized 1-D token IDs to the model's single-example batch."""
+    ids_t = torch.as_tensor(input_ids, dtype=torch.long, device=device)
+    if ids_t.ndim != 1:
+        raise ValueError("prepared input_ids must be one-dimensional")
+    if ids_t.numel() == 0:
+        raise ValueError("prepared input_ids must not be empty")
+    return ids_t.unsqueeze(0)
+
+
+def _validate_generation_controls(
+    max_new_tokens: int,
+    min_new_tokens: int,
+    stop_token_ids: Collection[int],
+) -> frozenset[int]:
+    if max_new_tokens <= 0:
+        raise ValueError("max_new_tokens must be positive")
+    if not 0 <= min_new_tokens <= max_new_tokens:
+        raise ValueError(
+            "min_new_tokens must be between 0 and max_new_tokens, inclusive"
+        )
+    stop_ids = frozenset(int(token_id) for token_id in stop_token_ids)
+    if any(token_id < 0 for token_id in stop_ids):
+        raise ValueError("stop_token_ids must contain non-negative token IDs")
+    return stop_ids
+
+
+def _greedy_next_token(
+    logits: torch.Tensor,
+    stop_token_ids: frozenset[int],
+    generated_count: int,
+    min_new_tokens: int,
+) -> torch.Tensor:
+    """Greedy selection with stop IDs masked until the minimum is reached."""
+    if generated_count >= min_new_tokens or not stop_token_ids:
+        return logits.argmax(dim=-1, keepdim=True)
+
+    valid_stop_ids = [
+        token_id for token_id in stop_token_ids
+        if token_id < logits.shape[-1]
+    ]
+    if len(valid_stop_ids) == logits.shape[-1]:
+        raise ValueError("cannot mask every vocabulary token before minimum length")
+    scores = logits.clone()
+    scores[..., valid_stop_ids] = float("-inf")
+    return scores.argmax(dim=-1, keepdim=True)
+
+
+def generate_prepared_c2(
+    model,
+    tokenizer,
+    input_ids: Sequence[int] | torch.Tensor,
+    max_new_tokens: int,
+    device: str,
+    *,
+    q_norm: float,
+    stop_token_ids: Collection[int],
+    min_new_tokens: int = 0,
+    attn_aware_decode: bool = True,
+) -> tuple[str, int, dict]:
     """
-    Generate with full QAQ attention-aware variable-bit KV cache quantization.
+    Generate with full QAQ from finalized IDs without preparing them again.
 
     Prefill (both models): two-pass SDPA prefix + eager last-`n` attention.
     V-bits are derived from the max attention over those last n=5 query rows
@@ -825,7 +919,7 @@ def _generate_qaq(
     Decode (attn_aware_decode=False): SDPA, no per-step quantization; decode
         tokens stay fp16 and are charged 2 bytes/element in kv_bytes.
 
-    Returns (decoded_text, stats) with stats:
+    Returns (decoded_text, n_generated, stats) with stats:
       kv_bytes        — effective bytes actually kept (metadata-inclusive;
                         on sliding-window models, scaled to the tokens the
                         capped cache physically holds)
@@ -835,13 +929,10 @@ def _generate_qaq(
       avg_bits        — metadata-inclusive avg bits/element of quantized tokens
       n_decode_tokens — decode tokens appended to the cache
     """
-    if use_chat:
-        prompt = apply_chat_template(tokenizer, prompt)
-    ids = tokenizer.encode(prompt, add_special_tokens=False)
-    if len(ids) > max_input:
-        half = max_input // 2
-        ids  = ids[:half] + ids[-half:]
-    ids_t = torch.tensor([ids], device=device)
+    ids_t = _prepared_input_tensor(input_ids, device)
+    stop_ids = _validate_generation_controls(
+        max_new_tokens, min_new_tokens, stop_token_ids
+    )
 
     generated_ids = []
     n_decode      = 0   # decode forwards executed = KV entries appended after prefill
@@ -862,19 +953,24 @@ def _generate_qaq(
             prefill_past, q_norm, prefill_attns=prefill_attns,
         )
         del prefill_attns
-        next_tok = last_logits.argmax(dim=-1, keepdim=True)
+        next_tok = _greedy_next_token(
+            last_logits,
+            stop_ids,
+            generated_count=0,
+            min_new_tokens=min_new_tokens,
+        )
         del last_logits
-        if next_tok.item() != tokenizer.eos_token_id:
+        if int(next_tok.item()) not in stop_ids:
             generated_ids.append(next_tok.item())
 
         # Decode: each step gets attention weights for the new token
-        for _ in range(max_new - 1):
-            if next_tok.item() == tokenizer.eos_token_id:
+        for _ in range(max_new_tokens - 1):
+            if int(next_tok.item()) in stop_ids:
                 break
             if attn_aware_decode:
                 # Eager + output_attentions: attention-aware V bits (1 tok = O(seq_len), safe)
                 out = model(next_tok, past_key_values=past, use_cache=True,
-                            output_attentions=True)
+                            output_attentions=True, logits_to_keep=1)
                 new_attns = list(out.attentions)
                 past, state = _qaq_quantize_new_token_aware(
                     out.past_key_values, new_attns, q_norm, state
@@ -882,11 +978,21 @@ def _generate_qaq(
             else:
                 # SDPA, no per-step quantization: decode tokens stay fp16 in the
                 # cache and are charged at fp16 in kv_bytes below.
-                out  = model(next_tok, past_key_values=past, use_cache=True)
+                out = model(
+                    next_tok,
+                    past_key_values=past,
+                    use_cache=True,
+                    logits_to_keep=1,
+                )
                 past = out.past_key_values
             n_decode += 1
-            next_tok = out.logits[:, -1, :].argmax(dim=-1, keepdim=True)
-            if next_tok.item() != tokenizer.eos_token_id:
+            next_tok = _greedy_next_token(
+                out.logits[:, -1, :],
+                stop_ids,
+                generated_count=len(generated_ids),
+                min_new_tokens=min_new_tokens,
+            )
+            if int(next_tok.item()) not in stop_ids:
                 generated_ids.append(next_tok.item())
 
     # Per-prompt effective bytes (metadata-inclusive):
@@ -916,7 +1022,37 @@ def _generate_qaq(
         "avg_bits":        state.effective_avg_bits(),
         "n_decode_tokens": n_decode,
     }
-    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip(), stats
+    stats["compression"] = (
+        kv_bytes_fp16 / kv_bytes if kv_bytes > 0 else 1.0
+    )
+    prediction = tokenizer.decode(generated_ids, skip_special_tokens=True)
+    return prediction, len(generated_ids), stats
+
+
+def _generate_qaq(
+    model, tokenizer, prompt: str, max_new: int, max_input: int,
+    device: str, use_chat: bool, q_norm: float, attn_aware_decode: bool = True,
+) -> tuple[str, dict]:
+    """P0-compatible prompt wrapper around :func:`generate_prepared_c2`."""
+    if use_chat:
+        prompt = apply_chat_template(tokenizer, prompt)
+    ids = tokenizer.encode(prompt, add_special_tokens=False)
+    if len(ids) > max_input:
+        half = max_input // 2
+        ids = ids[:half] + ids[-half:]
+    prediction, _, stats = generate_prepared_c2(
+        model,
+        tokenizer,
+        ids,
+        max_new,
+        device,
+        q_norm=q_norm,
+        stop_token_ids={tokenizer.eos_token_id},
+        attn_aware_decode=attn_aware_decode,
+    )
+    legacy_stats = dict(stats)
+    legacy_stats.pop("compression")
+    return prediction.strip(), legacy_stats
 
 
 def run_longbench(

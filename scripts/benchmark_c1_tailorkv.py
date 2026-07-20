@@ -51,6 +51,7 @@ import argparse
 import json
 import math
 import time
+from collections.abc import Collection, Sequence
 from pathlib import Path
 
 import torch
@@ -309,7 +310,12 @@ def _prefill_and_compress(
     if seq_len <= w:
         model.set_attn_implementation("eager")
         with torch.no_grad():
-            out = model(ids_t, use_cache=True, output_attentions=True)
+            out = model(
+                ids_t,
+                use_cache=True,
+                output_attentions=True,
+                logits_to_keep=1,
+            )
         full_bytes = kv_cache_bytes(out.past_key_values)  # pre-compression FP16 reference
         past, st = _compress_cache(
             out.past_key_values, out.attentions,
@@ -327,7 +333,7 @@ def _prefill_and_compress(
 
     model.set_attn_implementation("sdpa")
     with torch.no_grad():
-        pref = model(prefix_ids, use_cache=True)
+        pref = model(prefix_ids, use_cache=True, logits_to_keep=1)
     prefix_past = pref.past_key_values
     del pref
 
@@ -335,7 +341,8 @@ def _prefill_and_compress(
     pos = torch.arange(seq_len - w, seq_len, device=device).unsqueeze(0)
     with torch.no_grad():
         out = model(last_ids, past_key_values=prefix_past, use_cache=True,
-                    output_attentions=True, position_ids=pos)
+                    output_attentions=True, position_ids=pos,
+                    logits_to_keep=1)
     full_bytes = kv_cache_bytes(out.past_key_values)  # pre-compression FP16 reference
     past, st = _compress_cache(
         out.past_key_values, out.attentions,
@@ -370,7 +377,7 @@ def run_speed(model, tokenizer, model_key: str, q_layers: set[int],
           f"S-budget: {TKV_N_LOCAL}+({TKV_N_TOPK})  bits: {TKV_BITS}")
 
     with torch.no_grad():
-        _ = model(input_ids[:, :32], use_cache=False)
+        _ = model(input_ids[:, :32], use_cache=False, logits_to_keep=1)
     torch.cuda.synchronize()
     torch.cuda.reset_peak_memory_stats()
 
@@ -403,7 +410,7 @@ def run_speed(model, tokenizer, model_key: str, q_layers: set[int],
             torch.cuda.synchronize()
             t0 = time.perf_counter()
             step = model(next_tok, past_key_values=past, use_cache=True,
-                         position_ids=pos)
+                         position_ids=pos, logits_to_keep=1)
             torch.cuda.synchronize()
             decode_times.append((time.perf_counter() - t0) * 1000)
             past     = step.past_key_values
@@ -433,6 +440,129 @@ def run_speed(model, tokenizer, model_key: str, q_layers: set[int],
 # Phase 3: LongBench
 # ---------------------------------------------------------------------------
 
+def _prepared_input_tensor(
+    input_ids: Sequence[int] | torch.Tensor, device: str,
+) -> torch.Tensor:
+    """Convert finalized 1-D token IDs to the model's single-example batch."""
+    ids_t = torch.as_tensor(input_ids, dtype=torch.long, device=device)
+    if ids_t.ndim != 1:
+        raise ValueError("prepared input_ids must be one-dimensional")
+    if ids_t.numel() == 0:
+        raise ValueError("prepared input_ids must not be empty")
+    return ids_t.unsqueeze(0)
+
+
+def _validate_generation_controls(
+    max_new_tokens: int,
+    min_new_tokens: int,
+    stop_token_ids: Collection[int],
+) -> frozenset[int]:
+    if max_new_tokens <= 0:
+        raise ValueError("max_new_tokens must be positive")
+    if not 0 <= min_new_tokens <= max_new_tokens:
+        raise ValueError(
+            "min_new_tokens must be between 0 and max_new_tokens, inclusive"
+        )
+    stop_ids = frozenset(int(token_id) for token_id in stop_token_ids)
+    if any(token_id < 0 for token_id in stop_ids):
+        raise ValueError("stop_token_ids must contain non-negative token IDs")
+    return stop_ids
+
+
+def _greedy_next_token(
+    logits: torch.Tensor,
+    stop_token_ids: frozenset[int],
+    generated_count: int,
+    min_new_tokens: int,
+) -> torch.Tensor:
+    """Greedy selection with stop IDs masked until the minimum is reached."""
+    if generated_count >= min_new_tokens or not stop_token_ids:
+        return logits.argmax(dim=-1, keepdim=True)
+
+    valid_stop_ids = [
+        token_id for token_id in stop_token_ids
+        if token_id < logits.shape[-1]
+    ]
+    if len(valid_stop_ids) == logits.shape[-1]:
+        raise ValueError("cannot mask every vocabulary token before minimum length")
+    scores = logits.clone()
+    scores[..., valid_stop_ids] = float("-inf")
+    return scores.argmax(dim=-1, keepdim=True)
+
+
+def generate_prepared_c1(
+    model,
+    tokenizer,
+    input_ids: Sequence[int] | torch.Tensor,
+    max_new_tokens: int,
+    device: str,
+    *,
+    q_layers: set[int],
+    stop_token_ids: Collection[int],
+    min_new_tokens: int = 0,
+    _forward_final_token_at_limit: bool = False,
+) -> tuple[str, int, dict]:
+    """Generate with C1 from finalized IDs, preserving its cache behavior."""
+    ids_t = _prepared_input_tensor(input_ids, device)
+    stop_ids = _validate_generation_controls(
+        max_new_tokens, min_new_tokens, stop_token_ids
+    )
+    logical_len = ids_t.shape[1]
+
+    past, last_logits, stats = _prefill_and_compress(
+        model, ids_t, q_layers=q_layers, device=device,
+    )
+    next_tok = _greedy_next_token(
+        last_logits, stop_ids, generated_count=0,
+        min_new_tokens=min_new_tokens,
+    )
+    del last_logits
+
+    n_decode_forwards = 0
+    with torch.no_grad():
+        generated = []
+        for step_i in range(max_new_tokens):
+            tok_id = int(next_tok.item())
+            if tok_id in stop_ids:
+                break
+            generated.append(tok_id)
+            if (
+                len(generated) == max_new_tokens
+                and not _forward_final_token_at_limit
+            ):
+                break
+            pos = torch.tensor([[logical_len + step_i]], device=device)
+            step = model(next_tok, past_key_values=past, use_cache=True,
+                         position_ids=pos, logits_to_keep=1)
+            n_decode_forwards += 1
+            past = step.past_key_values
+            next_tok = _greedy_next_token(
+                step.logits[:, -1, :],
+                stop_ids,
+                generated_count=len(generated),
+                min_new_tokens=min_new_tokens,
+            )
+
+    n_generated = len(generated)
+    stats["n_decode_tokens"] = n_decode_forwards
+    kv_bytes = stats["compressed_kv_bytes"] + (
+        n_decode_forwards * stats["fp16_bytes_per_token"]
+    )
+    kv_bytes_fp16 = stats["full_kv_bytes"] + fp16_decode_growth_bytes(
+        stats["full_kv_bytes"],
+        n_decode_forwards,
+        stats["fp16_bytes_per_token"],
+        model.config,
+    )
+    stats["kv_bytes"] = kv_bytes
+    stats["kv_bytes_fp16"] = kv_bytes_fp16
+    stats["compression"] = (
+        kv_bytes_fp16 / kv_bytes if kv_bytes > 0 else 1.0
+    )
+    prediction = tokenizer.decode(generated, skip_special_tokens=True)
+    return prediction, n_generated, stats
+
+
 def _generate_tkv(
     model, tokenizer, prompt: str, max_new: int, max_input: int,
     device: str, use_chat: bool, q_layers: set[int],
@@ -443,33 +573,20 @@ def _generate_tkv(
     if len(ids) > max_input:
         half = max_input // 2
         ids  = ids[:half] + ids[-half:]
-    ids_t = torch.tensor([ids], device=device)
-    logical_len = ids_t.shape[1]
-
-    eos_id = tokenizer.eos_token_id
-    past, last_logits, stats = _prefill_and_compress(
-        model, ids_t, q_layers=q_layers, device=device,
+    prediction, _, stats = generate_prepared_c1(
+        model,
+        tokenizer,
+        ids,
+        max_new,
+        device,
+        q_layers=q_layers,
+        stop_token_ids={tokenizer.eos_token_id},
+        _forward_final_token_at_limit=True,
     )
-    next_tok = last_logits.argmax(dim=-1, keepdim=True)
-    del last_logits
-
-    with torch.no_grad():
-        generated = []
-        for step_i in range(max_new):
-            tok_id = int(next_tok.item())
-            if tok_id == eos_id:
-                break
-            generated.append(tok_id)
-            pos = torch.tensor([[logical_len + step_i]], device=device)
-            step = model(next_tok, past_key_values=past, use_cache=True,
-                         position_ids=pos)
-            past     = step.past_key_values
-            next_tok = step.logits[:, -1, :].argmax(dim=-1, keepdim=True)
-
-    # Each generated token corresponds to exactly one decode forward that
-    # appended one (uncompressed fp16) token to every layer of the cache.
-    stats["n_decode_tokens"] = len(generated)
-    return tokenizer.decode(generated, skip_special_tokens=True).strip(), stats
+    legacy_stats = dict(stats)
+    for key in ("kv_bytes", "kv_bytes_fp16", "compression"):
+        legacy_stats.pop(key)
+    return prediction.strip(), legacy_stats
 
 
 def run_longbench(model, tokenizer, model_key: str, q_layers: set[int],

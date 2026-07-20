@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from collections.abc import Collection, Sequence
 from pathlib import Path
 
 import torch
@@ -64,7 +65,7 @@ def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
 
     # Warm-up pass (discarded)
     with torch.no_grad():
-        _ = model(input_ids[:, :32], use_cache=False)
+        _ = model(input_ids[:, :32], use_cache=False, logits_to_keep=1)
     torch.cuda.synchronize()
     torch.cuda.reset_peak_memory_stats()
 
@@ -72,7 +73,7 @@ def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
     torch.cuda.synchronize()
     t0 = time.perf_counter()
     with torch.no_grad():
-        prefill_out = model(input_ids, use_cache=True)
+        prefill_out = model(input_ids, use_cache=True, logits_to_keep=1)
     torch.cuda.synchronize()
     ttft_ms = (time.perf_counter() - t0) * 1000
     print(f"  TTFT: {ttft_ms:.1f} ms")
@@ -89,7 +90,12 @@ def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
         for _ in range(SPEED_N_DECODE):
             torch.cuda.synchronize()
             t0 = time.perf_counter()
-            step = model(next_tok, past_key_values=past, use_cache=True)
+            step = model(
+                next_tok,
+                past_key_values=past,
+                use_cache=True,
+                logits_to_keep=1,
+            )
             torch.cuda.synchronize()
             decode_times.append((time.perf_counter() - t0) * 1000)
             past     = step.past_key_values
@@ -118,6 +124,82 @@ def run_speed(model, tokenizer, model_key: str, device: str) -> dict:
 # Phase 3: LongBench
 # ---------------------------------------------------------------------------
 
+def _prepared_input_tensor(
+    input_ids: Sequence[int] | torch.Tensor, device: str,
+) -> torch.Tensor:
+    """Convert finalized 1-D token IDs to the model's single-example batch."""
+    ids_t = torch.as_tensor(input_ids, dtype=torch.long, device=device)
+    if ids_t.ndim != 1:
+        raise ValueError("prepared input_ids must be one-dimensional")
+    if ids_t.numel() == 0:
+        raise ValueError("prepared input_ids must not be empty")
+    return ids_t.unsqueeze(0)
+
+
+def _validate_generation_controls(
+    max_new_tokens: int,
+    min_new_tokens: int,
+    stop_token_ids: Collection[int],
+) -> frozenset[int]:
+    if max_new_tokens <= 0:
+        raise ValueError("max_new_tokens must be positive")
+    if not 0 <= min_new_tokens <= max_new_tokens:
+        raise ValueError(
+            "min_new_tokens must be between 0 and max_new_tokens, inclusive"
+        )
+    stop_ids = frozenset(int(token_id) for token_id in stop_token_ids)
+    if any(token_id < 0 for token_id in stop_ids):
+        raise ValueError("stop_token_ids must contain non-negative token IDs")
+    return stop_ids
+
+
+def generate_prepared_c0(
+    model,
+    tokenizer,
+    input_ids: Sequence[int] | torch.Tensor,
+    max_new_tokens: int,
+    device: str,
+    *,
+    stop_token_ids: Collection[int],
+    min_new_tokens: int = 0,
+) -> tuple[str, int, dict]:
+    """Generate from finalized IDs without tokenizing or truncating them."""
+    ids_t = _prepared_input_tensor(input_ids, device)
+    stop_ids = _validate_generation_controls(
+        max_new_tokens, min_new_tokens, stop_token_ids
+    )
+
+    with torch.no_grad():
+        out = model.generate(
+            ids_t,
+            attention_mask=torch.ones_like(ids_t),
+            max_new_tokens=max_new_tokens,
+            max_length=None,
+            min_new_tokens=min_new_tokens,
+            do_sample=False,
+            eos_token_id=(sorted(stop_ids) if stop_ids else None),
+            pad_token_id=tokenizer.eos_token_id,
+            use_cache=True,
+            return_dict_in_generate=True,
+            logits_to_keep=1,
+        )
+
+    generated = out.sequences[0, ids_t.shape[1]:].tolist()
+    for index, token_id in enumerate(generated):
+        if token_id in stop_ids:
+            generated = generated[:index]
+            break
+
+    prediction = tokenizer.decode(generated, skip_special_tokens=True)
+    kv_bytes = float(kv_cache_bytes(out.past_key_values))
+    kv_stats = {
+        "kv_bytes": kv_bytes,
+        "kv_bytes_fp16": kv_bytes,
+        "compression": 1.0,
+    }
+    return prediction, len(generated), kv_stats
+
+
 def _generate(model, tokenizer, prompt: str, max_new: int, max_input: int, device: str,
               use_chat: bool = True) -> tuple[str, int]:
     """Greedy-decode a prediction.
@@ -132,20 +214,15 @@ def _generate(model, tokenizer, prompt: str, max_new: int, max_input: int, devic
     if len(ids) > max_input:
         half = max_input // 2
         ids  = ids[:half] + ids[-half:]
-    ids_t = torch.tensor([ids], device=device)
-    with torch.no_grad():
-        out = model.generate(
-            ids_t,
-            max_new_tokens=max_new,
-            max_length=None,
-            do_sample=False,
-            pad_token_id=tokenizer.eos_token_id,
-            use_cache=True,
-            return_dict_in_generate=True,
-        )
-    pred     = tokenizer.decode(out.sequences[0, len(ids):], skip_special_tokens=True)
-    kv_bytes = kv_cache_bytes(out.past_key_values)
-    return pred, kv_bytes
+    pred, _, kv_stats = generate_prepared_c0(
+        model,
+        tokenizer,
+        ids,
+        max_new,
+        device,
+        stop_token_ids={tokenizer.eos_token_id},
+    )
+    return pred, int(kv_stats["kv_bytes"])
 
 
 def run_longbench(model, tokenizer, model_key: str, device: str,

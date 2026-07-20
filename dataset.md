@@ -214,12 +214,32 @@ For one model:
 C6 routing does not add another LLM generation configuration. Its primary
 evaluation retains the project’s existing 10-fold task-stratified
 cross-validation, with fold shuffling seed 0. Every example is held out once,
-and the regressors retain `random_state=0`. Leave-one-task-out evaluation may
-be reported separately, but it is not a substitute for the primary protocol.
+and the regressors retain `random_state=0`. The primary operating point is
+the existing \(\tau=0.99\) iso-quality policy over C1–C5: a candidate is
+eligible when its predicted score is at least 0.99 times the larger of the
+predicted C0 score and the training-fold mean actual C0 score. Eligible
+candidates are ranked by training-fold harmonic-mean compression; if none is
+eligible, select the candidate with the highest predicted quality. Compression
+ranking, feature scaling, and model fitting must use only the training fold.
+Candidate ties use the fixed C1, C2, C3, C4, C5 order. Leave-one-task-out
+evaluation may be reported separately, but it is not a substitute for the
+primary protocol. Because each stratified fold contains held-out examples from
+the same 16 tasks represented in training, C6 measures within-task held-out
+prompt generalization; it must not be presented as unseen-task generalization.
 
 The raw-generation artifact therefore has 22,500 records per model, while the
 joined routing artifact has 3,750 rows per model with C0–C5 score,
 compression, and byte labels stored as columns.
+
+The primary post-hoc maximum-potential baseline mirrors that operating point
+with true held-out labels: among C1–C5 configurations whose actual score is at
+least \(0.99\) times the example’s actual C0 score, choose the configuration
+with the highest accounted per-example compression. Compression ties use the
+fixed C1–C5 order. If no candidate qualifies, choose the highest actual-score
+candidate, breaking score ties by compression and then fixed order. Report
+this as an oracle upper bound, never as a deployable router. Also report the
+quality-first oracle (quality, then compression, then fixed order) as a
+diagnostic.
 
 To preserve the existing router feature contract, C6’s `seq_len_tokens`
 feature remains the selected tokenizer’s length of the official
@@ -282,8 +302,11 @@ formally made and repository support is implemented.
    prompt. This is a checkpoint-specific adaptation of the
    [released LongBench runner](https://github.com/THUDM/LongBench/blob/main/LongBench/pred.py),
    which predates Llama-3.1. Unlike that runner, this protocol applies
-   truncation after final formatting.
+   truncation after final formatting. Pass the locked template date string
+   `20 Jul 2026` so the rendered system header is reproducible.
 4. Tokenize the complete, final model input before applying the length rule.
+   Retain the tokenizer's normal special tokens (including Llama's BOS token)
+   on the five tasks without a chat wrapper.
 5. Save both the pre-truncation and post-truncation token counts.
 
 ### Context policy
@@ -311,9 +334,10 @@ Section 4. The maximum possible request is therefore:
 Decoding is greedy (`do_sample=False` or exact argmax), with no beam search or
 stochastic sampling. This does not by itself assert deterministic CUDA-kernel
 execution.
-For SAMSum, require at least one generated token and use both the model EOS
-token and the tokenizer’s newline token as stopping IDs, matching the released
-runner.
+Use the pinned checkpoint's complete native terminal-token set:
+`128001` (`<|end_of_text|>`), `128008` (`<|eom_id|>`), and `128009`
+(`<|eot_id|>`). For SAMSum, require at least one generated token and add the
+tokenizer’s newline token as a stopping ID, matching the released runner.
 
 ### Why 24,000 tokens
 
@@ -321,10 +345,10 @@ A full-panel audit with the Llama-3.1-8B-Instruct tokenizer found:
 
 | Statistic | Result |
 | --- | ---: |
-| Median final formatted length | 8,866.5 tokens |
-| 90th percentile | 17,502 tokens |
-| 95th percentile | 23,220 tokens |
-| 99th percentile | 46,742 tokens |
+| Median final formatted length | 8,867.0 tokens |
+| 90th percentile | 17,505.9 tokens |
+| 95th percentile | 23,205.1 tokens |
+| 99th percentile | 46,741.5 tokens |
 | Maximum | 65,404 tokens |
 | Inputs at or below 24,000 | 3,579 / 3,750 (95.44%) |
 | Inputs requiring truncation | 171 / 3,750 (4.56%) |
@@ -389,6 +413,17 @@ For compression, retain the project’s existing definition:
 > per-example compression ratio =
 > `kv_bytes_fp16 / kv_bytes`
 
+Here `kv_bytes` is an effective-storage accounting field, not a uniform
+measurement of live CUDA allocation. C0, C4, and C5 use physical retained
+FP16 tensor bytes. C1, C2, and C3 are round-trip FP16 simulations whose
+`kv_bytes` values model packed quantized storage, including the implemented
+quantization metadata; their runtime tensors are not physically stored in
+that packed representation. Accordingly, the reported ratio estimates KV
+storage reduction under the specified representation. It must not be
+described as measured peak-VRAM reduction, end-to-end memory reduction, or
+latency improvement. Every raw and joined record carries the applicable
+accounting descriptor.
+
 The primary compression summary is the harmonic mean of the 3,750 per-example
 ratios. Because this request-weighted statistic gives more weight to tasks
 with larger official test splits, also report a category-balanced diagnostic:
@@ -440,7 +475,8 @@ Each per-prompt record must include at least:
 - a hash of the final input token-ID sequence;
 - task-specific output limit;
 - generated-token count; and
-- measured KV-cache byte fields required by the compression analysis.
+- effective and FP16-reference KV byte fields plus the configuration-specific
+  physical-versus-modeled accounting descriptor.
 
 The manifest must make interrupted, retried, or failed prompts visible. Raw
 records and the joined table must use `(task, benchmark_id)` as the primary
@@ -450,38 +486,42 @@ once and their final-input token hashes agree within each model.
 
 ## 12. Implementation gates before the full run
 
-The current repository implements the old 11-task/20-example protocol. The
-expanded evaluation must not begin until all of the following are checked:
+The codebase formerly implemented only the old 11-task/20-example protocol.
+Checked items below are now implemented and CPU-tested; unchecked items require
+the canonical prepared artifact, saved GPU evidence, or complete generation
+records. The full evaluation must not begin until every pre-generation item is
+checked:
 
-- [ ] Add MuSiQue, SAMSum, PassageRetrieval-en, LCC, and RepoBench-P to the
+- [x] Add MuSiQue, SAMSum, PassageRetrieval-en, LCC, and RepoBench-P to the
       task registry and prompt registry.
-- [ ] Add the official retrieval and code-similarity scorers.
-- [ ] Add SAMSum to official first-line post-processing and termination logic.
-- [ ] Remove the 20-example loader default for the final-run mode and make an
+- [x] Add the official retrieval and code-similarity scorers.
+- [x] Add SAMSum to official first-line post-processing and termination logic.
+- [x] Remove the 20-example loader default for the final-run mode and make an
       accidentally set `ADAPTIVESERVE_LB_N` fatal.
-- [ ] Validate the exact 16-task membership and all per-task counts before any
+- [x] Validate the exact 16-task membership and all per-task counts before any
       generation begins; missing files or mismatched counts must fail closed
       rather than be skipped.
-- [ ] Load all 3,750 official test examples and verify the counts in Section 4.
-- [ ] Apply the 24,000-token limit to the final formatted input, identically
+- [x] Load all 3,750 official test examples and verify the counts in Section 4.
+- [x] Apply the 24,000-token limit to the final formatted input, identically
       across C0–C5.
-- [ ] Extend per-prompt logging with benchmark ID, source index, references,
+- [x] Extend per-prompt logging with benchmark ID, source index, references,
       pre/post token counts, truncation state, output counts, and final token-ID
       hash; join configurations on `(task, benchmark_id)`.
-- [ ] Add the six-category map and implement the task → category → headline
+- [x] Add the six-category map and implement the task → category → headline
       quality aggregation consistently in C0–C5, C6, cross-validation,
       candidate-pool summaries, plots, and exports.
-- [ ] Preserve the primary harmonic-mean compression summary and add the
+- [x] Preserve the primary harmonic-mean compression summary and add the
       labelled category-balanced compression diagnostic from Section 10.
-- [ ] Request only final-position logits in non-perplexity manual prefills;
+- [x] Request only final-position logits in non-perplexity manual prefills;
       full-sequence vocabulary logits are unnecessary and exceed the memory
       budget.
-- [ ] Expand or replace the deterministic speed-test input so it contains at
-      least 24,000 tokens, or explicitly skip speed/perplexity in the quality
-      run and execute a separately named speed protocol.
+- [x] Explicitly exclude speed and perplexity from this quality/KV-label
+      milestone; they require no runs here and may use a separately named
+      protocol later.
 - [ ] Run a worst-case 24,000-input + 512-output pilot for C0–C5.
-- [ ] Require at least 1.5 GiB of physical-VRAM headroom and reject CPU-offload
-      or paging-contaminated latency measurements.
+- [x] Force all 512 feasibility decode positions even if a terminal token is
+      produced, require at least 1.5 GiB of physical-VRAM headroom, and block
+      final-mode generation until all six pilots pass.
 - [ ] Save the feasibility-pilot script, configuration, raw output, and
       environment metadata as a versioned provenance artifact.
 - [ ] Verify that every configuration produces the same ordered composite-ID

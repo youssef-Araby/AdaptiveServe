@@ -1,0 +1,251 @@
+{
+  "schema_version": "adaptiveserve-longbench16-run-config/v1",
+  "protocol_id": "longbench-v1-non-zh-24k",
+  "scope": {
+    "purpose": "quality-and-KV-compression labels for fixed-method comparison, routing, and routing-oracle analysis",
+    "task_registry": "configs/longbench_v1/task_registry.json",
+    "benchmark_examples": 3750,
+    "configurations": [
+      "C0",
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "expected_generation_records": 22500,
+    "speed_in_scope": false,
+    "perplexity_in_scope": false
+  },
+  "model": {
+    "alias": "llama31_8b",
+    "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+    "model_revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+    "tokenizer_id": "meta-llama/Llama-3.1-8B-Instruct",
+    "tokenizer_revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+    "dtype": "float16",
+    "single_gpu_required": true,
+    "cpu_or_disk_offload_allowed": false
+  },
+  "input_policy": {
+    "final_input_token_cap": 24000,
+    "overlength_policy": "first_12000_plus_last_12000_token_ids",
+    "decode_and_retokenize_after_truncation": false,
+    "feature_prompt_stage": "official_task_prompt_before_chat_wrapper_and_truncation",
+    "persist_prepared_token_ids": true,
+    "token_id_hash": "sha256-little-endian-uint32",
+    "no_chat_add_special_tokens": true,
+    "chat_template_date_string": "20 Jul 2026",
+    "expected_primary_truncation_counts": {
+      "narrativeqa": 115,
+      "qasper": 0,
+      "multifieldqa_en": 0,
+      "hotpotqa": 0,
+      "2wikimqa": 0,
+      "musique": 0,
+      "gov_report": 7,
+      "qmsum": 22,
+      "multi_news": 0,
+      "trec": 0,
+      "triviaqa": 0,
+      "samsum": 0,
+      "passage_count": 3,
+      "passage_retrieval_en": 0,
+      "lcc": 1,
+      "repobench-p": 23
+    },
+    "expected_primary_total_truncated": 171
+  },
+  "generation_policy": {
+    "decoding": "greedy",
+    "do_sample": false,
+    "num_beams": 1,
+    "task_specific_max_new_tokens": true,
+    "default_stop": "pinned_model_native_eos_token_ids",
+    "native_stop_token_ids": [
+      128001,
+      128008,
+      128009
+    ],
+    "samsum_minimum_new_tokens": 1,
+    "samsum_additional_stop": "last_tokenizer_id_for_newline"
+  },
+  "configurations": {
+    "C0": {
+      "method": "FP16 full KV-cache reference",
+      "kv_accounting": {
+        "kind": "physical_tensor_bytes",
+        "quantization_metadata_included": false,
+        "runtime_representation": "native_fp16_cache"
+      }
+    },
+    "C1": {
+      "method": "TailorKV-inspired hybrid",
+      "quantized_layers": [
+        0
+      ],
+      "quantization_bits": 1,
+      "group_size": 64,
+      "recent_tokens": 64,
+      "topk_prefix_tokens": 128,
+      "attention_window": 32,
+      "smoothing_kernel": 7,
+      "kv_accounting": {
+        "kind": "modeled_packed_bytes",
+        "quantization_metadata_included": true,
+        "runtime_representation": "round_trip_fp16_quantization_simulation"
+      }
+    },
+    "C2": {
+      "method": "QAQ attention-aware variable-bit quantization",
+      "outlier_fraction": 0.01,
+      "minimum_bits": 2,
+      "maximum_bits": 16,
+      "last_attention_queries": 5,
+      "target_error": 1.0,
+      "q_norm_percentile": 90,
+      "attention_aware_decode": true,
+      "q_norm_calibration": "first_128_tokens_of_versioned_calibration_text",
+      "q_norm_calibration_text_source": "scripts/_common.py:SPEED_TEXT",
+      "q_norm_calibration_text_sha256": "8482361e49bc66afb6b90fe3e88f5c7f1f6d4583bcf5c9f06b65a0a27fdbc710",
+      "q_norm_calibration_token_count": 128,
+      "q_norm_calibration_token_sha256": "84a13235d8579291e4715a81b3f86a3ecf175392587c8611975b9296b20f658b",
+      "q_norm_calibration_add_special_tokens": false,
+      "kv_accounting": {
+        "kind": "modeled_packed_bytes",
+        "quantization_metadata_included": true,
+        "runtime_representation": "round_trip_fp16_quantization_simulation"
+      }
+    },
+    "C3": {
+      "method": "simplified-but-faithful KVQuant simulation",
+      "quantization_bits": 4,
+      "group_size": 128,
+      "outlier_fraction": 0.01,
+      "kv_accounting": {
+        "kind": "modeled_packed_bytes",
+        "quantization_metadata_included": true,
+        "runtime_representation": "round_trip_fp16_quantization_simulation"
+      }
+    },
+    "C4": {
+      "method": "DynamicKV cross-layer adaptive retention with one shared index set per layer",
+      "mean_per_layer_budget": 1024,
+      "recent_window": 32,
+      "smoothing_kernel": 7,
+      "maximum_layer_budget_ratio": 10,
+      "kv_accounting": {
+        "kind": "physical_tensor_bytes",
+        "quantization_metadata_included": false,
+        "runtime_representation": "retained_native_fp16_cache"
+      }
+    },
+    "C5": {
+      "method": "head-vote top-k eviction with Ada-KV-inspired budget weighting and one shared index set",
+      "per_head_budget": 1024,
+      "recent_window": 32,
+      "smoothing_kernel": 7,
+      "kv_accounting": {
+        "kind": "physical_tensor_bytes",
+        "quantization_metadata_included": false,
+        "runtime_representation": "retained_native_fp16_cache"
+      }
+    }
+  },
+  "quality_aggregation": {
+    "score_scale_in_records": "0_to_1",
+    "primary": "example_mean_within_task_then_task_mean_within_category_then_equal_mean_of_six_categories",
+    "required_diagnostics": [
+      "all_16_task_scores",
+      "all_6_category_scores",
+      "prompt_micro_average"
+    ]
+  },
+  "compression_aggregation": {
+    "per_example": "kv_bytes_fp16_divided_by_kv_bytes",
+    "primary": "harmonic_mean_over_3750_examples",
+    "category_balanced_diagnostic": "harmonic_mean_within_task_then_task_mean_within_category_then_equal_mean_of_six_categories"
+  },
+  "oracle_analysis": {
+    "interpretation": "post_hoc_upper_bound_not_a_deployable_router",
+    "candidate_configurations": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "primary": {
+      "name": "iso_quality_tau_0.99_max_compression",
+      "quality_threshold": "actual_candidate_score_gte_0.99_times_actual_c0_score",
+      "eligible_ranking": "highest_actual_per_prompt_compression_then_fixed_config_order",
+      "fallback": "highest_actual_quality_then_actual_compression_then_fixed_config_order"
+    },
+    "required_diagnostic": "max_quality_then_compression_then_config"
+  },
+  "router_dataset": {
+    "primary_key": [
+      "task",
+      "benchmark_id"
+    ],
+    "feature_keys": [
+      "seq_len_tokens",
+      "seq_len_chars",
+      "token_entropy",
+      "gzip_ratio",
+      "unique_token_ratio",
+      "question_position",
+      "newline_density"
+    ],
+    "label_configurations": [
+      "C0",
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "routing_policy": {
+      "reference_configuration": "C0",
+      "candidate_configurations": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "iso_quality_tau": 0.99,
+      "quality_threshold": "predicted_candidate_score_gte_tau_times_max_of_predicted_c0_and_train_mean_actual_c0",
+      "candidate_ranking": "descending_train_fold_harmonic_mean_compression",
+      "fallback": "highest_predicted_quality_candidate",
+      "filter_candidates_by_train_mean_quality": false,
+      "deterministic_tie_order": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "regressor": {
+        "class": "sklearn.ensemble.HistGradientBoostingRegressor",
+        "max_iter": 300,
+        "max_depth": 4,
+        "learning_rate": 0.05,
+        "random_state": 0
+      },
+      "feature_scaler": "sklearn.preprocessing.StandardScaler_fit_on_training_fold"
+    },
+    "primary_cross_validation": {
+      "kind": "task_stratified_k_fold",
+      "folds": 10,
+      "shuffle": true,
+      "seed": 0,
+      "regressor_random_state": 0
+    }
+  },
+  "deferred": {
+    "speed_protocol": true,
+    "perplexity_protocol": true,
+    "confirmation_model": true
+  }
+}

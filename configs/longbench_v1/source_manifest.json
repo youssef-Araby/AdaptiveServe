@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "longbench_code": {
+    "repository": "https://github.com/THUDM/LongBench",
+    "commit": "2e00731f8d0bff23dc4325161044d0ed8af94c1e",
+    "assets": {
+      "LongBench/config/dataset2prompt.json": {
+        "url": "https://raw.githubusercontent.com/THUDM/LongBench/2e00731f8d0bff23dc4325161044d0ed8af94c1e/LongBench/config/dataset2prompt.json",
+        "raw_upstream_sha256": "56d22ad4f382169c2b8a11ff4c982a4a1bea096c8152b0f0b85b64686b157c30"
+      },
+      "LongBench/config/dataset2maxlen.json": {
+        "url": "https://raw.githubusercontent.com/THUDM/LongBench/2e00731f8d0bff23dc4325161044d0ed8af94c1e/LongBench/config/dataset2maxlen.json",
+        "raw_upstream_sha256": "72966b3c0933e214591637fb085798c5e687ebff4ddaab5d99bbc31120532022"
+      },
+      "LongBench/metrics.py": {
+        "url": "https://raw.githubusercontent.com/THUDM/LongBench/2e00731f8d0bff23dc4325161044d0ed8af94c1e/LongBench/metrics.py",
+        "raw_upstream_sha256": "e22e2a2662e0f7e683137fa3541f64edb6a801e9138d16d2f3459a6ab9941323"
+      },
+      "LongBench/eval.py": {
+        "url": "https://raw.githubusercontent.com/THUDM/LongBench/2e00731f8d0bff23dc4325161044d0ed8af94c1e/LongBench/eval.py",
+        "raw_upstream_sha256": "1a3acfc25d9b053e9bb75c479f7e385d0cb9989f0f7115346b7d632655967721"
+      },
+      "LongBench/pred.py": {
+        "url": "https://raw.githubusercontent.com/THUDM/LongBench/2e00731f8d0bff23dc4325161044d0ed8af94c1e/LongBench/pred.py",
+        "raw_upstream_sha256": "fdbb0ab2bb68c822fc35126ac050ec60110396bd14fb6d27bed1969f6361835c"
+      }
+    }
+  },
+  "longbench_dataset": {
+    "requested_id": "THUDM/LongBench",
+    "resolved_id": "zai-org/LongBench",
+    "revision": "5e628be450b7e67fb7ae6e201bd6d8f7056f7672",
+    "split": "test",
+    "revision_api": "https://huggingface.co/api/datasets/THUDM/LongBench/revision/5e628be450b7e67fb7ae6e201bd6d8f7056f7672",
+    "assets": {
+      "README.md": {
+        "url": "https://huggingface.co/datasets/zai-org/LongBench/raw/5e628be450b7e67fb7ae6e201bd6d8f7056f7672/README.md",
+        "raw_upstream_sha256": "5c648f2d0f5f1953f9361fdd3dcda23077f103b4028599095a31f03b74fe6458"
+      },
+      "LongBench.py": {
+        "url": "https://huggingface.co/datasets/zai-org/LongBench/raw/5e628be450b7e67fb7ae6e201bd6d8f7056f7672/LongBench.py",
+        "raw_upstream_sha256": "be9fad2dba34c4ddf77c83640974160bb95c0bb8759e6274ca01a6b2fe9f3372"
+      },
+      "data.zip": {
+        "url": "https://huggingface.co/datasets/zai-org/LongBench/resolve/5e628be450b7e67fb7ae6e201bd6d8f7056f7672/data.zip",
+        "raw_upstream_sha256": "cb45b11a4133c6bc1d6a44b0f8e701335ff1e543195db1103472e575857f7f64"
+      }
+    },
+    "extracted_task_sha256": {
+      "narrativeqa": "0fb8d08ba5cdad4b74244224b0dc2e8b41ee6b850d954a13eb2d282621ce2f71",
+      "qasper": "29aa07d2a63f36f4fb8e8cd200a3428ee3126d750bde6af1c8f9bc41c2366854",
+      "multifieldqa_en": "0aac182fd317dcf6d74f8e1e0f3e61029407435346c2e0b3ff9fb45ae49c5c3f",
+      "hotpotqa": "a0005ab2a1bc2ac3a70352dccbf96cccc4e0aac6bb677f6a55180fa51b92ef6f",
+      "2wikimqa": "dda279cf93a99e1e5bfa3291fb199fd55978d10a1feb31822953cf77a1742e37",
+      "musique": "4ac69b91281c4ec6b21316cb7282e83fb6b4dda04fc68480bb8d8ed1e19ff7bd",
+      "gov_report": "d28112beb3a9b41d80aa390837fa1a31c9e3da84a5262009c97585cc49f597c4",
+      "qmsum": "e992f5157679b0c1ca281d0da19d1a8b3496117630ae639c9683ed3dab029113",
+      "multi_news": "f8817c00af317c2d7f81128f334bcfe5780c6c2a515d5c96811aa0ddf8b5ee6b",
+      "trec": "20a88e14f7442f58a39082cdd7396f1093ea8162da0a4ea7ead7d6757514c8f4",
+      "triviaqa": "ed2529de2e10b12c00f49981870c23c7c51667069cdd8d0740e1423ff337d7fa",
+      "samsum": "d435a4c7a05d2006872da8dd0c44c0a48648baa1ce4f62a4084d07aa7883f0cc",
+      "passage_count": "0455a8f1e8e99d63a86bdc6bdb8b943b22509e3102bbef65ce6794045e03bbcd",
+      "passage_retrieval_en": "0f34d2955bfc9bd21ccaa3f4c5aa4e41263aaf83d3fb6002ff7118c134f1eabd",
+      "lcc": "a35809a88d899f61c116690b12f9e96d443238852cedc1a9fe48d85bff6f7aa1",
+      "repobench-p": "919a4439e2a84ebb25bacc39ac3b3269a7641af6e02ae205ed78d8c53dfe3568"
+    }
+  },
+  "local_assets": {
+    "official_dataset2prompt.json": {
+      "derivation": "Upstream JSON bytes with a terminal newline added by repository tooling; parsed JSON is required to equal the pinned upstream object.",
+      "local_sha256": "5c1231ee6c3f198b0021e9c1ab9b66cbbfb52c432e0ed821a5afe89eefa17fd8",
+      "upstream_asset": "LongBench/config/dataset2prompt.json"
+    },
+    "official_dataset2maxlen.json": {
+      "derivation": "Upstream JSON bytes with a terminal newline added by repository tooling; parsed JSON is required to equal the pinned upstream object.",
+      "local_sha256": "75301d9cacf912e967c775997c94d9f021d176f940cb2d0318b99567220f52fb",
+      "upstream_asset": "LongBench/config/dataset2maxlen.json"
+    },
+    "task_registry.json": {
+      "derivation": "AdaptiveServe strict 16-task projection of the pinned official benchmark assets and dataset statistics.",
+      "local_sha256": "59c2febef3571df380f998ea9ad1518c1e8258fcf4c770ce4afde5ab940958b2"
+    }
+  }
+}
