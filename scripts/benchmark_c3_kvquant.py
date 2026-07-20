@@ -196,56 +196,108 @@ def _kvquant_layer(K: torch.Tensor, V: torch.Tensor,
 
     Returns (K_mixed, V_mixed, effective_bytes).
     """
-    mask_k, n_out_k = _outlier_mask(K, outlier_frac)
-    mask_v, n_out_v = _outlier_mask(V, outlier_frac)
+    Km, k_bytes = _kvquant_tensor(
+        K,
+        bits=bits,
+        group_size=group_size,
+        outlier_frac=outlier_frac,
+        channel_dim=2,
+    )
+    Vm, v_bytes = _kvquant_tensor(
+        V,
+        bits=bits,
+        group_size=group_size,
+        outlier_frac=outlier_frac,
+        channel_dim=3,
+    )
+    return Km, Vm, k_bytes + v_bytes
 
-    Kq = _quantize_dequantize(K, bits=bits, group_size=group_size,
-                              channel_dim=2, exclude_mask=mask_k)
-    Vq = _quantize_dequantize(V, bits=bits, group_size=group_size,
-                              channel_dim=3, exclude_mask=mask_v)
 
-    Km = torch.where(mask_k, K, Kq) if mask_k is not None else Kq
-    Vm = torch.where(mask_v, V, Vq) if mask_v is not None else Vq
+def _kvquant_tensor(
+    tensor: torch.Tensor,
+    *,
+    bits: int,
+    group_size: int,
+    outlier_frac: float,
+    channel_dim: int,
+) -> tuple[torch.Tensor, float]:
+    """Round-trip one cache tensor and return its modeled packed bytes."""
+    mask, n_out = _outlier_mask(tensor, outlier_frac)
+    mixed = _quantize_dequantize(
+        tensor,
+        bits=bits,
+        group_size=group_size,
+        channel_dim=channel_dim,
+        exclude_mask=mask,
+    )
+    if mask is not None:
+        # Restore the sparse FP16 values without allocating another dense
+        # tensor (torch.where would retain both dense operands and its result).
+        mixed[mask] = tensor[mask]
 
     # Effective storage:
     #   - quantized data: (n - n_outliers) × bits / 8
     #   - scale + zero (fp16) per group: 4 bytes per group, with groups
-    #     formed per vector along the quantization axis (ceil per vector —
-    #     matches what _quantize_dequantize physically forms; K groups along
-    #     S, V groups along head_dim, which pads e.g. Phi-3's D=96 to one
-    #     full group per (head, token) vector)
-    #   - outliers:        n_outliers × (fp16 value + int32 index) = 6 B
-    bytes_total = 0.0
-    for T, n_out, axis_len in ((K, n_out_k, K.shape[2]), (V, n_out_v, V.shape[3])):
-        n        = T.numel()
-        n_vecs   = n // axis_len
-        n_groups = n_vecs * ((axis_len + group_size - 1) // group_size)
-        bytes_total += (n - n_out) * bits / 8.0   # quantized data
-        bytes_total += n_groups * 4.0             # fp16 scale + fp16 zero
-        bytes_total += n_out * 6.0                # fp16 value + int32 index
-    return Km, Vm, bytes_total
+    #     formed per vector along the quantization axis (ceil per vector)
+    #   - outliers: n_outliers × (fp16 value + int32 index) = 6 B
+    axis_len = tensor.shape[channel_dim]
+    n = tensor.numel()
+    n_vecs = n // axis_len
+    n_groups = n_vecs * ((axis_len + group_size - 1) // group_size)
+    effective_bytes = (
+        (n - n_out) * bits / 8.0
+        + n_groups * 4.0
+        + n_out * 6.0
+    )
+    return mixed, effective_bytes
 
 
 def _quantize_cache(past: DynamicCache, bits: int, group_size: int,
                     outlier_frac: float) -> tuple[DynamicCache, dict]:
-    """In-place rewrite of every layer's K/V; returns new cache and stats."""
-    new_cache = DynamicCache()
+    """Rewrite every layer in place and return the same cache plus stats.
+
+    The round-trip simulation still stores FP16 tensors at runtime. Reusing
+    each cache tensor's existing storage prevents the simulation from holding
+    the complete original cache and a second complete rebuilt cache at once.
+    K and V are processed sequentially to bound temporary workspace.
+    """
     total_bytes = 0.0
     n_layers = len(past.layers)
     for L in range(n_layers):
-        K = past.layers[L].keys
-        V = past.layers[L].values
-        Km, Vm, b = _kvquant_layer(K, V, bits=bits, group_size=group_size,
-                                    outlier_frac=outlier_frac)
-        new_cache.update(Km, Vm, layer_idx=L)
-        total_bytes += b
+        layer = past.layers[L]
+
+        K = layer.keys
+        Km, k_bytes = _kvquant_tensor(
+            K,
+            bits=bits,
+            group_size=group_size,
+            outlier_frac=outlier_frac,
+            channel_dim=2,
+        )
+        with torch.no_grad():
+            K.copy_(Km)
+        del Km, K
+
+        V = layer.values
+        Vm, v_bytes = _kvquant_tensor(
+            V,
+            bits=bits,
+            group_size=group_size,
+            outlier_frac=outlier_frac,
+            channel_dim=3,
+        )
+        with torch.no_grad():
+            V.copy_(Vm)
+        del Vm, V
+
+        total_bytes += k_bytes + v_bytes
 
     stats = {
         "compressed_kv_bytes": total_bytes,
         "compressed_kv_mb":    total_bytes / (1024 ** 2),
         "n_layers":            n_layers,
     }
-    return new_cache, stats
+    return past, stats
 
 
 def _fp16_bytes_per_token(model) -> float:

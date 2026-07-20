@@ -447,6 +447,107 @@ def test_manual_prepared_generator_does_not_forward_unused_capped_token(
     assert kv_stats["kv_bytes_fp16"] == 200.0
 
 
+def _c3_legacy_tensor_reference(
+    module,
+    tensor: torch.Tensor,
+    *,
+    bits: int,
+    group_size: int,
+    outlier_frac: float,
+    channel_dim: int,
+) -> tuple[torch.Tensor, float]:
+    mask, n_outliers = module._outlier_mask(tensor, outlier_frac)
+    quantized = module._quantize_dequantize(
+        tensor,
+        bits=bits,
+        group_size=group_size,
+        channel_dim=channel_dim,
+        exclude_mask=mask,
+    )
+    mixed = (
+        torch.where(mask, tensor, quantized)
+        if mask is not None
+        else quantized
+    )
+    axis_len = tensor.shape[channel_dim]
+    n_groups = (
+        tensor.numel() // axis_len
+    ) * ((axis_len + group_size - 1) // group_size)
+    effective_bytes = (
+        (tensor.numel() - n_outliers) * bits / 8.0
+        + n_groups * 4.0
+        + n_outliers * 6.0
+    )
+    return mixed, effective_bytes
+
+
+@pytest.mark.parametrize("outlier_frac", [0.0, 0.125])
+def test_c3_quantize_cache_reuses_storage_and_remains_appendable(
+    outlier_frac,
+) -> None:
+    from transformers.cache_utils import DynamicCache
+
+    module = MODULES["benchmark_c3_kvquant"]
+    torch.manual_seed(0)
+    key = torch.randn((1, 2, 9, 5), dtype=torch.float16)
+    value = torch.randn((1, 2, 9, 5), dtype=torch.float16)
+    expected_key, expected_key_bytes = _c3_legacy_tensor_reference(
+        module,
+        key,
+        bits=4,
+        group_size=4,
+        outlier_frac=outlier_frac,
+        channel_dim=2,
+    )
+    expected_value, expected_value_bytes = _c3_legacy_tensor_reference(
+        module,
+        value,
+        bits=4,
+        group_size=4,
+        outlier_frac=outlier_frac,
+        channel_dim=3,
+    )
+    expected_bytes = expected_key_bytes + expected_value_bytes
+    cache = DynamicCache(
+        ddp_cache_data=[(key.clone(), value.clone())],
+    )
+    layer = cache.layers[0]
+    key_pointer = layer.keys.data_ptr()
+    value_pointer = layer.values.data_ptr()
+
+    returned, stats = module._quantize_cache(
+        cache,
+        bits=4,
+        group_size=4,
+        outlier_frac=outlier_frac,
+    )
+
+    assert returned is cache
+    assert layer.keys.data_ptr() == key_pointer
+    assert layer.values.data_ptr() == value_pointer
+    assert torch.equal(layer.keys, expected_key)
+    assert torch.equal(layer.values, expected_value)
+    assert stats == {
+        "compressed_kv_bytes": expected_bytes,
+        "compressed_kv_mb": expected_bytes / (1024 ** 2),
+        "n_layers": 1,
+    }
+
+    appended_key = torch.randn((1, 2, 1, 5), dtype=torch.float16)
+    appended_value = torch.randn((1, 2, 1, 5), dtype=torch.float16)
+    grown_key, grown_value = cache.update(
+        appended_key,
+        appended_value,
+        layer_idx=0,
+    )
+    assert grown_key.shape[2] == 10
+    assert grown_value.shape[2] == 10
+    assert torch.equal(grown_key[:, :, :9, :], expected_key)
+    assert torch.equal(grown_value[:, :, :9, :], expected_value)
+    assert torch.equal(grown_key[:, :, -1:, :], appended_key)
+    assert torch.equal(grown_value[:, :, -1:, :], appended_value)
+
+
 def test_prepared_apis_are_tokenization_free_and_legacy_wrappers_delegate() -> None:
     for filename, (api_name, wrapper_name) in PREPARED_APIS.items():
         path = SCRIPT_DIR / filename
