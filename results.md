@@ -1,357 +1,220 @@
-# AdaptiveServe-KV Results
+# AdaptiveServe-KV: Oracle Potential and Current C6 Router
 
-This report consolidates the completed **P0 corrected rerun**. It uses only
-the artifacts produced by the full rerun, which started on 2026-07-15 at
-17:20 EEST and completed on 2026-07-16 at 04:34 EEST. The full execution log
-is available in [runs/p0/rerun_p0.log](runs/p0/rerun_p0.log).
+This report first establishes how each fixed compression technique performs
+alone, then presents the finalized post-hoc oracle potential and the current
+held-out C6 router result. The earlier 220-prompt P0 results are intentionally
+excluded.
 
-## Scope and Reading Guide
+The evidence comes from the completed Llama-3.1-8B-Instruct primary run over
+all 3,750 official examples from the 16 non-Chinese LongBench tasks, covering
+all six task categories. Each fixed configuration, C0 through C5, completed
+3,750 generations, producing 22,500 generation records with no failed attempts
+or retried keys. The joined analysis and C6 evaluation each contain 3,750
+examples.
 
-| Item | Value |
+| Run field | Final value |
 | --- | --- |
-| Models | Phi-3-mini, LLaMA-3-8B, LLaMA-3.2-3B, LLaMA-3.1-8B |
-| Prompts per model | 220 LongBench prompts: 20 prompts from each of 11 tasks |
-| Fixed configurations | C0 through C5 |
-| Router configuration | C6, seven prompt-only features and one regressor per fixed configuration |
-| Primary router evaluation | 10-fold task-stratified cross-validation over all 220 prompts |
-| Router thresholds | $\tau \in \{0.99, 0.95, 0.90\}$ |
-| Quality metric | Mean per-prompt LongBench score; higher is better |
-| Compression metric | Harmonic mean of measured per-prompt KV-cache compression ratios; higher is better |
+| Model | `meta-llama/Llama-3.1-8B-Instruct` |
+| Model revision | `0e9e39f249a16976918f6564b8830bc894c89659` |
+| Source commit used for the run | `17e27ba7bd53d00bb933b22d8c5f57485a75a2ad` |
+| Run ID | `primary-20260720-17e27ba-c3fix-expseg` |
+| Final status | Complete; all finalization checks passed |
+| Final manifest SHA-256 | `3d84c92931c9179063f53a89308a67e145730249f9bb2d1c7cbcfad0726c1d37` |
 
-The primary evidence is the fair 10-fold CV evaluation in
-[runs/p0/cv_router_220_tau0.99.json](runs/p0/cv_router_220_tau0.99.json),
-[runs/p0/cv_router_220_tau0.95.json](runs/p0/cv_router_220_tau0.95.json), and
-[runs/p0/cv_router_220_tau0.9.json](runs/p0/cv_router_220_tau0.9.json). It routes
-each prompt with a model that did not train on that prompt, then compares the
-result against fixed methods on the same full 220-prompt set.
+## Fixed Compression Techniques in Isolation
 
-The P0 GPU phase used `--skip-speed-ppl`. Consequently, this document does
-not present TTFT, TPOT, throughput, VRAM, or perplexity as newly measured P0
-results. The router overhead values below were measured separately by C6 and
-include feature extraction, tokenization, scaling, and six regressor calls.
+Each row below applies one configuration to all 3,750 examples. These are
+standalone results, not router selections. Quality is the equal-weight mean
+across the six LongBench categories, and compression is the harmonic mean of
+the per-example effective KV-storage ratios.
 
-## Configurations
+| Configuration | Technique | What it does | Quality | Change from C0 | Harmonic KV ratio |
+| --- | --- | --- | ---: | ---: | ---: |
+| C0 | Full FP16 KV cache | Keeps the complete native FP16 cache; uncompressed reference | 0.5015 | — | 1.0000x |
+| C1 | TailorKV-inspired hybrid | Combines aggressive token retention with low-bit quantization | 0.4426 | -0.0589 | 18.2930x |
+| C2 | QAQ | Assigns attention-aware variable-bit precision and preserves outliers | 0.4984 | -0.0031 | 4.6157x |
+| C3 | KVQuant simulation | Applies 4-bit groupwise K/V quantization while preserving outliers | 0.5023 | +0.0008 | 3.2449x |
+| C4 | DynamicKV | Adapts the retained-token budget across layers using a shared index set per layer | 0.4897 | -0.0118 | 4.8725x |
+| C5 | Ada-KV-inspired eviction | Uses attention-head voting and budget weighting to retain a shared top-k token set | 0.4922 | -0.0093 | 4.8735x |
 
-| ID | Configuration | Role |
-| --- | --- | --- |
-| C0 | FP16 full KV cache | Uncompressed quality reference; never selected by C6 |
-| C1 | TailorKV-inspired hybrid | Aggressive retention plus quantization |
-| C2 | QAQ | Attention-aware variable-bit quantization |
-| C3 | KVQuant | 4-bit K/V quantization with FP16 outliers |
-| C4 | DynamicKV | Cross-layer adaptive token-retention budget |
-| C5 | Ada-KV-inspired | Head-weighted token retention |
-| C6 | AdaptiveServe-KV router | Selects one of C1-C5 per prompt |
+C1 supplies the most aggressive standalone compression, but with the largest
+quality loss. C2 provides 4.6157x compression while remaining only 0.0031 below
+C0 in category-balanced quality. C3 has the highest standalone quality,
+although its +0.0008 difference from C0 is descriptive and has not been
+established as statistically significant. C4 and C5 provide similar
+compression, with C5 retaining slightly more aggregate quality in this run.
 
-## Fixed-Method Baselines
+The accounting basis is important: C1-C3 report modeled packed bytes, including
+quantization metadata, whereas C4-C5 report physically retained FP16 tensor
+bytes. The implementation and measurement boundaries are detailed later in
+this report.
 
-Each cell is `quality / compression`. These are the fixed-method results on
-all 220 prompts and are the baseline values used by the primary CV analysis.
+## Router Potential and Current State
 
-| Config | Phi-3-mini | LLaMA-3-8B | LLaMA-3.2-3B | LLaMA-3.1-8B |
-| --- | ---: | ---: | ---: | ---: |
-| C0 FP16 | 0.3033 / 1.000x | 0.4293 / 1.000x | 0.4031 / 1.000x | 0.4358 / 1.000x |
-| C1 hybrid | 0.2934 / 6.803x | 0.3743 / 18.329x | 0.3353 / 17.506x | 0.3662 / 16.144x |
-| C2 QAQ | 0.3175 / 4.622x | 0.4231 / 4.607x | 0.4046 / 4.647x | 0.4348 / 4.602x |
-| C3 KVQuant | 0.3050 / 2.880x | 0.4302 / 3.240x | 0.4013 / 3.215x | 0.4352 / 3.196x |
-| C4 DynamicKV | 0.2950 / 3.242x | 0.4233 / 4.697x | 0.3960 / 4.647x | 0.4297 / 4.632x |
-| C5 Ada-KV-inspired | 0.3000 / 3.215x | 0.4280 / 4.705x | 0.3961 / 4.660x | 0.4315 / 4.633x |
+Quality is reported primarily as the equal-weight mean across the six LongBench
+categories. The prompt-level micro mean is included as a diagnostic. Compression
+is the harmonic mean of the per-example effective KV-storage ratios; this is the
+primary compression aggregation.
 
-## Primary Router Results: Fair 10-Fold CV
+| Evaluation | Information used for selection | Category-balanced quality | Quality change from C0 | Prompt-micro quality | Harmonic KV ratio |
+| --- | --- | ---: | ---: | ---: | ---: |
+| C0 reference | Full FP16 KV cache | 0.5015 | — | 0.5093 | 1.0000x |
+| Primary oracle | Actual per-example quality and compression | 0.5228 | +0.0213 | 0.5338 | 9.4226x |
+| Quality-first oracle | Actual per-example quality and compression | 0.5350 | +0.0335 | 0.5477 | 7.9405x |
+| Current C6 router | Prompt-only features under held-out cross-validation | 0.4921 | -0.0094 | 0.4986 | 4.8913x |
 
-The C6 router is evaluated on all 220 prompts. `Delta quality vs C0` is the
-absolute and relative difference from the FP16 baseline on the same prompts.
+C0 is an uncompressed reference, not a router candidate. Both oracle rows are
+post-hoc upper bounds that use information unavailable at inference time. C6 is
+the only learned-router result in this report.
 
-<table>
-	<thead>
-		<tr>
-			<th>Model</th>
-			<th>Tau</th>
-			<th>Router quality</th>
-			<th>Router compression</th>
-			<th>Delta quality vs C0</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<th rowspan="3" scope="rowgroup">Phi-3-mini</th>
-			<td>0.99</td>
-			<td>0.3108</td>
-			<td>4.520x</td>
-			<td>+0.0075 (+2.5%)</td>
-		</tr>
-		<tr>
-			<td>0.95</td>
-			<td>0.3041</td>
-			<td>4.650x</td>
-			<td>+0.0008 (+0.3%)</td>
-		</tr>
-		<tr>
-			<td>0.90</td>
-			<td>0.3040</td>
-			<td>4.810x</td>
-			<td>+0.0007 (+0.2%)</td>
-		</tr>
-		<tr>
-			<th rowspan="3" scope="rowgroup">LLaMA-3-8B</th>
-			<td>0.99</td>
-			<td>0.4274</td>
-			<td>5.247x</td>
-			<td>-0.0019 (-0.4%)</td>
-		</tr>
-		<tr>
-			<td>0.95</td>
-			<td>0.4211</td>
-			<td>5.542x</td>
-			<td>-0.0082 (-1.9%)</td>
-		</tr>
-		<tr>
-			<td>0.90</td>
-			<td>0.4189</td>
-			<td>5.993x</td>
-			<td>-0.0104 (-2.4%)</td>
-		</tr>
-		<tr>
-			<th rowspan="3" scope="rowgroup">LLaMA-3.2-3B</th>
-			<td>0.99</td>
-			<td>0.3907</td>
-			<td>4.785x</td>
-			<td>-0.0124 (-3.1%)</td>
-		</tr>
-		<tr>
-			<td>0.95</td>
-			<td>0.3869</td>
-			<td>4.988x</td>
-			<td>-0.0162 (-4.0%)</td>
-		</tr>
-		<tr>
-			<td>0.90</td>
-			<td>0.3779</td>
-			<td>5.409x</td>
-			<td>-0.0252 (-6.3%)</td>
-		</tr>
-		<tr>
-			<th rowspan="3" scope="rowgroup">LLaMA-3.1-8B</th>
-			<td>0.99</td>
-			<td>0.4239</td>
-			<td>5.017x</td>
-			<td>-0.0119 (-2.7%)</td>
-		</tr>
-		<tr>
-			<td>0.95</td>
-			<td>0.4229</td>
-			<td>5.238x</td>
-			<td>-0.0129 (-3.0%)</td>
-		</tr>
-		<tr>
-			<td>0.90</td>
-			<td>0.4227</td>
-			<td>5.415x</td>
-			<td>-0.0131 (-3.0%)</td>
-		</tr>
-	</tbody>
-</table>
+## Primary Oracle: Iso-Quality Maximum Compression
 
-### Pareto Summary at $\tau = 0.99$
+The primary oracle is
+`iso_quality_tau_0.99_max_compression`. For each example, it:
 
-| Model | Router outcome against fixed methods |
-| --- | --- |
-| Phi-3-mini | C6 dominates C0, C3, C4, and C5. C2 QAQ dominates C6. C1 remains a higher-compression/lower-quality trade-off. |
-| LLaMA-3-8B | C6 dominates C2 QAQ and C4 DynamicKV. C0, C1, C3, and C5 remain non-dominated trade-offs. |
-| LLaMA-3.2-3B | No fixed configuration strictly dominates C6, and C6 strictly dominates none. |
-| LLaMA-3.1-8B | No fixed configuration strictly dominates C6, and C6 strictly dominates none. |
+1. treats C1 through C5 as the candidate pool;
+2. keeps candidates whose actual quality is at least 99% of the actual C0
+   quality;
+3. selects the eligible candidate with the highest actual per-example
+   compression; and
+4. if no candidate is eligible, selects the candidate with the highest actual
+   quality, then compression.
 
-### C6 Selection Mix at $\tau = 0.99$
+Ties use the fixed order C1, C2, C3, C4, C5.
 
-Counts show which compressor C6 chose across the 220 held-out CV decisions.
-C0 is absent because it is only a quality reference.
+| Primary-oracle outcome | Count | Share |
+| --- | ---: | ---: |
+| At least one eligible candidate | 3,580 | 95.47% |
+| No eligible candidate; fallback used | 170 | 4.53% |
+| Threshold violations among non-fallback selections | 0 | 0.00% |
 
-| Model | C1 | C2 | C3 | C4 | C5 |
-| --- | ---: | ---: | ---: | ---: |
-| Phi-3-mini | 76 | 69 | 26 | 22 | 27 |
-| LLaMA-3-8B | 47 | 46 | 39 | 20 | 68 |
-| LLaMA-3.2-3B | 42 | 69 | 38 | 34 | 37 |
-| LLaMA-3.1-8B | 47 | 59 | 53 | 23 | 38 |
+The selected configurations were:
 
-## Corrected Candidate-Pool Sweep
+| Configuration | Selections | Share |
+| --- | ---: | ---: |
+| C1 | 2,379 | 63.44% |
+| C2 | 535 | 14.27% |
+| C3 | 318 | 8.48% |
+| C4 | 402 | 10.72% |
+| C5 | 116 | 3.09% |
 
-The all-five C6 result is one operating point, not the only eligible router
-configuration. The corrected P0 sweep evaluates every C1-C5 subset of size 2-5
-(26 pools) at $\tau \in \{0.99, 0.95, 0.90, 0.85, 0.80\}$ using the same
-10-fold task-stratified CV protocol as the primary router evaluation. It caches
-each fold's regressors, predictions, C0 floor, and compression ranking once,
-then evaluates every pool/tau combination without retraining.
+The primary oracle reaches 9.4226x harmonic compression while increasing
+category-balanced quality by 0.0213 and prompt-micro quality by 0.0244 relative
+to C0. This shows that the evaluated C1-C5 candidate set contains substantial
+per-example routing potential. It does not show that a deployable router can
+identify those choices without access to the realized outputs and labels.
 
-The full machine-readable evidence, source JSONL hashes, all-five consistency
-checks, and regenerated figures are in
-[runs/p0/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/p0/candidate_pool_sweeps/p0_corrected_2026-07-16).
-The all-five entries at $\tau \in \{0.99, 0.95, 0.90\}$ exactly match the
-primary `cv_router_220` outputs.
+When an example's actual C0 score is zero, the 99% threshold is also zero, so
+all non-negative candidate scores are eligible. The 170 fallback examples are
+the cases in which no candidate met the actual per-example threshold.
 
-| Model | Highest-quality evaluated pool | $\tau$ | Quality / compression | Relation to C0 |
-| --- | --- | ---: | ---: | --- |
-| Phi-3-mini | `{C2,C3}` | 0.99 | 0.3184 / 3.659x | Strictly dominates C0 |
-| LLaMA-3-8B | `{C2,C5}` | 0.85 | 0.4337 / 4.936x | Strictly dominates C0 |
-| LLaMA-3.2-3B | `{C2,C4,C5}` | 0.99 | 0.4069 / 4.607x | Strictly dominates C0 |
-| LLaMA-3.1-8B | `{C2,C3}` | 0.99 | 0.4374 / 3.842x | Strictly dominates C0 |
+## Quality-First Oracle Diagnostic
 
-These rows select the highest-quality point among the 130 evaluated pool/tau
-combinations, with compression and smaller pool size as tie-breakers. They are
-appropriate calibration candidates, but not an unbiased post-selection
-generalization estimate: the pool/tau selection occurs on the same CV aggregate
-reported here. A deployment study that requires an unbiased estimate should use
-a separate calibration workload or nested CV.
+The required quality-first diagnostic is
+`max_quality_then_compression_then_config`. It selects the candidate with the
+highest actual per-example quality, then uses actual compression and the fixed
+configuration order to break ties.
 
-The May candidate-pool figures and paper table are pre-P0 artifacts with a
-different scoring, compressor, byte-accounting, and router-selection contract.
-They are retained under `runs/legacy/` after cleanup and must not be compared
-numerically with the table above.
+| Configuration | Selections | Share |
+| --- | ---: | ---: |
+| C1 | 2,088 | 55.68% |
+| C2 | 617 | 16.45% |
+| C3 | 433 | 11.55% |
+| C4 | 444 | 11.84% |
+| C5 | 168 | 4.48% |
 
-## Supplementary Router Evaluations
+This diagnostic reaches 0.5350 category-balanced quality and 7.9405x harmonic
+compression. Relative to the primary oracle, prioritizing realized quality
+adds 0.0122 quality but gives up 1.4821x harmonic compression. It is included
+to expose the quality-compression trade-off, not as the primary objective.
 
-These outputs are useful diagnostics but are not the primary comparison.
-LOTO is leave-one-task-out evaluation, where each held-out task is unseen at
-training time. The 70/30 split is one random seed-0 split and therefore has a
-smaller, noisier 66-prompt test set.
+## Current C6 Held-Out Router
 
-<table>
-	<thead>
-		<tr>
-			<th>Model</th>
-			<th>Tau</th>
-			<th>LOTO quality</th>
-			<th>LOTO compression</th>
-			<th>70/30 quality</th>
-			<th>70/30 compression</th>
-			<th>Median overhead</th>
-			<th>P95 overhead</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<th rowspan="3" scope="rowgroup">Phi-3-mini</th>
-			<td>0.99</td><td>0.3135</td><td>4.824x</td><td>0.3280</td><td>4.136x</td><td>22.731 ms</td><td>40.636 ms</td>
-		</tr>
-		<tr>
-			<td>0.95</td><td>0.3092</td><td>4.957x</td><td>0.3285</td><td>4.439x</td><td>21.651 ms</td><td>41.578 ms</td>
-		</tr>
-		<tr>
-			<td>0.90</td><td>0.3071</td><td>5.123x</td><td>0.3285</td><td>4.500x</td><td>22.386 ms</td><td>42.481 ms</td>
-		</tr>
-		<tr>
-			<th rowspan="3" scope="rowgroup">LLaMA-3-8B</th>
-			<td>0.99</td><td>0.4152</td><td>5.170x</td><td>0.4077</td><td>6.390x</td><td>23.568 ms</td><td>50.237 ms</td>
-		</tr>
-		<tr>
-			<td>0.95</td><td>0.4136</td><td>5.643x</td><td>0.4087</td><td>6.489x</td><td>24.862 ms</td><td>47.100 ms</td>
-		</tr>
-		<tr>
-			<td>0.90</td><td>0.4106</td><td>6.337x</td><td>0.4082</td><td>7.019x</td><td>23.643 ms</td><td>45.248 ms</td>
-		</tr>
-		<tr>
-			<th rowspan="3" scope="rowgroup">LLaMA-3.2-3B</th>
-			<td>0.99</td><td>0.3773</td><td>4.866x</td><td>0.3817</td><td>4.477x</td><td>24.691 ms</td><td>48.831 ms</td>
-		</tr>
-		<tr>
-			<td>0.95</td><td>0.3737</td><td>4.992x</td><td>0.3779</td><td>5.018x</td><td>23.956 ms</td><td>45.954 ms</td>
-		</tr>
-		<tr>
-			<td>0.90</td><td>0.3670</td><td>5.300x</td><td>0.3779</td><td>5.110x</td><td>23.049 ms</td><td>46.912 ms</td>
-		</tr>
-		<tr>
-			<th rowspan="3" scope="rowgroup">LLaMA-3.1-8B</th>
-			<td>0.99</td><td>0.4042</td><td>5.249x</td><td>0.3837</td><td>4.259x</td><td>24.722 ms</td><td>45.251 ms</td>
-		</tr>
-		<tr>
-			<td>0.95</td><td>0.4033</td><td>5.312x</td><td>0.3839</td><td>4.355x</td><td>23.846 ms</td><td>52.268 ms</td>
-		</tr>
-		<tr>
-			<td>0.90</td><td>0.4026</td><td>5.553x</td><td>0.3858</td><td>4.556x</td><td>23.841 ms</td><td>48.395 ms</td>
-		</tr>
-	</tbody>
-</table>
+C6 was evaluated with 10-fold task-stratified cross-validation using seed 0.
+Each fold contains 3,375 training examples and 375 test examples, and every
+example is held out exactly once. This is held-out-prompt evaluation within
+each task; it is not an unseen-task or external-dataset test.
 
-## Router Regressor Fit: 70/30 Split Diagnostic
+The router uses only seven pre-generation prompt features:
+`seq_len_tokens`, `seq_len_chars`, `token_entropy`, `gzip_ratio`,
+`unique_token_ratio`, `question_position`, and `newline_density`. A fresh
+standardization transform and one quality regressor per configuration are fit
+inside each training fold.
 
-C6 is not a classifier with one accuracy value. It trains six regressors to
-predict continuous per-prompt LongBench quality, one each for C0-C5. The
-relevant fit measures are $R^2$ and mean absolute error (MAE), not
-classification accuracy.
+For each held-out example, C6 admits a candidate when its predicted quality is
+at least 99% of the larger of predicted C0 quality and the training-fold mean
+actual C0 quality. Eligible candidates are ranked by training-fold harmonic
+compression; if none is eligible, C6 selects the candidate with the highest
+predicted quality.
 
-These numbers come from the one seed-0 70/30 split used by C6: 154 training
-prompts and 66 held-out prompts per model. They are saved under
-`regressor_fit` in each `runs/p0/C6/<model>/results_tau0.99.json` file. The
-regressor fit is independent of $\tau$, because $\tau$ changes the routing
-rule after quality prediction rather than the regressor training; the same
-fit values are therefore repeated in the $\tau = 0.95$ and $0.90$ files.
+| Configuration | C6 selections | Share |
+| --- | ---: | ---: |
+| C1 | 735 | 19.60% |
+| C2 | 780 | 20.80% |
+| C3 | 811 | 21.63% |
+| C4 | 479 | 12.77% |
+| C5 | 945 | 25.20% |
 
-These tau-specific files are the post-fix P0 outputs: the pipeline first
-reran C0-C5, rebuilt each 220-prompt dataset, then retrained C6. Use these
-files rather than the superseded unversioned and filtered C6 artifacts retained
-under `runs/legacy/pre_p0_2026-05/c6/`.
+C6 achieves 4.8913x harmonic compression. Its category-balanced quality is
+0.4921, which is 0.0094 below C0; its prompt-micro quality is 0.4986, which is
+0.0107 below C0.
 
-| Model | Train $R^2$ (mean C0-C5) | Held-out $R^2$ (mean C0-C5) | Train MAE (mean C0-C5) | Held-out MAE (mean C0-C5) |
-| --- | ---: | ---: | ---: | ---: |
-| Phi-3-mini | 0.8403 | -0.0774 | 0.0999 | 0.2344 |
-| LLaMA-3-8B | 0.7765 | -0.0661 | 0.1389 | 0.2831 |
-| LLaMA-3.2-3B | 0.7562 | 0.1382 | 0.1415 | 0.2546 |
-| LLaMA-3.1-8B | 0.7883 | 0.1969 | 0.1333 | 0.2292 |
+| Actual held-out quality check | Count | Rate |
+| --- | ---: | ---: |
+| C6 quality below actual C0 quality | 779 | 20.77% |
+| C6 quality below 99% of actual C0 quality | 755 | 20.13% |
 
-### Held-Out Fit by Regressor
+Mean held-out quality-prediction R-squared ranges from 0.298 to 0.310 across
+C0-C5. The observed constraint-violation rate and modest predictive fit show
+that the current prompt-only regressors do not yet enforce the intended
+per-example iso-quality target reliably.
 
-Each cell is `held-out R2 / held-out MAE` on the same 66-prompt split. A
-negative $R^2$ means that regressor predicts worse than a constant
-test-set-mean score predictor for that target configuration.
+## Oracle-to-C6 Gap
 
-| Model | C0 | C1 | C2 | C3 | C4 | C5 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Phi-3-mini | -0.1546 / 0.2425 | 0.0179 / 0.2224 | -0.1744 / 0.2620 | -0.0676 / 0.2268 | -0.0213 / 0.2183 | -0.0643 / 0.2346 |
-| LLaMA-3-8B | -0.0932 / 0.2875 | 0.0109 / 0.2743 | -0.0451 / 0.2712 | -0.1270 / 0.2930 | -0.0739 / 0.2878 | -0.0685 / 0.2846 |
-| LLaMA-3.2-3B | 0.1081 / 0.2543 | 0.1202 / 0.2493 | 0.1266 / 0.2693 | 0.1567 / 0.2523 | 0.1600 / 0.2508 | 0.1578 / 0.2513 |
-| LLaMA-3.1-8B | 0.1747 / 0.2278 | 0.1701 / 0.2423 | 0.2739 / 0.2180 | 0.1891 / 0.2263 | 0.1855 / 0.2295 | 0.1880 / 0.2316 |
+| Comparison | Primary oracle | Current C6 | Gap |
+| --- | ---: | ---: | ---: |
+| Category-balanced quality | 0.5228 | 0.4921 | 0.0306 |
+| Harmonic KV ratio | 9.4226x | 4.8913x | 4.5314x |
 
-### What This Does and Does Not Establish
+C6's harmonic ratio is 51.91% of the primary oracle's raw ratio. Measured as
+compression improvement above the 1.0x C0 reference, C6 realizes 46.20% of the
+oracle improvement. At the same time, C6 falls below C0 quality, whereas the
+oracle remains above it.
 
-| Question | Answer |
-| --- | --- |
-| Is regression accuracy calculated? | Yes. C6 calculates per-config train/test $R^2$ and MAE for the 70/30 split. |
-| Is there one router classification accuracy? | No. C6 predicts six continuous quality scores and then applies an iso-quality routing rule; it is not trained to reproduce one discrete label. |
-| Do the primary 10-fold CV files contain aggregate regression $R^2$/MAE? | No. [scripts/cv_router_220.py](scripts/cv_router_220.py) evaluates routed quality and compression, but does not save fold-aggregated score-prediction metrics. |
-| What do the current diagnostics say? | The train $R^2$ values are high while held-out $R^2$ is weak or negative for Phi-3 and LLaMA-3. This is evidence of limited score-prediction generalization and should qualify any strong routing claim. |
+Therefore, these results establish a meaningful routing opportunity but do not
+yet establish a successful quality-preserving learned router. The gap suggests
+that quality prediction and constraint reliability are the immediate
+bottlenecks for C6, rather than an absence of useful per-example variation
+among C1-C5.
 
-## Fixed Methods on the Exact 66-Prompt Split Test Set
+## Interpretation Boundaries
 
-This table addresses the earlier comparison mismatch by calculating every
-fixed method on the exact 66 prompts used by the seed-0 70/30 split router
-evaluation. Each cell is `quality / compression`.
+- The oracles use actual output quality and actual compression after generation.
+  They are empirical upper bounds over C1-C5, not deployable policies or
+  theoretical global optima.
+- Selecting configurations using realized quality introduces post-hoc selection
+  advantage. Oracle quality above C0 must not be interpreted as an unbiased
+  improvement from a production router.
+- The primary quality statistic is the equal-weight mean across six task
+  categories. Prompt-micro quality is diagnostic and gives more weight to tasks
+  with more examples.
+- The primary compression statistic is the harmonic mean across examples.
+  Category-balanced compression values in the artifacts are diagnostic and are
+  not used for the headline claims.
+- C0, C4, and C5 use retained physical FP16 tensor bytes. C1, C2, and C3 use
+  modeled packed bytes including quantization metadata, while their runtime
+  execution uses round-trip FP16 quantization simulation.
+- The reported ratios describe effective KV storage. They are not measurements
+  of peak VRAM, latency, throughput, energy, or perplexity.
+- C1-C5 are paper-inspired experimental implementations, not claims of exact
+  reproduction of the original systems.
+- These results cover the primary Llama-3.1-8B-Instruct model only. A second
+  confirmation model and statistical uncertainty analysis remain future work.
 
-| Config | Phi-3-mini | LLaMA-3-8B | LLaMA-3.2-3B | LLaMA-3.1-8B |
-| --- | ---: | ---: | ---: | ---: |
-| C0 FP16 | 0.3285 / 1.000x | 0.4440 / 1.000x | 0.4230 / 1.000x | 0.4249 / 1.000x |
-| C1 hybrid | 0.3057 / 6.048x | 0.3700 / 15.466x | 0.3402 / 14.703x | 0.3522 / 13.470x |
-| C2 QAQ | 0.3465 / 4.619x | 0.4234 / 4.607x | 0.4227 / 4.645x | 0.4095 / 4.602x |
-| C3 KVQuant | 0.3283 / 2.765x | 0.4431 / 3.176x | 0.4200 / 3.140x | 0.4264 / 3.111x |
-| C4 DynamicKV | 0.3072 / 3.049x | 0.4327 / 4.419x | 0.4135 / 4.374x | 0.4081 / 4.350x |
-| C5 Ada-KV-inspired | 0.3138 / 2.992x | 0.4368 / 4.426x | 0.4087 / 4.391x | 0.4062 / 4.338x |
+## Final Artifacts
 
-## Interpretation
-
-| Question | Result supported by P0 |
-| --- | --- |
-| Does C6 beat FP16 on every model? | No. At $\tau = 0.99$, only Phi-3 improves over C0 quality; the three LLaMA models trade a small-to-moderate quality loss for substantially higher compression. |
-| Does C6 beat every fixed compressor? | No. On Phi-3, C2 QAQ dominates C6 at $\tau = 0.99$. On LLaMA-3, C6 dominates C2 and C4 but not all fixed methods. On LLaMA-3.1 and LLaMA-3.2, there is no strict dominance. |
-| What is the strongest conservative claim? | C6 can create useful quality/compression operating points, especially on Phi-3 and LLaMA-3, but its benefit is model- and threshold-dependent. |
-| Is the old microsecond router-overhead claim current? | No. The P0 C6 measurements are approximately 22-25 ms median per long prompt when feature extraction and tokenization are included. |
-
-## Source Artifacts
-
-| Artifact | Contents |
-| --- | --- |
-| [scripts/run_full_pipeline.sh](scripts/run_full_pipeline.sh) | P0 execution plan and corrected-rerun scope |
-| [runs/p0/rerun_p0.log](runs/p0/rerun_p0.log) | Complete P0 execution log and completion marker |
-| [runs/p0/cv_router_220_tau0.99.json](runs/p0/cv_router_220_tau0.99.json) | Primary CV results at $\tau = 0.99$ |
-| [runs/p0/cv_router_220_tau0.95.json](runs/p0/cv_router_220_tau0.95.json) | Primary CV results at $\tau = 0.95$ |
-| [runs/p0/cv_router_220_tau0.9.json](runs/p0/cv_router_220_tau0.9.json) | Primary CV results at $\tau = 0.90$ |
-| [runs/p0/fair_comparison_66.json](runs/p0/fair_comparison_66.json) | Fixed-method results on the exact split-test prompts |
-| [runs/p0/C6](runs/p0/C6) | Per-model C6 LOTO, split, overhead, and per-prompt outputs |
-| [runs/p0/figs](runs/p0/figs) | Updated quality/compression Pareto figures |
-| [runs/p0/candidate_pool_sweeps/p0_corrected_2026-07-16](runs/p0/candidate_pool_sweeps/p0_corrected_2026-07-16) | Corrected P0 pool/tau sweep, manifests, and figures |
+- [Final run manifest](runs/longbench16_24k/llama31_8b/primary-20260720-17e27ba-c3fix-expseg/manifest.json)
+- [Joined analysis and oracle summary](runs/longbench16_24k/llama31_8b/primary-20260720-17e27ba-c3fix-expseg/analysis/summary.json)
+- [Joined per-example records](runs/longbench16_24k/llama31_8b/primary-20260720-17e27ba-c3fix-expseg/analysis/joined.jsonl)
+- [C6 summary](runs/longbench16_24k/llama31_8b/primary-20260720-17e27ba-c3fix-expseg/analysis/c6_summary.json)
+- [C6 held-out per-example records](runs/longbench16_24k/llama31_8b/primary-20260720-17e27ba-c3fix-expseg/analysis/c6_per_prompt.jsonl)
