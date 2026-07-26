@@ -1,0 +1,214 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+% ── Title block ───────────────────────────────────────────────────────────────
+\title{AdaptiveServe: Runtime-Adaptive LLM Inference via KV Cache Strategy
+       Selection, Activation Sparsity, and Model Routing}
+
+\author{
+  \IEEEauthorblockN{Youssef Araby}
+  \IEEEauthorblockA{\textit{[Department / Lab]}\\
+    [Institution]\\
+    [City, Country]\\
+    youssef@[institution].edu}
+  \and
+  \IEEEauthorblockN{Rodaina [LastName]}
+  \IEEEauthorblockA{\textit{[Department / Lab]}\\
+    [Institution]\\
+    [City, Country]\\
+    rodaina@[institution].edu}
+}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+\maketitle
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+Efficient LLM inference is bottlenecked by KV cache memory bandwidth and dense
+compute, yet existing compression methods apply a single fixed policy to every
+prompt.
+We present \textsc{AdaptiveServe}, a five-layer adaptive inference framework;
+this paper covers layers (i)--(iii).
+Our KV cache selector uses three cheap prefill signals---attention entropy,
+sequence length, and head-level variance---in a two-phase design: a
+rule-based Phase~A heuristic and a learned Phase~B MLP.
+An initial imbalanced dataset caused Ada-KV to be never selected; expanding
+the calibration corpus resolved this, yielding 61\% classifier accuracy vs.\
+a 49\% majority baseline under 5-fold cross-validation and a Pareto frontier
+that strictly dominates every individual technique.
+Integrating \textsc{TailorKV}---an offline method that degrades on some tasks
+alone---into the classifier further improves the Pareto frontier by routing
+away from it on quality-sensitive inputs.
+For activation sparsity, Wanda 2:4 on Llama-3.1-8B is blocked by two issues:
+vLLM~0.20 removed \texttt{Sparse24} kernel support (eliminating any
+throughput gain) and insufficient calibration (512 samples,
+\textsc{OpenPlatypus}) caused an 18~pp PIQA accuracy drop.
+For model routing, Phi-3.5-Mini (3.8B) and Llama-3.1-8B-Instruct perform
+comparably on LongBench and WikiText, making reliable routing signal
+unlearnable; effective routing requires a larger capability gap between models.
+\end{abstract}
+
+\begin{IEEEkeywords}
+LLM inference, KV cache compression, adaptive selection, weight sparsity,
+model routing
+\end{IEEEkeywords}
+
+% ══════════════════════════════════════════════════════════════════════════════
+%  I. INTRODUCTION
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+\label{sec:introduction}
+
+The cost of LLM inference has become a first-class engineering concern.
+Serving a single 7--8B parameter model at even moderate traffic imposes three
+interacting constraints: memory bandwidth to stream the KV cache from DRAM to
+GPU on every decode step, compute throughput to execute dense GEMMs in
+attention and feed-forward layers, and a latency budget that varies by
+application---a coding assistant can tolerate higher time-to-first-token than a
+real-time speech interface.
+These constraints do not decompose cleanly: reducing KV cache size via
+quantization saves memory bandwidth but can degrade generation quality;
+applying weight sparsity saves FLOPs but only if the inference engine exposes
+the corresponding sparse kernels; routing short prompts to a smaller model
+saves compute but only if the smaller model is genuinely weaker on those
+inputs.
+
+The literature addresses each axis in isolation.
+KV cache compression methods---KVQuant~\cite{hooper2024kvquant},
+DynamicKV~\cite{dynamickv}, Ada-KV~\cite{adakv}, and
+TailorKV~\cite{tailorkv}---define a fixed per-layer compression policy applied
+uniformly to all inputs, without considering how task type, sequence length, or
+attention statistics should modulate the choice.
+Weight sparsity methods---Wanda~\cite{sun2024wanda} and
+SparseGPT~\cite{frantar2023sparsegpt}---reduce the density of model weights
+but require hardware-friendly sparsity patterns and a serving stack that
+exposes the corresponding sparse dispatch kernels.
+Speculative decoding and model routing methods~\cite{leviathan2023speculative,%
+chen2023speculative} exploit heterogeneity across model sizes but their gains
+diminish when the draft and target models are close in capability.
+
+\textsc{AdaptiveServe} brings these axes together under a unified five-layer
+framework: (i)~adaptive KV cache strategy selection, (ii)~activation sparsity,
+(iii)~query-level model routing, (iv)~cloud--edge splitting, and (v)~serving-
+level batching.
+This paper reports findings on layers (i)--(iii), for which we have completed
+experiments using LLaMA-3.1-8B-Instruct~\cite{llama3} and
+Phi-3.5-Mini-3.8B~\cite{phi3} served via vLLM~\cite{vllm}, evaluated on
+LongBench~\cite{longbench}, WikiText-2, and PIQA~\cite{piqa} using the
+EleutherAI evaluation harness~\cite{lmeval}.
+
+\subsection{Motivation: Adaptive KV Cache Selection}
+\label{sec:intro:kvcache}
+
+A central observation is that no single KV cache compression policy is
+Pareto-optimal across the full distribution of LLM prompts.
+Short prompts with low attention entropy lose little from aggressive KV
+quantization; long prompts with high head-level variance benefit from
+head-adaptive budgets (\textsc{Ada-KV}~\cite{adakv}); certain task types are
+sensitive to 3-bit quantization artifacts that 4-bit quantization avoids
+(\textsc{KVQuant}~\cite{hooper2024kvquant}); and some prompts tolerate
+extreme compression ratios that \textsc{TailorKV}~\cite{tailorkv} provides
+while others do not.
+A selector that dispatches to the right policy using cheap prefill-time signals
+can, in principle, achieve a strictly better compression--quality Pareto
+frontier than any fixed policy.
+
+This motivates the key design question: \emph{what signals are cheap enough to
+compute per layer at prefill time and informative enough to distinguish among
+the four target strategies?}
+We identify three such signals---attention entropy, sequence length, and
+head-level variance---all of which are available during the prefill pass with
+negligible additional overhead.
+Even a small MLP trained on approximately 2\,800 labeled examples achieves
+meaningful routing accuracy and, critically, produces a Pareto frontier that
+dominates every individual compression technique.
+
+\subsection{Motivation: Limits of Weight Sparsity}
+\label{sec:intro:sparsity}
+
+An alternative to KV cache compression is to reduce the computational cost
+of the attention and feed-forward layers via weight sparsity.
+R-Sparse~\cite{rsparse} claims dynamic activation sparsity with minimal
+accuracy loss, but the custom CUDA kernels required to realize its reported
+latency improvements are not publicly available; we were unable to reproduce
+the speedup numbers.
+Wanda 2:4~\cite{sun2024wanda} offers a tractable alternative with an open
+implementation via \texttt{llm-compressor}, and we successfully applied it to
+Llama-3.1-8B.
+However, our evaluation revealed two blocking issues on the current vLLM~0.20
+stack.
+First, vLLM~0.20 removed the \texttt{Sparse24} kernel dispatch path
+(\texttt{NotImplementedError: Sparse24 models are no longer supported by
+vLLM}), meaning any Wanda~2:4 checkpoint---including those declared via a
+\texttt{sparsity\_config} block---fails to load or falls back to dense
+kernels with no throughput benefit.
+Second, calibrating on only 512 samples from \textsc{OpenPlatypus} yielded an
+18~pp PIQA accuracy drop (0.6300 vs.\ the dense baseline of 0.8118), far
+outside the 1--3~pp range reported by Sun~et~al.~\cite{sun2024wanda} under
+proper calibration.
+We document both issues in detail in Section~\ref{sec:sparsity} as a
+cautionary note for practitioners relying on planning documents that predate
+vLLM~0.20.
+
+\subsection{Motivation: Limits of Model Routing}
+\label{sec:intro:routing}
+
+Routing easy prompts to a small model and hard prompts to a large model is
+appealing in theory.
+In our evaluation, however, Phi-3.5-Mini-3.8B and Llama-3.1-8B-Instruct
+perform comparably on LongBench and WikiText-2 perplexity.
+When the capability gap between models is small, the routing signal that
+consistently favors one model over the other is difficult to learn: the router
+degenerates either to always using the large model (safe but uneconomical) or
+to routing too aggressively to the small model (cheap but lower quality).
+We conclude that effective model routing requires a pair of models with
+substantially different capability profiles, and we outline the conditions
+under which routing is expected to yield meaningful gains in
+Section~\ref{sec:routing}.
+
+\subsection{Paper Organization}
+\label{sec:intro:organization}
+
+Section~\ref{sec:related} reviews related work on KV cache compression, weight
+sparsity, and model routing.
+Section~\ref{sec:kvcache} describes the KV cache selector in full: the
+Phase~A rule-based heuristic, the calibration pipeline, the Phase~B MLP
+classifier, and TailorKV integration.
+Section~\ref{sec:sparsity} documents our activation sparsity experiments,
+including the Wanda~2:4 pipeline, the vLLM \texttt{Sparse24} removal, and the
+accuracy analysis.
+Section~\ref{sec:routing} presents the model routing study comparing
+Phi-3.5-Mini and Llama-3.1-8B-Instruct.
+Section~\ref{sec:discussion} synthesizes findings across all three axes and
+identifies the conditions under which each technique yields practical benefit.
+Section~\ref{sec:conclusion} concludes and outlines future work.
+
+% ── Forward-reference stubs for sections to be added in future files ────────
+% When Sections II–VII are written, move each \label{} to the corresponding
+% \section{} command and remove the stub declarations below.
+\label{sec:related}   % TODO: move to \section{Related Work}
+\label{sec:kvcache}   % TODO: move to \section{KV Cache Selector}
+\label{sec:sparsity}  % TODO: move to \section{Activation Sparsity}
+\label{sec:routing}   % TODO: move to \section{Model Routing}
+\label{sec:discussion}% TODO: move to \section{Discussion}
+\label{sec:conclusion}% TODO: move to \section{Conclusion}
+
+% ── Bibliography ──────────────────────────────────────────────────────────────
+\bibliographystyle{IEEEtran}
+\bibliography{adaptiveserve}
+
+\end{document}
